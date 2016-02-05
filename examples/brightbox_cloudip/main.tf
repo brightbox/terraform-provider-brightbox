@@ -6,9 +6,9 @@ resource "brightbox_cloudip" "default" {
   target = "${brightbox_server.web.id}"
 }
 
-# Our default security group to access
+# Our default server group to access
 # the instances over SSH and HTTP
-resource "brightbox_security_group" "default" {
+resource "brightbox_server_group" "default" {
   description = "Used by the terraform"
 
   # SSH access from anywhere
@@ -38,12 +38,12 @@ resource "brightbox_security_group" "default" {
 
 resource "brightbox_server" "web" {
 
-  description = "Terraform web server example"
+  name = "Terraform web server example"
   image = "${var.web_image}"
   type = "${var.web_type}"
 
   # Our Security group to allow HTTP and SSH access
-  security_groups = ["${brightbox_security_group.default.id}"]
+  server_groups = ["${brightbox_server_group.default.id}"]
 
   # We run a remote provisioner on the instance after creating it.
   # In this case, we just install nginx and start it. By default,
