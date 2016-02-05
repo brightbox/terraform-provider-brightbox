@@ -28,7 +28,7 @@ func resourceBrightboxServer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default: nil,
+				Default:  nil,
 			},
 
 			"type": &schema.Schema{
@@ -134,7 +134,7 @@ func resourceBrightboxServerCreate(
 	client := meta.(*brightbox.Client)
 
 	server_opts := &brightbox.ServerOptions{
-		Image:      d.Get("image").(string),
+		Image: d.Get("image").(string),
 	}
 
 	addUpdateableOptions(d, server_opts)

@@ -71,16 +71,15 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.Account = d.Get("account").(string)
 	config.APIURL = d.Get("apiurl").(string)
 
-
 	if config.APIClient == defaultClientID && config.APISecret == defaultClientSecret {
 		if config.Account == "" {
 			return nil,
-			  fmt.Errorf("Must specify Account with User Credentials")
+				fmt.Errorf("Must specify Account with User Credentials")
 		}
 	} else {
 		if config.UserName != "" || config.password != "" {
 			return nil,
-			  fmt.Errorf("User Credentials not used with API Client.")
+				fmt.Errorf("User Credentials not used with API Client.")
 		}
 	}
 

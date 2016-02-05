@@ -17,6 +17,11 @@ func (c *Config) Client() (*brightbox.Client, error) {
 	}
 
 	log.Printf("[INFO] Brightbox Client configured for URL: %s", client.BaseURL.String())
+	if client.AccountId == "" {
+		log.Printf("[INFO] Provisioning on default account")
+	} else {
+		log.Printf("[INFO] Provisioning to account %s", client.AccountId)
+	}
 
 	return client, nil
 
