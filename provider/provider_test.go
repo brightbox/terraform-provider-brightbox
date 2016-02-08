@@ -1,7 +1,7 @@
 package brightbox
 
 import (
-	//	"os"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -28,8 +28,11 @@ func TestProvider_impl(t *testing.T) {
 	var _ terraform.ResourceProvider = Provider()
 }
 
-// func testAccPreCheck(t *testing.T) {
-// 	if v := os.Getenv("DIGITALOCEAN_TOKEN"); v == "" {
-// 		t.Fatal("DIGITALOCEAN_TOKEN must be set for acceptance tests")
-// 	}
-// }
+func testAccPreCheck(t *testing.T) {
+	if v := os.Getenv("BRIGHTBOX_CLIENT"); v == "" {
+		t.Fatal("BRIGHTBOX_CLIENT must be set for acceptance tests")
+	}
+	if v := os.Getenv("BRIGHTBOX_CLIENT_SECRET"); v == "" {
+		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
+	}
+}

@@ -11,6 +11,10 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+const (
+	userdata_size_limit = 16384
+)
+
 func resourceBrightboxServer() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBrightboxServerCreate,
@@ -123,6 +127,10 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"username": &schema.Schema{
+				Type:	schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -137,7 +145,10 @@ func resourceBrightboxServerCreate(
 		Image: d.Get("image").(string),
 	}
 
-	addUpdateableOptions(d, server_opts)
+	err := addUpdateableOptions(d, server_opts)
+	if err != nil {
+		return err
+	}
 
 	if attr, ok := d.GetOk("type"); ok {
 		server_opts.ServerType = attr.(string)
@@ -210,7 +221,10 @@ func resourceBrightboxServerUpdate(
 		Id: d.Id(),
 	}
 
-	addUpdateableOptions(d, server_opts)
+	err := addUpdateableOptions(d, server_opts)
+	if err != nil {
+		return err
+	}
 
 	log.Printf("[DEBUG] Server update configuration: %#v", server_opts)
 
@@ -227,7 +241,7 @@ func resourceBrightboxServerUpdate(
 func addUpdateableOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerOptions,
-) {
+) error {
 
 	if attr, ok := d.GetOk("name"); ok {
 		temp_name := attr.(string)
@@ -236,6 +250,12 @@ func addUpdateableOptions(
 
 	if attr, ok := d.GetOk("userdata"); ok {
 		encoded_userdata := base64.StdEncoding.EncodeToString([]byte(attr.(string)))
+
+		if len(encoded_userdata) > userdata_size_limit {
+			return fmt.Errorf(
+				"The supplied user_data contains %d bytes after encoding, "+
+					"this exeeds the limit of %d bytes", len(encoded_userdata), userdata_size_limit)
+		}
 		opts.UserData = &encoded_userdata
 	}
 
@@ -243,6 +263,8 @@ func addUpdateableOptions(
 		temp_compat := attr.(bool)
 		opts.CompatibilityMode = &temp_compat
 	}
+
+	return nil
 
 }
 
@@ -252,18 +274,23 @@ func setServerAttributes(
 ) {
 	d.Set("image", server.Image.Id)
 	d.Set("name", server.Name)
-	d.Set("type", server.ServerType.Id)
-	d.Set("zone", server.Zone.Id)
+	d.Set("type", server.ServerType.Handle)
+	d.Set("zone", server.Zone.Handle)
 	d.Set("compatbility", server.CompatibilityMode)
 	d.Set("status", server.Status)
 	d.Set("locked", server.Locked)
 	d.Set("hostname", server.Hostname)
-	d.Set("fqdn", server.Fqdn)
-	d.Set("ipv6_hostname", "ipv6."+server.Fqdn)
+	if server.Image.Username != "" {
+		d.Set("username", server.Image.Username)
+	}
 
-	server_interface := server.Interfaces[0]
-	d.Set("ipv6_address", server_interface.IPv6Address)
-	d.Set("ipv4_address_private", server_interface.IPv4Address)
+	if len(server.Interfaces) > 0 {
+		server_interface := server.Interfaces[0]
+		d.Set("ipv4_address_private", server_interface.IPv4Address)
+		d.Set("fqdn", server.Fqdn)
+		d.Set("ipv6_address", server_interface.IPv6Address)
+		d.Set("ipv6_hostname", "ipv6."+server.Fqdn)
+	}
 
 	if len(server.CloudIPs) > 0 {
 		cloud_ip := server.CloudIPs[0]
@@ -276,4 +303,29 @@ func setServerAttributes(
 		srvGrpIds = append(srvGrpIds, sg.Id)
 	}
 	d.Set("server_groups", srvGrpIds)
+
+	SetConnectionDetails(d)
+
+}
+
+func SetConnectionDetails(d *schema.ResourceData) {
+	var preferredSSHAddress string
+	if attr, ok := d.GetOk("public_hostname"); ok {
+		preferredSSHAddress = attr.(string)
+	} else if attr, ok := d.GetOk("ipv6_hostname"); ok {
+		preferredSSHAddress = attr.(string)
+	} else if attr, ok := d.GetOk("fqdn"); ok {
+		preferredSSHAddress = attr.(string)
+	}
+
+	if preferredSSHAddress != "" {
+		connection_details := map[string]string{
+			"type": "ssh",
+			"host": preferredSSHAddress,
+		}
+		if attr, ok := d.GetOk("username"); ok {
+			connection_details["user"] = attr.(string)
+		}
+		d.SetConnInfo(connection_details)
+	}
 }
