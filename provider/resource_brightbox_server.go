@@ -6,9 +6,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/resource"
 )
 
 const (
@@ -128,7 +130,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Computed: true,
 			},
 			"username": &schema.Schema{
-				Type:	schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 		},
@@ -174,9 +176,22 @@ func resourceBrightboxServerCreate(
 
 	d.SetId(server.Id)
 
-	log.Printf("[INFO] Server ID: %s", d.Id())
+	log.Printf("[INFO] Waiting for Server (%s) to become available", d.Id())
 
-	setServerAttributes(d, server)
+	stateConf := resource.StateChangeConf{
+		Pending:    []string{"creating"},
+		Target:     []string{"active", "inactive"},
+		Refresh:    serverStateRefresh(client, server.Id),
+		Timeout:    5 * time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	active_server, err := stateConf.WaitForState()
+	if err != nil {
+		return err
+	}
+
+	setServerAttributes(d, active_server.(*brightbox.Server))
 
 	return nil
 }
@@ -327,5 +342,16 @@ func SetConnectionDetails(d *schema.ResourceData) {
 			connection_details["user"] = attr.(string)
 		}
 		d.SetConnInfo(connection_details)
+	}
+}
+
+func serverStateRefresh(client *brightbox.Client, serverID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		server, err := client.Server(serverID)
+		if err != nil {
+			log.Printf("Error on Server State Refresh: %s", err)
+			return nil, "", err
+		}
+		return server, server.Status, nil
 	}
 }
