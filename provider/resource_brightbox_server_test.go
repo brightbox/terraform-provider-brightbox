@@ -32,9 +32,7 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "zone", "gb1-a"),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "compatibility", "false"),
-					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "user_data", "foo:-with-character's"),
+						"brightbox_server.foobar", "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
 				),
 			},
 		},
@@ -108,9 +106,6 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 		if server.Zone.Handle != "gb1-a" {
 			return fmt.Errorf("Bad zone: %s", server.Zone.Handle)
 		}
-		if server.CompatibilityMode != false {
-			return fmt.Errorf("Bad compatibility mode: %v", server.CompatibilityMode)
-		}
 
 		if server.Name != "foo" {
 			return fmt.Errorf("Bad name: %s", server.Name)
@@ -125,8 +120,7 @@ resource "brightbox_server" "foobar" {
 	image = "img-zhoh0"
 	name = "foo"
 	type = "1gb.ssd"
-	zone = "zon-6mxqw"
-	compatibility = false
+	zone = "gb1-a"
 	user_data = "foo:-with-character's"
 }
 `

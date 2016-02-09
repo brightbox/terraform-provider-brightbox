@@ -53,14 +53,6 @@ func resourceBrightboxServer() *schema.Resource {
 				ForceNew: true,
 			},
 
-			"compatibility": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
-				Default:  nil,
-				ForceNew: true,
-			},
-
 			"user_data": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -274,10 +266,6 @@ func addUpdateableOptions(
 		opts.UserData = &encoded_userdata
 	}
 
-	if attr, ok := d.GetOk("compatibility"); ok {
-		temp_compat := attr.(bool)
-		opts.CompatibilityMode = &temp_compat
-	}
 
 	return nil
 
@@ -291,7 +279,6 @@ func setServerAttributes(
 	d.Set("name", server.Name)
 	d.Set("type", server.ServerType.Handle)
 	d.Set("zone", server.Zone.Handle)
-	d.Set("compatbility", server.CompatibilityMode)
 	d.Set("status", server.Status)
 	d.Set("locked", server.Locked)
 	d.Set("hostname", server.Hostname)
