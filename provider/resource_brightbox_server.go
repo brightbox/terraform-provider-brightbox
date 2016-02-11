@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 const (
@@ -84,6 +84,11 @@ func resourceBrightboxServer() *schema.Resource {
 
 			"locked": &schema.Schema{
 				Type:     schema.TypeBool,
+				Computed: true,
+			},
+
+			"interface": &schema.Schema{
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 
@@ -266,7 +271,6 @@ func addUpdateableOptions(
 		opts.UserData = &encoded_userdata
 	}
 
-
 	return nil
 
 }
@@ -288,6 +292,7 @@ func setServerAttributes(
 
 	if len(server.Interfaces) > 0 {
 		server_interface := server.Interfaces[0]
+		d.Set("interface", server_interface.Id)
 		d.Set("ipv4_address_private", server_interface.IPv4Address)
 		d.Set("fqdn", server.Fqdn)
 		d.Set("ipv6_address", server_interface.IPv6Address)

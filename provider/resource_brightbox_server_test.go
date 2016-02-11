@@ -2,7 +2,6 @@ package brightbox
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/brightbox/gobrightbox"
@@ -26,7 +25,7 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "image", "img-zhoh0"),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", "foo"),
+						"brightbox_server.foobar", "name", "create_server_test"),
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "type", "1gb.ssd"),
 					resource.TestCheckResourceAttr(
@@ -48,14 +47,20 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 		}
 
 		// Try to find the Server
-		_, err := client.Server(rs.Primary.ID)
+		server, err := client.Server(rs.Primary.ID)
 
 		// Wait
 
-		if err != nil && !strings.Contains(err.Error(), "404") {
+		if err == nil && server.Status != "deleting" {
 			return fmt.Errorf(
-				"Error waiting for server (%s) to be destroyed: %s",
-				rs.Primary.ID, err)
+				"Server %s exists but not in deleting state. Status is %s", rs.Primary.ID, server.Status)
+		} else if err != nil {
+			apierror := err.(brightbox.ApiError)
+			if apierror.StatusCode != 404 {
+				return fmt.Errorf(
+					"Error waiting for server (%s) to be destroyed: %s",
+					rs.Primary.ID, err)
+			}
 		}
 	}
 
@@ -107,7 +112,7 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 			return fmt.Errorf("Bad zone: %s", server.Zone.Handle)
 		}
 
-		if server.Name != "foo" {
+		if server.Name != "create_server_test" {
 			return fmt.Errorf("Bad name: %s", server.Name)
 		}
 		return nil
@@ -118,7 +123,7 @@ const testAccCheckBrightboxServerConfig_basic = `
 
 resource "brightbox_server" "foobar" {
 	image = "img-zhoh0"
-	name = "foo"
+	name = "create_server_test"
 	type = "1gb.ssd"
 	zone = "gb1-a"
 	user_data = "foo:-with-character's"
