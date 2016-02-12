@@ -38,6 +38,36 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServer_server_group(t *testing.T) {
+	var server_group brightbox.ServerGroup
+	var server brightbox.Server
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_server_group,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo", &server_group),
+					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "server_groups.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckBrightboxServerAndGroupDestroy(s *terraform.State) error {
+	err := testAccCheckBrightboxServerDestroy(s)
+	if err != nil {
+		return err
+	}
+	return testAccCheckBrightboxServerGroupDestroy(s)
+}
+
 func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*brightbox.Client)
 
@@ -127,5 +157,18 @@ resource "brightbox_server" "foobar" {
 	type = "1gb.ssd"
 	zone = "gb1-a"
 	user_data = "foo:-with-character's"
+}
+`
+
+const testAccCheckBrightboxServerConfig_server_group = `
+
+resource "brightbox_server" "foobar" {
+	name = "server_group_test"
+	image = "img-zhoh0"
+	server_groups = ["${brightbox_server_group.barfoo.id}"]
+}
+
+resource "brightbox_server_group" "barfoo" {
+	name = "server_group_test"
 }
 `

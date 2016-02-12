@@ -87,8 +87,24 @@ func resourceBrightboxServerGroupDelete(
 ) error {
 	client := meta.(*brightbox.Client)
 
+	server_group, err := client.ServerGroup(d.Id())
+	if err != nil {
+		return fmt.Errorf("Error retrieving Server Group details: %s", err)
+	}
+	if len(server_group.Servers) > 0 {
+		serverIds := serverIdList(server_group.Servers)
+		log.Printf("[INFO] Removing servers %#v from server group %s", serverIds, server_group.Id)
+		server_group, err := client.RemoveServersFromServerGroup(server_group.Id, serverIds)
+		if err != nil {
+			return fmt.Errorf("Error removing servers from server group %s", server_group.Id)
+		}
+		if len(server_group.Servers) > 0 {
+			return fmt.Errorf("Error servers %#v still in server group %s", serverIdList(server_group.Servers), server_group.Id)
+		}
+	}
+
 	log.Printf("[INFO] Deleting Server Group %s", d.Id())
-	err := client.DestroyServerGroup(d.Id())
+	err = client.DestroyServerGroup(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting Server Group (%s): %s", d.Id(), err)
 	}
@@ -133,4 +149,12 @@ func addUpdateableServerGroupOptions(
 		opts.Description = &temp_desc
 	}
 	return nil
+}
+
+func serverIdList(servers []brightbox.Server) []string {
+	var result []string
+	for _, srv := range servers {
+		result = append(result, srv.Id)
+	}
+	return result
 }
