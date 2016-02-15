@@ -72,7 +72,6 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
@@ -140,6 +139,7 @@ func resourceBrightboxServerCreate(
 ) error {
 	client := meta.(*brightbox.Client)
 
+	log.Printf("[DEBUG] Server create called")
 	server_opts := &brightbox.ServerOptions{
 		Image: d.Get("image").(string),
 	}
@@ -154,14 +154,6 @@ func resourceBrightboxServerCreate(
 	}
 	if attr, ok := d.GetOk("zone"); ok {
 		server_opts.Zone = attr.(string)
-	}
-
-	if sgs := d.Get("server_groups").(*schema.Set); sgs.Len() > 0 {
-		var groups []string
-		for _, v := range sgs.List() {
-			groups = append(groups, v.(string))
-		}
-		server_opts.ServerGroups = &groups
 	}
 
 	log.Printf("[DEBUG] Server create configuration: %#v", server_opts)
@@ -199,6 +191,7 @@ func resourceBrightboxServerRead(
 ) error {
 	client := meta.(*brightbox.Client)
 
+	log.Printf("[DEBUG] Server read called for %s", d.Id())
 	server, err := client.Server(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving server details: %s", err)
@@ -216,6 +209,7 @@ func resourceBrightboxServerDelete(
 ) error {
 	client := meta.(*brightbox.Client)
 
+	log.Printf("[DEBUG] Server delete called for %s", d.Id())
 	err := client.DestroyServer(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting server: %s", err)
@@ -229,6 +223,7 @@ func resourceBrightboxServerUpdate(
 ) error {
 	client := meta.(*brightbox.Client)
 
+	log.Printf("[DEBUG] Server update called for %s", d.Id())
 	server_opts := &brightbox.ServerOptions{
 		Id: d.Id(),
 	}
@@ -269,6 +264,16 @@ func addUpdateableOptions(
 					"this exeeds the limit of %d bytes", len(encoded_userdata), userdata_size_limit)
 		}
 		opts.UserData = &encoded_userdata
+	}
+
+	if d.HasChange("server_groups") {
+		var groups []string
+		if sgs := d.Get("server_groups").(*schema.Set); sgs.Len() > 0 {
+			for _, v := range sgs.List() {
+				groups = append(groups, v.(string))
+			}
+		}
+		opts.ServerGroups = &groups
 	}
 
 	return nil

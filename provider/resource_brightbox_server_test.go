@@ -60,6 +60,68 @@ func TestAccBrightboxServer_server_group(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServer_multi_server_group_up(t *testing.T) {
+	var server_group, server_group2 brightbox.ServerGroup
+	var server brightbox.Server
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_server_group,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "server_groups.#", "1"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_multi_server_group,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo", &server_group),
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo2", &server_group2),
+					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "server_groups.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccBrightboxServer_multi_server_group_down(t *testing.T) {
+	var server_group, server_group2 brightbox.ServerGroup
+	var server brightbox.Server
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_multi_server_group,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo", &server_group),
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo2", &server_group2),
+					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "server_groups.#", "2"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_server_group,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "server_groups.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckBrightboxServerAndGroupDestroy(s *terraform.State) error {
 	err := testAccCheckBrightboxServerDestroy(s)
 	if err != nil {
@@ -170,5 +232,23 @@ resource "brightbox_server" "foobar" {
 
 resource "brightbox_server_group" "barfoo" {
 	name = "server_group_test"
+}
+`
+
+const testAccCheckBrightboxServerConfig_multi_server_group = `
+
+resource "brightbox_server" "foobar" {
+	name = "server_group_test"
+	image = "img-zhoh0"
+	server_groups = ["${brightbox_server_group.barfoo.id}",
+	"${brightbox_server_group.barfoo2.id}"]
+}
+
+resource "brightbox_server_group" "barfoo" {
+	name = "server_group_test"
+}
+
+resource "brightbox_server_group" "barfoo2" {
+	name = "server_group_test2"
 }
 `
