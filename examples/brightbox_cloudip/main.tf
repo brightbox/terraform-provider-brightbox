@@ -9,31 +9,34 @@ resource "brightbox_cloudip" "default" {
 # Our default server group to access
 # the instances over SSH and HTTP
 resource "brightbox_server_group" "default" {
-  description = "Used by the terraform"
+  name = "Used by the terraform"
+}
 
-  # SSH access from anywhere
-  ingress {
-    from_port = 22
-    to_port = 22
+resource "brightbox_firewall_policy" "default" {
+  name = "Used by terraform"
+  server_group = "${brightbox_server_group.default.id}"
+}
+
+resource "brightbox_firewall_rule" "default_ssh" {
+    destination_port = 22
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    source = "any"
+    description = "SSH access from anywhere"
+    firewall_policy = "${brightbox_firewall_policy.default.id}"
+}
 
-  # HTTP access from anywhere
-  ingress {
-    from_port = 80
-    to_port = 80
+resource "brightbox_firewall_rule" "default_http" {
+    destination_port = 80
     protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    source = "any"
+    description = "HTTP access from anywhere"
+    firewall_policy = "${brightbox_firewall_policy.default.id}"
+}
 
-  # outbound internet access
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "brightbox_firewall_rule" "default_outbound" {
+    destination = "any"
+    description = "Outbound internet access"
+    firewall_policy = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_server" "web" {

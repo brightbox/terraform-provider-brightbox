@@ -56,9 +56,11 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"brightbox_server":       resourceBrightboxServer(),
-			"brightbox_cloudip":      resourceBrightboxCloudip(),
-			"brightbox_server_group": resourceBrightboxServerGroup(),
+			"brightbox_server":          resourceBrightboxServer(),
+			"brightbox_cloudip":         resourceBrightboxCloudip(),
+			"brightbox_server_group":    resourceBrightboxServerGroup(),
+			"brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
+			"brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
