@@ -3,8 +3,10 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -92,14 +94,9 @@ func resourceBrightboxServerGroupDelete(
 		return fmt.Errorf("Error retrieving Server Group details: %s", err)
 	}
 	if len(server_group.Servers) > 0 {
-		serverIds := serverIdList(server_group.Servers)
-		log.Printf("[INFO] Removing servers %#v from server group %s", serverIds, server_group.Id)
-		server_group, err := client.RemoveServersFromServerGroup(server_group.Id, serverIds)
+		err := clearServerList(client, server_group)
 		if err != nil {
-			return fmt.Errorf("Error removing servers from server group %s", server_group.Id)
-		}
-		if len(server_group.Servers) > 0 {
-			return fmt.Errorf("Error: servers %#v still in server group %s", serverIdList(server_group.Servers), server_group.Id)
+			return err
 		}
 	}
 
@@ -139,14 +136,19 @@ func addUpdateableServerGroupOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerGroupOptions,
 ) error {
-	if attr, ok := d.GetOk("name"); ok {
-		temp_name := attr.(string)
-		opts.Name = &temp_name
+	if d.HasChange("name") {
+		var temp string
+		if attr, ok := d.GetOk("name"); ok {
+			temp = attr.(string)
+		}
+		opts.Name = &temp
 	}
-
-	if attr, ok := d.GetOk("description"); ok {
-		temp_desc := attr.(string)
-		opts.Description = &temp_desc
+	if d.HasChange("description") {
+		var temp string
+		if attr, ok := d.GetOk("description"); ok {
+			temp = attr.(string)
+		}
+		opts.Description = &temp
 	}
 	return nil
 }
@@ -157,4 +159,31 @@ func serverIdList(servers []brightbox.Server) []string {
 		result = append(result, srv.Id)
 	}
 	return result
+}
+
+func clearServerList(client *brightbox.Client, initial_server_group *brightbox.ServerGroup) error {
+	serverID := initial_server_group.Id
+	server_list := initial_server_group.Servers
+	serverIds := serverIdList(server_list)
+	log.Printf("[INFO] Removing servers %#v from server group %s", serverIds, serverID)
+	_, err := client.RemoveServersFromServerGroup(serverID, serverIds)
+	if err != nil {
+		return fmt.Errorf("Error removing servers from server group %s", serverID)
+	}
+	// Wait for group to empty
+	return resource.Retry(
+		1*time.Minute,
+		func() error {
+			server_group, err := client.ServerGroup(serverID)
+			if err != nil {
+				return resource.RetryError{
+					Err: fmt.Errorf("Error retrieving Server Group details: %s", err),
+				}
+			}
+			if len(server_group.Servers) > 0 {
+				return fmt.Errorf("Error: servers %#v still in server group %s", serverIdList(server_group.Servers), server_group.Id)
+			}
+			return nil
+		},
+	)
 }

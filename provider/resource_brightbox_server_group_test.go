@@ -42,6 +42,39 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
+	var server_group brightbox.ServerGroup
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerGroupDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerGroupConfig_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
+					testAccCheckBrightboxServerGroupAttributes(&server_group),
+					resource.TestCheckResourceAttr(
+						"brightbox_server_group.foobar", "name", "empty"),
+					resource.TestCheckResourceAttr(
+						"brightbox_server_group.foobar", "description", "empty"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerGroupConfig_empty,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
+					resource.TestCheckResourceAttr(
+						"brightbox_server_group.foobar", "name", ""),
+					resource.TestCheckResourceAttr(
+						"brightbox_server_group.foobar", "description", ""),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckBrightboxServerGroupDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*brightbox.Client)
 
@@ -127,5 +160,13 @@ const testAccCheckBrightboxServerGroupConfig_updated = `
 resource "brightbox_server_group" "foobar" {
 	name = "updated"
 	description = "updated"
+}
+`
+
+const testAccCheckBrightboxServerGroupConfig_empty = `
+
+resource "brightbox_server_group" "foobar" {
+	name = ""
+	description = ""
 }
 `
