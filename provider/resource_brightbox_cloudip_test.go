@@ -32,6 +32,39 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxCloudip_clear_name(t *testing.T) {
+	var cloudip brightbox.CloudIP
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBrightboxCloudipConfig_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
+					testAccCheckBrightboxCloudipAttributes(&cloudip),
+					resource.TestCheckResourceAttr(
+						"brightbox_cloudip.foobar", "name", "unmapped"),
+					resource.TestCheckResourceAttr(
+						"brightbox_cloudip.foobar", "target", ""),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckBrightboxCloudipConfig_empty_name,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
+					resource.TestCheckResourceAttr(
+						"brightbox_cloudip.foobar", "name", ""),
+					resource.TestCheckResourceAttr(
+						"brightbox_cloudip.foobar", "target", ""),
+				),
+			},
+		},
+	})
+}
+
 func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 	var cloudip brightbox.CloudIP
 
@@ -166,6 +199,13 @@ const testAccCheckBrightboxCloudipConfig_basic = `
 
 resource "brightbox_cloudip" "foobar" {
 	name = "unmapped"
+}
+`
+
+const testAccCheckBrightboxCloudipConfig_empty_name = `
+
+resource "brightbox_cloudip" "foobar" {
+	name = ""
 }
 `
 
