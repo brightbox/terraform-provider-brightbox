@@ -3,7 +3,7 @@ provider "brightbox" {
 }
 
 resource "brightbox_cloudip" "default" {
-  target = "${brightbox_server.web.id}"
+  target = "${brightbox_server.web.interface}"
 }
 
 # Our default server group to access
@@ -40,6 +40,8 @@ resource "brightbox_firewall_rule" "default_outbound" {
 }
 
 resource "brightbox_server" "web" {
+
+  depends_on = ["brightbox_firewall_policy.default"]
 
   name = "Terraform web server example"
   image = "${var.web_image}"
