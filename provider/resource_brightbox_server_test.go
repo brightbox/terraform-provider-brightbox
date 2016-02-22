@@ -38,6 +38,31 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServer_Blank(t *testing.T) {
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_basic,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "name", "create_server_test"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckBrightboxServerConfig_blank,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"brightbox_server.foobar", "name", ""),
+				),
+			},
+		},
+	})
+}
+
 func TestAccBrightboxServer_server_group(t *testing.T) {
 	var server_group brightbox.ServerGroup
 	var server brightbox.Server
@@ -216,6 +241,16 @@ const testAccCheckBrightboxServerConfig_basic = `
 resource "brightbox_server" "foobar" {
 	image = "img-zhoh0"
 	name = "create_server_test"
+	type = "1gb.ssd"
+	zone = "gb1-a"
+	user_data = "foo:-with-character's"
+}
+`
+
+const testAccCheckBrightboxServerConfig_blank = `
+resource "brightbox_server" "foobar" {
+	image = "img-zhoh0"
+	name = ""
 	type = "1gb.ssd"
 	zone = "gb1-a"
 	user_data = "foo:-with-character's"

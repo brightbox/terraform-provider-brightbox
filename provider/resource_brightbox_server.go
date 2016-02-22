@@ -262,18 +262,25 @@ func addUpdateableOptions(
 	opts *brightbox.ServerOptions,
 ) error {
 
-	if attr, ok := d.GetOk("name"); ok {
-		temp_name := attr.(string)
-		opts.Name = &temp_name
+	if d.HasChange("name") {
+		var temp string
+		if attr, ok := d.GetOk("name"); ok {
+			temp = attr.(string)
+		}
+		opts.Name = &temp
 	}
+	if d.HasChange("userdata") {
+		var encoded_userdata string
+		if attr, ok := d.GetOk("userdata"); ok {
+			encoded_userdata = base64.StdEncoding.EncodeToString([]byte(attr.(string)))
 
-	if attr, ok := d.GetOk("userdata"); ok {
-		encoded_userdata := base64.StdEncoding.EncodeToString([]byte(attr.(string)))
-
-		if len(encoded_userdata) > userdata_size_limit {
-			return fmt.Errorf(
-				"The supplied user_data contains %d bytes after encoding, "+
-					"this exeeds the limit of %d bytes", len(encoded_userdata), userdata_size_limit)
+			if len(encoded_userdata) > userdata_size_limit {
+				return fmt.Errorf(
+					"The supplied user_data contains %d bytes after encoding, this exeeds the limit of %d bytes",
+					len(encoded_userdata),
+					userdata_size_limit,
+				)
+			}
 		}
 		opts.UserData = &encoded_userdata
 	}
