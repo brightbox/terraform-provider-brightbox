@@ -115,7 +115,7 @@ func resourceBrightboxFirewallPolicyUpdate(
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Firewall Policy update configuration: %#v", firewall_policy_opts)
+	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewall_policy_opts)
 
 	firewall_policy, err := client.UpdateFirewallPolicy(firewall_policy_opts)
 	if err != nil {

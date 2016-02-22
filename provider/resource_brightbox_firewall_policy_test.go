@@ -239,6 +239,10 @@ resource "brightbox_firewall_policy" "foobar" {
 	server_group = "${brightbox_server_group.group2.id}"
 }
 
+resource "brightbox_server_group" "group1" {
+	name = "Terraform"
+}
+
 resource "brightbox_server_group" "group2" {
 	name = "Terraform"
 }
