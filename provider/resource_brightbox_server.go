@@ -269,9 +269,11 @@ func addUpdateableOptions(
 		}
 		opts.Name = &temp
 	}
-	if d.HasChange("userdata") {
+	if d.HasChange("user_data") {
 		var encoded_userdata string
-		if attr, ok := d.GetOk("userdata"); ok {
+		if attr, ok := d.GetOk("user_data"); ok {
+			log.Printf("[DEBUG] UserData to encode: %s", attr.(string))
+
 			encoded_userdata = base64.StdEncoding.EncodeToString([]byte(attr.(string)))
 
 			if len(encoded_userdata) > userdata_size_limit {
