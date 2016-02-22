@@ -143,9 +143,9 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 
 		// Wait
 
-		if err == nil && server.Status != "deleting" {
+		if err == nil && server.Status != "deleted" {
 			return fmt.Errorf(
-				"Server %s exists but not in deleting state. Status is %s", rs.Primary.ID, server.Status)
+				"Server %s not in deleted state. Status is %s", rs.Primary.ID, server.Status)
 		} else if err != nil {
 			apierror := err.(brightbox.ApiError)
 			if apierror.StatusCode != 404 {

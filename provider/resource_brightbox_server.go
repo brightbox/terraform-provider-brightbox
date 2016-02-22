@@ -214,6 +214,18 @@ func resourceBrightboxServerDelete(
 	if err != nil {
 		return fmt.Errorf("Error deleting server: %s", err)
 	}
+	stateConf := resource.StateChangeConf{
+		Pending:    []string{"deleting", "active", "inactive"},
+		Target:     []string{"deleted"},
+		Refresh:    serverStateRefresh(client, d.Id()),
+		Timeout:    5 * time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	_, err = stateConf.WaitForState()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
