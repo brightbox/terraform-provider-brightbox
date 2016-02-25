@@ -136,20 +136,8 @@ func addUpdateableServerGroupOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerGroupOptions,
 ) error {
-	if d.HasChange("name") {
-		var temp string
-		if attr, ok := d.GetOk("name"); ok {
-			temp = attr.(string)
-		}
-		opts.Name = &temp
-	}
-	if d.HasChange("description") {
-		var temp string
-		if attr, ok := d.GetOk("description"); ok {
-			temp = attr.(string)
-		}
-		opts.Description = &temp
-	}
+	assign_string(d, &opts.Name, "name")
+	assign_string(d, &opts.Description, "description")
 	return nil
 }
 

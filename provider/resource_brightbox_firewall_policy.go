@@ -130,26 +130,8 @@ func addUpdateableFirewallPolicyOptions(
 	d *schema.ResourceData,
 	opts *brightbox.FirewallPolicyOptions,
 ) error {
-	if d.HasChange("name") {
-		var temp string
-		if attr, ok := d.GetOk("name"); ok {
-			temp = attr.(string)
-		}
-		opts.Name = &temp
-	}
-	if d.HasChange("description") {
-		var temp string
-		if attr, ok := d.GetOk("description"); ok {
-			temp = attr.(string)
-		}
-		opts.Description = &temp
-	}
-	if d.HasChange("server_group") {
-		var temp string
-		if attr, ok := d.GetOk("server_group"); ok {
-			temp = attr.(string)
-		}
-		opts.ServerGroup = &temp
-	}
+	assign_string(d, &opts.Name, "name")
+	assign_string(d, &opts.Description, "description")
+	assign_string(d, &opts.ServerGroup, "server_group")
 	return nil
 }

@@ -274,20 +274,7 @@ func addUpdateableCloudipOptions(
 	d *schema.ResourceData,
 	opts *brightbox.CloudIPOptions,
 ) error {
-	if d.HasChange("name") {
-		var temp string
-		if attr, ok := d.GetOk("name"); ok {
-			temp = attr.(string)
-		}
-		opts.Name = &temp
-	}
-
-	if d.HasChange("reverse_dns") {
-		var temp string
-		if attr, ok := d.GetOk("reverse_dns"); ok {
-			temp = attr.(string)
-		}
-		opts.ReverseDns = &temp
-	}
+	assign_string(d, &opts.Name, "name")
+	assign_string(d, &opts.ReverseDns, "reverse_dns")
 	return nil
 }

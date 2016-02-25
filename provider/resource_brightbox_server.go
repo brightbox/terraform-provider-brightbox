@@ -1,9 +1,7 @@
 package brightbox
 
 import (
-	"crypto/sha1"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"time"
@@ -54,18 +52,10 @@ func resourceBrightboxServer() *schema.Resource {
 			},
 
 			"user_data": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				StateFunc: func(v interface{}) string {
-					switch v.(type) {
-					case string:
-						hash := sha1.Sum([]byte(v.(string)))
-						return hex.EncodeToString(hash[:])
-					default:
-						return ""
-					}
-				},
+				Type:      schema.TypeString,
+				Optional:  true,
+				ForceNew:  true,
+				StateFunc: hash_string,
 			},
 
 			"server_groups": &schema.Schema{
@@ -144,7 +134,7 @@ func resourceBrightboxServerCreate(
 		Image: d.Get("image").(string),
 	}
 
-	err := addUpdateableOptions(d, server_opts)
+	err := addUpdateableServerOptions(d, server_opts)
 	if err != nil {
 		return err
 	}
@@ -240,7 +230,7 @@ func resourceBrightboxServerUpdate(
 		Id: d.Id(),
 	}
 
-	err := addUpdateableOptions(d, server_opts)
+	err := addUpdateableServerOptions(d, server_opts)
 	if err != nil {
 		return err
 	}
@@ -257,18 +247,11 @@ func resourceBrightboxServerUpdate(
 	return nil
 }
 
-func addUpdateableOptions(
+func addUpdateableServerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerOptions,
 ) error {
-
-	if d.HasChange("name") {
-		var temp string
-		if attr, ok := d.GetOk("name"); ok {
-			temp = attr.(string)
-		}
-		opts.Name = &temp
-	}
+	assign_string(d, &opts.Name, "name")
 	if d.HasChange("user_data") {
 		var encoded_userdata string
 		if attr, ok := d.GetOk("user_data"); ok {
@@ -312,9 +295,7 @@ func setServerAttributes(
 	d.Set("status", server.Status)
 	d.Set("locked", server.Locked)
 	d.Set("hostname", server.Hostname)
-	if server.Image.Username != "" {
-		d.Set("username", server.Image.Username)
-	}
+	d.Set("username", server.Image.Username)
 
 	if len(server.Interfaces) > 0 {
 		server_interface := server.Interfaces[0]

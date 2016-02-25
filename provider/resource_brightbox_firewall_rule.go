@@ -160,54 +160,12 @@ func addUpdateableFirewallRuleOptions(
 	d *schema.ResourceData,
 	opts *brightbox.FirewallRuleOptions,
 ) error {
-	if d.HasChange("protocol") {
-		var temp string
-		if attr, ok := d.GetOk("protocol"); ok {
-			temp = attr.(string)
-		}
-		opts.Protocol = &temp
-	}
-	if d.HasChange("source") {
-		var temp string
-		if attr, ok := d.GetOk("source"); ok {
-			temp = attr.(string)
-		}
-		opts.Source = &temp
-	}
-	if d.HasChange("source_port") {
-		var temp string
-		if attr, ok := d.GetOk("source_port"); ok {
-			temp = attr.(string)
-		}
-		opts.SourcePort = &temp
-	}
-	if d.HasChange("destination") {
-		var temp string
-		if attr, ok := d.GetOk("destination"); ok {
-			temp = attr.(string)
-		}
-		opts.Destination = &temp
-	}
-	if d.HasChange("destination_port") {
-		var temp string
-		if attr, ok := d.GetOk("destination_port"); ok {
-			temp = attr.(string)
-		}
-		opts.DestinationPort = &temp
-	}
-	if d.HasChange("icmp_type_name") {
-		var temp string
-		if attr, ok := d.GetOk("icmp_type_name"); ok {
-			temp = attr.(string)
-		}
-		opts.IcmpTypeName = &temp
-	}
-	if d.HasChange("description") {
-		var temp string
-		if attr, ok := d.GetOk("description"); ok {
-			temp = attr.(string)
-		}
-		opts.Description = &temp
-	}
+	assign_string(d, &opts.Protocol, "protocol")
+	assign_string(d, &opts.Source, "source")
+	assign_string(d, &opts.SourcePort, "source_port")
+	assign_string(d, &opts.Destination, "destination")
+	assign_string(d, &opts.DestinationPort, "destination_port")
+	assign_string(d, &opts.IcmpTypeName, "icmp_type_name")
+	assign_string(d, &opts.Description, "description")
 	return nil
 }
