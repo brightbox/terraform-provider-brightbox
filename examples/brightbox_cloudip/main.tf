@@ -33,10 +33,25 @@ resource "brightbox_firewall_rule" "default_http" {
     firewall_policy = "${brightbox_firewall_policy.default.id}"
 }
 
+resource "brightbox_firewall_rule" "default_https" {
+    destination_port = 443
+    protocol = "tcp"
+    source = "any"
+    description = "HTTPs access from anywhere"
+    firewall_policy = "${brightbox_firewall_policy.default.id}"
+}
+
 resource "brightbox_firewall_rule" "default_outbound" {
     destination = "any"
     description = "Outbound internet access"
     firewall_policy = "${brightbox_firewall_policy.default.id}"
+}
+
+resource "brightbox_firewall_rule" "default_icmp" {
+	protocol = "icmp"
+	source = "any"
+	icmp_type_name = "any"
+        firewall_policy = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_server" "web" {
