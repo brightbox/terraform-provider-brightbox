@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 
 	"github.com/hashicorp/terraform/helper/schema"
-
 )
 
 func hash_string(

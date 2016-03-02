@@ -61,6 +61,7 @@ func Provider() terraform.ResourceProvider {
 			"brightbox_server_group":    resourceBrightboxServerGroup(),
 			"brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
 			"brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
+			"brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
