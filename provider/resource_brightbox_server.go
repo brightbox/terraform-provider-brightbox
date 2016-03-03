@@ -252,6 +252,7 @@ func addUpdateableServerOptions(
 	opts *brightbox.ServerOptions,
 ) error {
 	assign_string(d, &opts.Name, "name")
+	assign_string_set(d, &opts.ServerGroups, "server_groups")
 	if d.HasChange("user_data") {
 		var encoded_userdata string
 		if attr, ok := d.GetOk("user_data"); ok {
@@ -268,16 +269,6 @@ func addUpdateableServerOptions(
 			}
 		}
 		opts.UserData = &encoded_userdata
-	}
-
-	if d.HasChange("server_groups") {
-		var groups []string
-		if sgs := d.Get("server_groups").(*schema.Set); sgs.Len() > 0 {
-			for _, v := range sgs.List() {
-				groups = append(groups, v.(string))
-			}
-		}
-		opts.ServerGroups = &groups
 	}
 
 	return nil

@@ -29,6 +29,18 @@ func assign_string(d *schema.ResourceData, target **string, index string) {
 	}
 }
 
+func assign_string_set(d *schema.ResourceData, target **[]string, index string) {
+	if d.HasChange(index) {
+		var temp []string
+		if attr := d.Get(index).(*schema.Set); attr.Len() > 0 {
+			for _, v := range attr.List() {
+				temp = append(temp, v.(string))
+			}
+		}
+		*target = &temp
+	}
+}
+
 func assign_int(d *schema.ResourceData, target **int, index string) {
 	if d.HasChange(index) {
 		var temp int
