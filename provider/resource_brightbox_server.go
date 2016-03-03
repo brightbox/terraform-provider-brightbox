@@ -139,12 +139,10 @@ func resourceBrightboxServerCreate(
 		return err
 	}
 
-	if attr, ok := d.GetOk("type"); ok {
-		server_opts.ServerType = attr.(string)
-	}
-	if attr, ok := d.GetOk("zone"); ok {
-		server_opts.Zone = attr.(string)
-	}
+	server_type := &server_opts.ServerType
+	assign_string(d, &server_type, "type")
+	zone := &server_opts.Zone
+	assign_string(d, &zone, "zone")
 
 	log.Printf("[DEBUG] Server create configuration: %#v", server_opts)
 
