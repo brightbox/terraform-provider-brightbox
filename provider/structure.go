@@ -21,11 +21,13 @@ func hash_string(
 
 func assign_string(d *schema.ResourceData, target **string, index string) {
 	if d.HasChange(index) {
-		var temp string
-		if attr, ok := d.GetOk(index); ok {
-			temp = attr.(string)
+		if *target == nil {
+		  var temp string
+		  *target = &temp
 		}
-		*target = &temp
+		if attr, ok := d.GetOk(index); ok {
+			**target = attr.(string)
+		}
 	}
 }
 

@@ -263,6 +263,7 @@ resource "brightbox_server" "foobar" {
 	name = "server_group_test"
 	image = "img-zhoh0"
 	server_groups = ["${brightbox_server_group.barfoo.id}"]
+	type = "512mb.ssd"
 }
 
 resource "brightbox_server_group" "barfoo" {
@@ -277,6 +278,7 @@ resource "brightbox_server" "foobar" {
 	image = "img-zhoh0"
 	server_groups = ["${brightbox_server_group.barfoo.id}",
 	"${brightbox_server_group.barfoo2.id}"]
+	type = "512mb.ssd"
 }
 
 resource "brightbox_server_group" "barfoo" {
