@@ -123,7 +123,7 @@ func testAccCheckBrightboxFirewallPolicyAndGroupDestroy(s *terraform.State) erro
 }
 
 func testAccCheckBrightboxFirewallPolicyDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*brightbox.Client)
+	client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_firewall_policy" {
@@ -159,7 +159,7 @@ func testAccCheckBrightboxFirewallPolicyExists(n string, firewall_policy *bright
 			return fmt.Errorf("No FirewallPolicy ID is set")
 		}
 
-		client := testAccProvider.Meta().(*brightbox.Client)
+		client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 		// Try to find the FirewallPolicy
 		retrieveFirewallPolicy, err := client.FirewallPolicy(rs.Primary.ID)

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-var infrastructureScope = []string{"infrastructure"}
+var infrastructureScope = []string{"infrastructure, orbit"}
 
 type authdetails struct {
 	APIClient    string
@@ -67,5 +67,13 @@ func (authd *authdetails) apiClientAuth() (*brightbox.Client, error) {
 	}
 	log.Printf("[DEBUG] Obtaining API client authorisation for client %s", authd.APIClient)
 	oauthConnection := conf.Client(oauth2.NoContext)
+	if authd.currentToken == nil {
+		log.Printf("[DEBUG] Retrieving auth token for %s", conf.ClientID)
+		token, err := conf.Token(oauth2.NoContext)
+		if err != nil {
+			return nil, err
+		}
+		authd.currentToken = token
+	}
 	return brightbox.NewClient(authd.APIURL, authd.Account, oauthConnection)
 }

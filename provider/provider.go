@@ -63,19 +63,21 @@ func Provider() terraform.ResourceProvider {
 			"brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
 			"brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
 			"brightbox_database_server": resourceBrightboxDatabaseServer(),
+			"brightbox_container":       resourceBrightboxContainer(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	config := new(Config)
-	config.APIClient = d.Get("apiclient").(string)
-	config.APISecret = d.Get("apisecret").(string)
-	config.UserName = d.Get("username").(string)
-	config.password = d.Get("password").(string)
-	config.Account = d.Get("account").(string)
-	config.APIURL = d.Get("apiurl").(string)
+	config := &authdetails{
+		APIClient: d.Get("apiclient").(string),
+		APISecret: d.Get("apisecret").(string),
+		UserName:  d.Get("username").(string),
+		password:  d.Get("password").(string),
+		Account:   d.Get("account").(string),
+		APIURL:    d.Get("apiurl").(string),
+	}
 
 	if config.APIClient == defaultClientID && config.APISecret == defaultClientSecret {
 		if config.Account == "" {
@@ -89,10 +91,5 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		}
 	}
 
-	client, err := config.Client()
-	if err != nil {
-		return nil, err
-	}
-
-	return client, err
+	return config.Client()
 }

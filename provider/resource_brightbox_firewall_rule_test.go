@@ -79,7 +79,7 @@ func testAccCheckBrightboxFirewallRuleAndPolicyDestroy(s *terraform.State) error
 }
 
 func testAccCheckBrightboxFirewallRuleDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*brightbox.Client)
+	client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_firewall_rule" {
@@ -115,7 +115,7 @@ func testAccCheckBrightboxFirewallRuleExists(n string, firewall_policy *brightbo
 			return fmt.Errorf("No FirewallRule ID is set")
 		}
 
-		client := testAccProvider.Meta().(*brightbox.Client)
+		client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 		// Try to find the FirewallRule
 		retrieveFirewallRule, err := client.FirewallRule(rs.Primary.ID)

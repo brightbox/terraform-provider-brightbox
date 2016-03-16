@@ -109,7 +109,7 @@ func testAccCheckBrightboxLoadBalancerAndServerDestroy(s *terraform.State) error
 }
 
 func testAccCheckBrightboxLoadBalancerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*brightbox.Client)
+	client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_load_balancer" {
@@ -145,7 +145,7 @@ func testAccCheckBrightboxLoadBalancerExists(n string, load_balancer *brightbox.
 			return fmt.Errorf("No LoadBalancer ID is set")
 		}
 
-		client := testAccProvider.Meta().(*brightbox.Client)
+		client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 		// Try to find the LoadBalancer
 		retrieveLoadBalancer, err := client.LoadBalancer(rs.Primary.ID)

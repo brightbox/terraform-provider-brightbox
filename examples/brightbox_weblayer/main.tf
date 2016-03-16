@@ -99,7 +99,10 @@ EOF
 	
 }
 
-
+resource "brightbox_container" "backups" {
+	name = "terraform_backups"
+	description = "Terraform example backup area"
+}
 
 resource "brightbox_database_server" "database" {
   name = "Terraform weblayer example database"

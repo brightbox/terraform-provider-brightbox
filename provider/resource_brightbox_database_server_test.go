@@ -117,7 +117,7 @@ func testAccCheckBrightboxDatabaseServerAndOthersDestroy(s *terraform.State) err
 }
 
 func testAccCheckBrightboxDatabaseServerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*brightbox.Client)
+	client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_database_server" {
@@ -153,7 +153,7 @@ func testAccCheckBrightboxDatabaseServerExists(n string, database_server *bright
 			return fmt.Errorf("No DatabaseServer ID is set")
 		}
 
-		client := testAccProvider.Meta().(*brightbox.Client)
+		client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 		// Try to find the DatabaseServer
 		retrieveDatabaseServer, err := client.DatabaseServer(rs.Primary.ID)

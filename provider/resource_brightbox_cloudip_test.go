@@ -130,7 +130,7 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 }
 
 func testAccCheckBrightboxCloudipDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*brightbox.Client)
+	client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_cloudip" {
@@ -166,7 +166,7 @@ func testAccCheckBrightboxCloudipExists(n string, cloudip *brightbox.CloudIP) re
 			return fmt.Errorf("No CloudIP ID is set")
 		}
 
-		client := testAccProvider.Meta().(*brightbox.Client)
+		client := testAccProvider.Meta().(*CompositeClient).ApiClient
 
 		// Try to find the CloudIP
 		retrieveCloudip, err := client.CloudIP(rs.Primary.ID)

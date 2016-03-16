@@ -127,7 +127,7 @@ func resourceBrightboxServerCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[DEBUG] Server create called")
 	server_opts := &brightbox.ServerOptions{
@@ -177,7 +177,7 @@ func resourceBrightboxServerRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[DEBUG] Server read called for %s", d.Id())
 	server, err := client.Server(d.Id())
@@ -195,7 +195,7 @@ func resourceBrightboxServerDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[DEBUG] Server delete called for %s", d.Id())
 	err := client.DestroyServer(d.Id())
@@ -221,7 +221,7 @@ func resourceBrightboxServerUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[DEBUG] Server update called for %s", d.Id())
 	server_opts := &brightbox.ServerOptions{

@@ -22,8 +22,8 @@ func hash_string(
 func assign_string(d *schema.ResourceData, target **string, index string) {
 	if d.HasChange(index) {
 		if *target == nil {
-		  var temp string
-		  *target = &temp
+			var temp string
+			*target = &temp
 		}
 		if attr, ok := d.GetOk(index); ok {
 			**target = attr.(string)

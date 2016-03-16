@@ -6,11 +6,12 @@ import (
 	"github.com/brightbox/gobrightbox"
 )
 
-type Config struct {
-	authdetails
+type CompositeClient struct {
+	ApiClient      *brightbox.Client
+	OrbitAuthToken *string
 }
 
-func (c *Config) Client() (*brightbox.Client, error) {
+func (c *authdetails) Client() (*CompositeClient, error) {
 	client, err := c.authenticatedClient()
 	if err != nil {
 		return nil, err
@@ -23,6 +24,13 @@ func (c *Config) Client() (*brightbox.Client, error) {
 		log.Printf("[INFO] Provisioning to account %s", client.AccountId)
 	}
 
-	return client, nil
+	composite := &CompositeClient{
+		ApiClient:      client,
+		OrbitAuthToken: &(c.currentToken.AccessToken),
+	}
+
+	log.Printf("[DEBUG] Current Access Token is %s", *composite.OrbitAuthToken)
+
+	return composite, nil
 
 }

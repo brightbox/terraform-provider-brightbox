@@ -40,7 +40,7 @@ func resourceBrightboxFirewallPolicyCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[INFO] Creating Firewall Policy")
 	firewall_policy_opts := &brightbox.FirewallPolicyOptions{}
@@ -76,7 +76,7 @@ func resourceBrightboxFirewallPolicyRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	firewall_policy, err := client.FirewallPolicy(d.Id())
 	if err != nil {
@@ -92,7 +92,7 @@ func resourceBrightboxFirewallPolicyDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[INFO] Deleting Firewall Policy %s", d.Id())
 	err := client.DestroyFirewallPolicy(d.Id())
@@ -106,7 +106,7 @@ func resourceBrightboxFirewallPolicyUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*brightbox.Client)
+	client := meta.(*CompositeClient).ApiClient
 
 	firewall_policy_opts := &brightbox.FirewallPolicyOptions{
 		Id: d.Id(),
