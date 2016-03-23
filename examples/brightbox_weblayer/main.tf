@@ -6,12 +6,10 @@ resource "brightbox_cloudip" "lb" {
   target = "${brightbox_load_balancer.lb.id}"
 }
 
-resource "brightbox_cloudip" "database" {
-  target = "${brightbox_database_server.database.id}"
-}
 resource "brightbox_cloudip" "server1" {
   target = "${brightbox_server.server1.interface}"
 }
+
 resource "brightbox_cloudip" "server2" {
   target = "${brightbox_server.server2.interface}"
 }
@@ -110,6 +108,9 @@ resource "brightbox_database_server" "database" {
   database_version = "5.6"
   maintenance_weekday = 6
   maintenance_hour = 6
+  database_name = "backend"
+  database_username = "dbserver"
+  database_password = "nice-password"
   allow_access = ["${brightbox_server_group.weblayer.id}"]
 }
 

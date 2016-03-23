@@ -215,16 +215,19 @@ func resourceBrightboxCloudipDelete(
 	meta interface{},
 ) error {
 	client := meta.(*CompositeClient).ApiClient
+	return removeCloudIP(client, d.Id())
+}
 
-	err := unmapCloudIP(client, d.Id())
+func removeCloudIP(client *brightbox.Client, id string) error {
+	log.Printf("[DEBUG] Unmapping Cloud IP %s", id)
+	err := unmapCloudIP(client, id)
 	if err != nil {
 		return err
 	}
-
-	log.Printf("[INFO] Deleting Cloud IP %s", d.Id())
-	err = client.DestroyCloudIP(d.Id())
+	log.Printf("[INFO] Deleting Cloud IP %s", id)
+	err = client.DestroyCloudIP(id)
 	if err != nil {
-		return fmt.Errorf("Error deleting Cloud IP (%s): %s", d.Id(), err)
+		return fmt.Errorf("Error deleting Cloud IP (%s): %s", id, err)
 	}
 	return nil
 }

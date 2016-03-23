@@ -11,6 +11,7 @@ import (
 )
 
 var blank_database_server_opts = brightbox.DatabaseServerOptions{}
+var allow_any = []string{"any"}
 
 func resourceBrightboxDatabaseServer() *schema.Resource {
 	return &schema.Resource{
@@ -103,11 +104,17 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"cloud_ips": &schema.Schema{
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+			"cloud_ip_id": &schema.Schema{
+				Type:     schema.TypeString,
 				Computed: true,
-				Set:      schema.HashString,
+			},
+			"public_hostname": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"ipv4_address": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -137,14 +144,23 @@ func setDatabaseServerAttributes(
 	d.SetPartial("maintenance_hour")
 	d.Set("zone", database_server.Zone.Handle)
 	d.SetPartial("zone")
-	cipIds := make([]string, 0, len(database_server.CloudIPs))
-	for _, cip := range database_server.CloudIPs {
-		cipIds = append(cipIds, cip.Id)
+	if len(database_server.CloudIPs) > 0 {
+		setCloudIPDetails(d, &database_server.CloudIPs[0])
 	}
-	d.Set("cloud_ips", cipIds)
-	d.SetPartial("cloud_ips")
-	// No Partial on allow access because it may change
+}
+
+func setAllowAccessAttribute(
+	d *schema.ResourceData,
+	database_server *brightbox.DatabaseServer,
+) {
 	d.Set("allow_access", database_server.AllowAccess)
+	d.SetPartial("allow_access")
+}
+
+func setCloudIPDetails(d *schema.ResourceData, cloud_ip *brightbox.CloudIP) {
+	d.Set("cloud_ip_id", cloud_ip.Id)
+	d.SetPartial("cloud_ip_id")
+	setPrimaryCloudIp(d, cloud_ip)
 }
 
 func databaseServerStateRefresh(client *brightbox.Client, databaseServerID string) resource.StateRefreshFunc {
@@ -163,6 +179,38 @@ func resourceBrightboxDatabaseServerCreate(
 	meta interface{},
 ) error {
 	client := meta.(*CompositeClient).ApiClient
+	err := createDatabaseServer(d, client)
+	if err != nil {
+		return err
+	}
+	err = createDatabaseServerPublicAccess(d, client)
+	// Create/Update Database
+	err = changeDatabase(d)
+	if err != nil {
+		return err
+	}
+	database_server_opts := getBlankDatabaseServerOpts()
+	assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
+	return updateDatabaseServerAttributes(d, client, database_server_opts)
+}
+
+func createDatabaseServerPublicAccess(d *schema.ResourceData, client *brightbox.Client) error {
+	log.Printf("[INFO] Creating Database Server CloudIP")
+	cloudip_opts := &brightbox.CloudIPOptions{}
+	assign_string(d, &cloudip_opts.Name, "name")
+	cloudip, err := client.CreateCloudIP(cloudip_opts)
+	if err != nil {
+		return fmt.Errorf("Error creating Cloud IP: %s", err)
+	}
+	active_cloudip, err := assignCloudIP(client, cloudip.Id, d.Id())
+	if err != nil {
+		return err
+	}
+	setCloudIPDetails(d, active_cloudip)
+	return nil
+}
+
+func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) error {
 	log.Printf("[DEBUG] Database Server create called")
 	database_server_opts := getBlankDatabaseServerOpts()
 	err := addUpdateableDatabaseServerOptions(d, database_server_opts)
@@ -177,6 +225,7 @@ func resourceBrightboxDatabaseServerCreate(
 	assign_string(d, &snapshot, "snapshot")
 	zone := &database_server_opts.Zone
 	assign_string(d, &zone, "zone")
+	database_server_opts.AllowAccess = &allow_any
 	log.Printf("[DEBUG] Database Server create configuration %#v", database_server_opts)
 	output_database_server_options(database_server_opts)
 	database_server, err := client.CreateDatabaseServer(database_server_opts)
@@ -206,11 +255,7 @@ func resourceBrightboxDatabaseServerCreate(
 	}
 	d.SetPartial("admin_password")
 	setDatabaseServerAttributes(d, active_database_server.(*brightbox.DatabaseServer))
-	database_server_opts = getBlankDatabaseServerOpts()
-	// Create/Update Database
-	changeDatabase(d)
-	assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
-	return updateDatabaseServerAttributes(d, client, database_server_opts)
+	return nil
 }
 
 func resourceBrightboxDatabaseServerUpdate(
@@ -232,7 +277,10 @@ func resourceBrightboxDatabaseServerUpdate(
 		if err != nil {
 			return err
 		}
-		changeDatabase(d)
+		err = changeDatabase(d)
+		if err != nil {
+			return err
+		}
 		assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
 	} else {
 		log.Printf("[DEBUG] No change to database details detected")
@@ -243,39 +291,60 @@ func resourceBrightboxDatabaseServerUpdate(
 
 func changeDatabase(
 	d *schema.ResourceData,
-) {
+) error {
+	var db = &MysqlDatabase{}
 	if d.HasChange("database_name") {
 		oraw, nraw := d.GetChange("database_name")
 		old_database_name := oraw.(string)
 		new_database_name := nraw.(string)
 		if old_database_name != "" {
 			log.Printf("[INFO] database changed - removing %s", old_database_name)
+			db.DropDatabase(old_database_name)
 		}
 		log.Printf("[INFO] Creating database %s", new_database_name)
+		db.CreateDatabase(new_database_name)
+		if !d.HasChange("database_username") {
+			database_username := d.Get("database_username").(string)
+			log.Printf("[INFO] adding grants for user %s", database_username)
+			db.GrantPrivileges(new_database_name, database_username)
+		}
 	}
 	if d.HasChange("database_username") {
 		oraw, nraw := d.GetChange("database_username")
 		old_database_username := oraw.(string)
 		new_database_username := nraw.(string)
+		database_password := d.Get("database_password").(string)
+		database_name := d.Get("database_name").(string)
 		if old_database_username != "" {
 			log.Printf("[INFO] removing user %s", old_database_username)
+			db.DropUser(old_database_username)
 		}
 		log.Printf("[INFO] adding user %s", new_database_username)
+		db.CreateUser(new_database_username, database_password)
 		log.Printf("[INFO] adding grants for user %s", new_database_username)
+		db.GrantPrivileges(database_name, new_database_username)
 	} else if d.HasChange("database_password") {
-		log.Printf("[INFO] updating password for user %s", d.Get("database_username").(string))
+		database_username := d.Get("database_username").(string)
+		database_password := d.Get("database_password").(string)
+		log.Printf("[INFO] updating password for user %s", database_username)
+		db.SetPassword(database_username, database_password)
 	}
+	log.Printf("[INFO] Statements to execute are %v", db.Statements)
+	return db.OpenExec(
+		d.Get("admin_username").(string),
+		d.Get("admin_password").(string),
+		d.Get("public_hostname").(string),
+	)
 }
 
 func removeDatabaseAccessRestrictions(
 	client *brightbox.Client,
 	db_server_id string,
 ) error {
-	var empty []string
 	log.Printf("[DEBUG] Removing access restrictions from %s", db_server_id)
 	opts := getBlankDatabaseServerOpts()
 	opts.Id = db_server_id
-	opts.AllowAccess = &empty
+	opts.AllowAccess = &allow_any
 	_, err := updateDatabaseServer(client, opts)
 	return err
 }
@@ -314,15 +383,14 @@ func updateDatabaseServerAttributes(
 	if *database_server_opts == blank_database_server_opts {
 		// Shouldn't ever get here
 		return fmt.Errorf("[ERROR] No database update changes detected for %s", d.Id())
-	} else {
-		database_server_opts.Id = d.Id()
-		database_server, err := updateDatabaseServer(client, database_server_opts)
-		if err != nil {
-			return err
-		}
-		setDatabaseServerAttributes(d, database_server)
 	}
-	d.SetPartial("allow_access")
+	database_server_opts.Id = d.Id()
+	database_server, err := updateDatabaseServer(client, database_server_opts)
+	if err != nil {
+		return err
+	}
+	setDatabaseServerAttributes(d, database_server)
+	setAllowAccessAttribute(d, database_server)
 	d.Partial(false)
 	return nil
 }
@@ -338,6 +406,7 @@ func resourceBrightboxDatabaseServerRead(
 		return fmt.Errorf("Error retrieving Database Server details: %s", err)
 	}
 	setDatabaseServerAttributes(d, database_server)
+	setAllowAccessAttribute(d, database_server)
 	return nil
 }
 
@@ -347,8 +416,12 @@ func resourceBrightboxDatabaseServerDelete(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
+	err := removeCloudIP(client, d.Get("cloud_ip_id").(string))
+	if err != nil {
+		return err
+	}
 	log.Printf("[DEBUG] Database Server delete called for %s", d.Id())
-	err := client.DestroyDatabaseServer(d.Id())
+	err = client.DestroyDatabaseServer(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting Database Server: %s", err)
 	}

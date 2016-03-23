@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 
+	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -65,4 +66,11 @@ func assign_bool(d *schema.ResourceData, target **bool, index string) {
 		}
 		*target = &temp
 	}
+}
+
+func setPrimaryCloudIp(d *schema.ResourceData, cloud_ip *brightbox.CloudIP) {
+	d.Set("ipv4_address", cloud_ip.PublicIP)
+	d.SetPartial("ipv4_address")
+	d.Set("public_hostname", cloud_ip.Fqdn)
+	d.SetPartial("public_hostname")
 }

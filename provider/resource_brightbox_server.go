@@ -296,9 +296,7 @@ func setServerAttributes(
 	}
 
 	if len(server.CloudIPs) > 0 {
-		cloud_ip := server.CloudIPs[0]
-		d.Set("ipv4_address", cloud_ip.PublicIP)
-		d.Set("public_hostname", cloud_ip.Fqdn)
+		setPrimaryCloudIp(d, &server.CloudIPs[0])
 	}
 
 	srvGrpIds := []string{}
