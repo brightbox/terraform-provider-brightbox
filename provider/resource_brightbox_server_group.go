@@ -161,15 +161,17 @@ func clearServerList(client *brightbox.Client, initial_server_group *brightbox.S
 	// Wait for group to empty
 	return resource.Retry(
 		1*time.Minute,
-		func() error {
+		func() *resource.RetryError {
 			server_group, err := client.ServerGroup(serverID)
 			if err != nil {
-				return resource.RetryError{
-					Err: fmt.Errorf("Error retrieving Server Group details: %s", err),
-				}
+				return resource.NonRetryableError(
+					fmt.Errorf("Error retrieving Server Group details: %s", err),
+				)
 			}
 			if len(server_group.Servers) > 0 {
-				return fmt.Errorf("Error: servers %#v still in server group %s", serverIdList(server_group.Servers), server_group.Id)
+				return resource.RetryableError(
+					fmt.Errorf("Error: servers %#v still in server group %s", serverIdList(server_group.Servers), server_group.Id),
+				)
 			}
 			return nil
 		},
