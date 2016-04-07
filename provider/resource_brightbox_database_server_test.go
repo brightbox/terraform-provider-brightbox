@@ -194,10 +194,10 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightb
 			return fmt.Errorf("Bad database version: %s", database_server.DatabaseVersion)
 		}
 		if database_server.MaintenanceWeekday != 6 {
-			return fmt.Errorf("Bad MaintenanceWeekday: %s", database_server.MaintenanceWeekday)
+			return fmt.Errorf("Bad MaintenanceWeekday: %d", database_server.MaintenanceWeekday)
 		}
 		if database_server.MaintenanceHour != 6 {
-			return fmt.Errorf("Bad MaintenanceHour: %s", database_server.MaintenanceHour)
+			return fmt.Errorf("Bad MaintenanceHour: %d", database_server.MaintenanceHour)
 		}
 		if database_server.Zone.Handle == "" {
 			return fmt.Errorf("Bad Zone: %s", database_server.Zone.Handle)

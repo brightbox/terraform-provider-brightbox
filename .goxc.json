@@ -1,0 +1,18 @@
+{
+	"Tasks": [
+		"default",
+		"publish-github"
+	],
+	"BuildConstraints": "linux,!arm windows,386 darwin",
+	"PackageVersion": "0.0.1",
+	"TaskSettings": {
+		"publish-github": {
+			"owner": "brightbox",
+			"repository": "terraform-provider-brightbox"
+		}
+	},
+	"ConfigVersion": "0.9",
+	"BuildSettings": {
+		"LdFlags": "-s"
+	}
+}
