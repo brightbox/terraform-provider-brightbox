@@ -217,7 +217,7 @@ resource "brightbox_cloudip" "foobar" {
 }
 
 resource "brightbox_server" "boofar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "map_cip_test"
 }
 `
@@ -230,12 +230,12 @@ resource "brightbox_cloudip" "foobar" {
 }
 
 resource "brightbox_server" "boofar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "map_cip_test"
 }
 
 resource "brightbox_server" "fred" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "remap_cip_test"
 }
 `

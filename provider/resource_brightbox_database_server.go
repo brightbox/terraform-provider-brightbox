@@ -76,6 +76,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Default:  nil,
 				ForceNew: true,
 			},
+			/*
 			"database_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -88,6 +89,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			*/
 			"admin_username": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -184,11 +186,15 @@ func resourceBrightboxDatabaseServerCreate(
 		return err
 	}
 	err = createDatabaseServerPublicAccess(d, client)
-	// Create/Update Database
+	if err != nil {
+		return err
+	}
+	/* Create/Update Database
 	err = changeDatabase(d)
 	if err != nil {
 		return err
 	}
+	*/
 	database_server_opts := getBlankDatabaseServerOpts()
 	assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
 	return updateDatabaseServerAttributes(d, client, database_server_opts)
@@ -365,9 +371,12 @@ func updateDatabaseServer(
 func databaseDetailsChanged(
 	d *schema.ResourceData,
 ) bool {
+	return false
+/*
 	return d.HasChange("database_name") ||
 		d.HasChange("database_username") ||
 		d.HasChange("database_password")
+		*/
 }
 
 func getBlankDatabaseServerOpts() *brightbox.DatabaseServerOptions {

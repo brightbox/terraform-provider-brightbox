@@ -224,9 +224,6 @@ resource "brightbox_database_server" "default" {
 	database_version = "5.6"
 	maintenance_weekday = 6
 	maintenance_hour = 6
-	database_name = "testdb"
-	database_username = "example"
-	database_password = "password"
 }
 `
 
@@ -239,9 +236,6 @@ resource "brightbox_database_server" "default" {
 	database_version = "5.6"
 	maintenance_weekday = 6
 	maintenance_hour = 6
-	database_name = "testdb"
-	database_username = "example"
-	database_password = "password"
 }
 `
 
@@ -254,9 +248,6 @@ resource "brightbox_database_server" "default" {
 	database_version = "5.6"
 	maintenance_weekday = 5
 	maintenance_hour = 4
-	database_name = "testdb"
-	database_username = "example"
-	database_password = "password"
 }
 `
 
@@ -272,14 +263,11 @@ resource "brightbox_database_server" "default" {
 	allow_access = [
 		"${brightbox_server_group.barfoo.id}", "${brightbox_server.foobar.id}", "158.152.1.65/32"
 	]
-	database_name = "testdb"
-	database_username = "example"
-	database_password = "password"
 }
 
 resource "brightbox_server" "foobar" {
 	name = "database test"
-	image = "img-zhoh0"
+	image = "img-8pcus"
 }
 
 resource "brightbox_server_group" "barfoo" {

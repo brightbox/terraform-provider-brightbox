@@ -210,7 +210,7 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
@@ -242,7 +242,7 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
@@ -273,7 +273,7 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
@@ -362,7 +362,7 @@ EOF
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
@@ -397,7 +397,7 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }

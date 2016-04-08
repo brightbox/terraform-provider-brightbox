@@ -23,7 +23,7 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "image", "img-zhoh0"),
+						"brightbox_server.foobar", "image", "img-8pcus"),
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "name", "create_server_test"),
 					resource.TestCheckResourceAttr(
@@ -217,7 +217,7 @@ func testAccCheckBrightboxServerExists(n string, server *brightbox.Server) resou
 func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if server.Image.Id != "img-zhoh0" {
+		if server.Image.Id != "img-8pcus" {
 			return fmt.Errorf("Bad image id: %s", server.Image.Id)
 		}
 
@@ -239,7 +239,7 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 const testAccCheckBrightboxServerConfig_basic = `
 
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = "create_server_test"
 	type = "1gb.ssd"
 	zone = "gb1-a"
@@ -249,7 +249,7 @@ resource "brightbox_server" "foobar" {
 
 const testAccCheckBrightboxServerConfig_blank = `
 resource "brightbox_server" "foobar" {
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	name = ""
 	type = "1gb.ssd"
 	zone = "gb1-a"
@@ -261,7 +261,7 @@ const testAccCheckBrightboxServerConfig_server_group = `
 
 resource "brightbox_server" "foobar" {
 	name = "server_group_test"
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	type = "512mb.ssd"
 }
@@ -275,7 +275,7 @@ const testAccCheckBrightboxServerConfig_multi_server_group = `
 
 resource "brightbox_server" "foobar" {
 	name = "server_group_test"
-	image = "img-zhoh0"
+	image = "img-8pcus"
 	server_groups = ["${brightbox_server_group.barfoo.id}",
 	"${brightbox_server_group.barfoo2.id}"]
 	type = "512mb.ssd"
