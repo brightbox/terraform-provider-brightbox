@@ -3,8 +3,8 @@ package brightbox
 import (
 	"fmt"
 	"log"
-	"sort"
 	"regexp"
+	"sort"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -194,7 +194,7 @@ func findImageByFilter(
 
 	descRe, err := regexp.Compile(d.Get("description").(string))
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	var results []brightbox.Image
@@ -228,7 +228,7 @@ func imageMatch(
 	descRe *regexp.Regexp,
 ) bool {
 	_, ok := d.GetOk("name")
-	if ok &&  !nameRe.MatchString(image.Name) {
+	if ok && !nameRe.MatchString(image.Name) {
 		return false
 	}
 	_, ok = d.GetOk("description")

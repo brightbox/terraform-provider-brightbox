@@ -12,13 +12,13 @@ import (
 var accountRe = regexp.MustCompile("acc-.....")
 var disktypeRe = regexp.MustCompile("uefi1.img")
 
-func TestAccBrightboxImageDataSource_basic(t *testing.T) {
+func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccBrightboxImageDataSource_basic,
+				Config: TestAccBrightboxImageDataSourceConfig_blank_disk,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
@@ -63,7 +63,7 @@ func TestAccBrightboxImageDataSource_ubuntu_xenial_official(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccBrightboxImageDataSource_ubuntu_xenial_official,
+				Config: TestAccBrightboxImageDataSourceConfig_ubuntu_xenial_official,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
@@ -117,16 +117,17 @@ func testAccCheckImagesDataSourceID(n string) resource.TestCheckFunc {
 	}
 }
 
-const testAccBrightboxImageDataSource_basic = `
+const TestAccBrightboxImageDataSourceConfig_blank_disk = `
 data "brightbox_image" "foobar" {
 	name = "^Blank Disk Image$"
 	arch = "x86_64"
 	official = true
 }
 `
+
 // Select latest ubuntu with uefi1 image
 // Checks name matches partial name
-const testAccBrightboxImageDataSource_ubuntu_xenial_official = `
+const TestAccBrightboxImageDataSourceConfig_ubuntu_xenial_official = `
 data "brightbox_image" "foobar" {
 	name = "^ubuntu-xenial.*server"
 	arch = "x86_64"
