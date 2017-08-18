@@ -1,11 +1,43 @@
-terraform-provider-brightbox
-============================
+Terraform Provider for [Brightbox Cloud](https://www.brightbox.com)
+=======================================
 
-Terraform provider for [Brightbox Cloud](https://www.brightbox.com)
 
-## Description
+Requirements
+------------
 
-This project is a terraform provider for Brightbox Cloud. This current version supports managing:
+-	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
+-	[Go](https://golang.org/doc/install) 1.8 (to build the provider plugin)
+
+Usage
+---------------------
+
+```
+# For example, restrict brightbox version to 0.1.x
+provider "brightbox" {
+  version = "~> 0.1"
+}
+```
+
+Building The Provider
+---------------------
+
+Clone repository to: `$GOPATH/src/github.com/brightbox/terraform-provider-brightbox`
+
+```sh
+$ mkdir -p $GOPATH/src/github.com/brightbox; cd $GOPATH/src/github.com/brightbox
+$ git clone git@github.com:brightbox/terraform-provider-brightbox
+```
+
+Enter the provider directory and build the provider
+
+```sh
+$ cd $GOPATH/src/github.com/brightbox/terraform-provider-brightbox
+$ make build
+```
+
+Using the provider
+----------------------
+This version supports managing:
 
 * [Cloud Servers](https://www.brightbox.com/cloud/servers/)
 * [Load Balancers](https://www.brightbox.com/cloud/load-balancing/)
@@ -14,7 +46,8 @@ This project is a terraform provider for Brightbox Cloud. This current version s
 * [Cloud IPs](https://www.brightbox.com/blog/2014/02/27/design-decisions-cloud-ip-policy/)
 * [Orbit Cloud Storage](https://www.brightbox.com/cloud/storage/) containers
 
-## Documentation
+Documentation
+-------------------------
 
 The announcement blog post gives a good overview:
 
@@ -24,8 +57,30 @@ And the getting started guide goes into more detail on how to use it
 
 https://www.brightbox.com/docs/guides/terraform/getting-started/
 
-## Licence
+Developing the Provider
+---------------------------
 
-[Mozilla Public License, version 2.0](https://github.com/brightbox/terraform-provider-brightbox/blob/master/LICENSE)
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.8+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
+To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
+```sh
+$ make bin
+...
+$ $GOPATH/bin/terraform-provider-brightbox
+...
+```
+
+In order to test the provider, you can simply run `make test`.
+
+```sh
+$ make test
+```
+
+In order to run the full suite of Acceptance tests, run `make testacc`.
+
+*Note:* Acceptance tests create real resources, and often cost money to run.
+
+```sh
+$ make testacc
+```

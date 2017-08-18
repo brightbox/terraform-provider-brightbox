@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/brightbox/terraform-provider-brightbox/provider"
+	"github.com/brightbox/terraform-provider-brightbox/brightbox"
 	"github.com/hashicorp/terraform/plugin"
 )
 
