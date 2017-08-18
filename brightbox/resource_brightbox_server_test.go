@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/brightbox/gobrightbox"
@@ -9,6 +10,9 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
+
+var imageRe = regexp.MustCompile("^img-.....$")
+var zoneRe = regexp.MustCompile("^gb1s?-[ab]$")
 
 func TestAccBrightboxServer_Basic(t *testing.T) {
 	var server brightbox.Server
@@ -24,14 +28,14 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
 					testAccCheckBrightboxServerAttributes(&server),
-					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "image", "img-8pcus"),
+					resource.TestMatchResourceAttr(
+						"brightbox_server.foobar", "image", imageRe),
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "type", "1gb.ssd"),
-					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "zone", "gb1-a"),
+					resource.TestMatchResourceAttr(
+						"brightbox_server.foobar", "zone", zoneRe),
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
 				),
@@ -223,7 +227,7 @@ func testAccCheckBrightboxServerExists(n string, server *brightbox.Server) resou
 func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if server.Image.Id != "img-8pcus" {
+		if !imageRe.MatchString(server.Image.Id) {
 			return fmt.Errorf("Bad image id: %s", server.Image.Id)
 		}
 
@@ -231,7 +235,7 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 			return fmt.Errorf("Bad server type: %s", server.ServerType.Handle)
 		}
 
-		if server.Zone.Handle != "gb1-a" {
+		if !zoneRe.MatchString(server.Zone.Handle) {
 			return fmt.Errorf("Bad zone: %s", server.Zone.Handle)
 		}
 
@@ -254,7 +258,7 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
-						"digitalocean_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
+						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
 
@@ -264,7 +268,7 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
-						"digitalocean_server.foobar", "name", fmt.Sprintf("baz-%d", rInt)),
+						"brightbox_server.foobar", "name", fmt.Sprintf("baz-%d", rInt)),
 				),
 			},
 		},
@@ -274,50 +278,58 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 func testAccCheckBrightboxServerConfig_basic(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "foo-%d"
 	type = "1gb.ssd"
-	zone = "gb1-a"
 	user_data = "foo:-with-character's"
-}`, rInt)
+}
+
+%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
 func testAccCheckBrightboxServerConfig_rename(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "baz-%d"
-}`, rInt)
-}
-
-const testAccCheckBrightboxServerConfig_blank = `
-resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
-	name = ""
 	type = "1gb.ssd"
-	zone = "gb1-a"
+	image = "${data.brightbox_image.foobar.id}"
 	user_data = "foo:-with-character's"
 }
-`
+
+%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
+
+var testAccCheckBrightboxServerConfig_blank = fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = "${data.brightbox_image.foobar.id}"
+	name = ""
+	type = "1gb.ssd"
+	user_data = "foo:-with-character's"
+}
+
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
 
 func testAccCheckBrightboxServerConfig_server_group(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "foo-%d"
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	type = "512mb.ssd"
 }
 
 resource "brightbox_server_group" "barfoo" {
 	name = "bar-%d"
-}`, rInt, rInt)
+}
+
+%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
 func testAccCheckBrightboxServerConfig_multi_server_group(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "foo-%d"
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	server_groups = ["${brightbox_server_group.barfoo.id}",
 	"${brightbox_server_group.barfoo2.id}"]
 	type = "512mb.ssd"
@@ -329,5 +341,7 @@ resource "brightbox_server_group" "barfoo" {
 
 resource "brightbox_server_group" "barfoo2" {
 	name = "baz-%d"
-}`, rInt, rInt, rInt)
+}
+
+%s`, rInt, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }

@@ -21,6 +21,9 @@ func resourceBrightboxServer() *schema.Resource {
 		Read:   resourceBrightboxServerRead,
 		Update: resourceBrightboxServerUpdate,
 		Delete: resourceBrightboxServerDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"image": &schema.Schema{
@@ -278,6 +281,11 @@ func setServerAttributes(
 	d *schema.ResourceData,
 	server *brightbox.Server,
 ) {
+	// If server is deleted, clear the Id to tell Terraform to remove the record
+	if server.Status == "deleted" {
+		d.SetId("")
+		return
+	}
 	d.Set("image", server.Image.Id)
 	d.Set("name", server.Name)
 	d.Set("type", server.ServerType.Handle)

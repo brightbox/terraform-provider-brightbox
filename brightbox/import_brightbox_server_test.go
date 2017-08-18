@@ -25,7 +25,8 @@ func TestAccBrightboxServer_importBasic(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"user_data", "resize_disk"}, //we ignore the ssh_keys, resize_disk and user_data as we do not set to state
+					"user_data",
+				}, //we ignore user_data as we do not set to state
 			},
 		},
 	})
