@@ -59,7 +59,7 @@ resource "brightbox_server" "web" {
   depends_on = ["brightbox_firewall_policy.default"]
 
   name = "Terraform web server example"
-  image = "${var.web_image}"
+  image = "${data.brightbox_image.ubuntu_lts.id}"
   type = "${var.web_type}"
 
   # Our Security group to allow HTTP and SSH access
@@ -69,4 +69,11 @@ resource "brightbox_server" "web" {
   # In this case, we just install nginx and start it. By default,
   # this should be on port 80
   user_data = "${file("userdata.sh")}"
+}
+
+data "brightbox_image" "ubuntu_lts" {
+	name = "^ubuntu-xenial.*server$"
+	arch = "x86_64"
+	official = true
+	most_recent = true
 }
