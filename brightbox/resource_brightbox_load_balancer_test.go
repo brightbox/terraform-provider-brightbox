@@ -186,7 +186,7 @@ func testAccCheckBrightboxEmptyLoadBalancerAttributes(load_balancer *brightbox.L
 	}
 }
 
-const testAccCheckBrightboxLoadBalancerConfig_basic = `
+var testAccCheckBrightboxLoadBalancerConfig_basic = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "default"
@@ -210,14 +210,14 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
 
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
 
-const testAccCheckBrightboxLoadBalancerConfig_new_timeout = `
+var testAccCheckBrightboxLoadBalancerConfig_new_timeout = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "default"
@@ -242,14 +242,14 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
 
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
 
-const testAccCheckBrightboxLoadBalancerConfig_new_healthcheck = `
+var testAccCheckBrightboxLoadBalancerConfig_new_healthcheck = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "default"
@@ -273,14 +273,14 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
 
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
 
-const testAccCheckBrightboxLoadBalancerConfig_add_listener = `
+var testAccCheckBrightboxLoadBalancerConfig_add_listener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "default"
@@ -362,14 +362,14 @@ EOF
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
 
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
 
-const testAccCheckBrightboxLoadBalancerConfig_remove_listener = `
+var testAccCheckBrightboxLoadBalancerConfig_remove_listener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "default"
@@ -397,9 +397,9 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
 }
 
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)

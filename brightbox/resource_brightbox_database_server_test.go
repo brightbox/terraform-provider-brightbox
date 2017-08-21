@@ -5,12 +5,16 @@ import (
 	"testing"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	var database_server brightbox.DatabaseServer
+	rInt := acctest.RandInt()
+	name := fmt.Sprintf("bar-%d", rInt)
+	updatedName := fmt.Sprintf("baz-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -18,14 +22,14 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxDatabaseServerAndOthersDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxDatabaseServerConfig_basic,
+				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
-					testAccCheckBrightboxEmptyDatabaseServerAttributes(&database_server),
+					testAccCheckBrightboxEmptyDatabaseServerAttributes(&database_server, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", "default"),
+						"brightbox_database_server.default", "name", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", "default"),
+						"brightbox_database_server.default", "description", name),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_weekday", "6"),
 					resource.TestCheckResourceAttr(
@@ -34,8 +38,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "0"),
+					resource.TestCheckNoResourceAttr(
+						"brightbox_database_server.default", "allow_access"),
 				),
 			},
 			resource.TestStep{
@@ -54,18 +58,18 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "0"),
+					resource.TestCheckNoResourceAttr(
+						"brightbox_database_server.default", "allow_access"),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckBrightboxDatabaseServerConfig_update_maintenance,
+				Config: testAccCheckBrightboxDatabaseServerConfig_update_maintenance(updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", "updated"),
+						"brightbox_database_server.default", "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", "updated"),
+						"brightbox_database_server.default", "description", updatedName),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
@@ -74,18 +78,18 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "0"),
+					resource.TestCheckNoResourceAttr(
+						"brightbox_database_server.default", "allow_access"),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckBrightboxDatabaseServerConfig_update_access,
+				Config: testAccCheckBrightboxDatabaseServerConfig_update_access(updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", "updated"),
+						"brightbox_database_server.default", "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", "updated"),
+						"brightbox_database_server.default", "description", updatedName),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
@@ -172,13 +176,13 @@ func testAccCheckBrightboxDatabaseServerExists(n string, database_server *bright
 	}
 }
 
-func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightbox.DatabaseServer) resource.TestCheckFunc {
+func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightbox.DatabaseServer, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if database_server.Name != "default" {
+		if database_server.Name != name {
 			return fmt.Errorf("Bad name: %s", database_server.Name)
 		}
-		if database_server.Description != "default" {
+		if database_server.Description != name {
 			return fmt.Errorf("Bad name: %s", database_server.Description)
 		}
 		if database_server.Locked != false {
@@ -208,54 +212,49 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightb
 		if database_server.AdminPassword != "" {
 			return fmt.Errorf("Exposed API AdminPassword: %s", database_server.AdminPassword)
 		}
-		if len(database_server.AllowAccess) > 0 {
+		if len(database_server.AllowAccess) != 0 {
 			return fmt.Errorf("Bad AllowAccess list: %#v", database_server.AllowAccess)
 		}
 		return nil
 	}
 }
 
-const testAccCheckBrightboxDatabaseServerConfig_basic = `
+func testAccCheckBrightboxDatabaseServerConfig_basic(name string) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_database_server" "default" {
-	name = "default"
-	description = "default"
+	name = "%s"
+	description = "%s"
 	database_engine = "mysql"
 	database_version = "5.6"
 	maintenance_weekday = 6
 	maintenance_hour = 6
 }
-`
-
-const testAccCheckBrightboxDatabaseServerConfig_clear_names = `
-
-resource "brightbox_database_server" "default" {
-	name = ""
-	description = ""
-	database_engine = "mysql"
-	database_version = "5.6"
-	maintenance_weekday = 6
-	maintenance_hour = 6
+`, name, name)
 }
-`
 
-const testAccCheckBrightboxDatabaseServerConfig_update_maintenance = `
+var testAccCheckBrightboxDatabaseServerConfig_clear_names = testAccCheckBrightboxDatabaseServerConfig_basic("")
+
+func testAccCheckBrightboxDatabaseServerConfig_update_maintenance(name string) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_database_server" "default" {
-	name = "updated"
-	description = "updated"
+	name = "%s"
+	description = "%s"
 	database_engine = "mysql"
 	database_version = "5.6"
 	maintenance_weekday = 5
 	maintenance_hour = 4
 }
-`
+`, name, name)
+}
 
-const testAccCheckBrightboxDatabaseServerConfig_update_access = `
+func testAccCheckBrightboxDatabaseServerConfig_update_access(name string) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_database_server" "default" {
-	name = "updated"
-	description = "updated"
+	name = "%s"
+	description = "%s"
 	database_engine = "mysql"
 	database_version = "5.6"
 	maintenance_weekday = 5
@@ -267,11 +266,12 @@ resource "brightbox_database_server" "default" {
 
 resource "brightbox_server" "foobar" {
 	name = "database test"
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 }
 
 resource "brightbox_server_group" "barfoo" {
 	name = "database test"
 }
 
-`
+%s`, name, name, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}

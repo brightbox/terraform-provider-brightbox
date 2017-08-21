@@ -11,7 +11,6 @@ import (
 )
 
 var blank_database_server_opts = brightbox.DatabaseServerOptions{}
-var allow_any = []string{"any"}
 
 func resourceBrightboxDatabaseServer() *schema.Resource {
 	return &schema.Resource{
@@ -76,20 +75,6 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Default:  nil,
 				ForceNew: true,
 			},
-			/*
-				"database_name": &schema.Schema{
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"database_username": &schema.Schema{
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"database_password": &schema.Schema{
-					Type:     schema.TypeString,
-					Required: true,
-				},
-			*/
 			"admin_username": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -189,12 +174,6 @@ func resourceBrightboxDatabaseServerCreate(
 	if err != nil {
 		return err
 	}
-	/* Create/Update Database
-	err = changeDatabase(d)
-	if err != nil {
-		return err
-	}
-	*/
 	database_server_opts := getBlankDatabaseServerOpts()
 	assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
 	return updateDatabaseServerAttributes(d, client, database_server_opts)
@@ -231,7 +210,6 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 	assign_string(d, &snapshot, "snapshot")
 	zone := &database_server_opts.Zone
 	assign_string(d, &zone, "zone")
-	database_server_opts.AllowAccess = &allow_any
 	log.Printf("[DEBUG] Database Server create configuration %#v", database_server_opts)
 	output_database_server_options(database_server_opts)
 	database_server, err := client.CreateDatabaseServer(database_server_opts)
@@ -277,82 +255,8 @@ func resourceBrightboxDatabaseServerUpdate(
 	if err != nil {
 		return err
 	}
-	if databaseDetailsChanged(d) {
-		log.Printf("[INFO] Changing database details")
-		err := removeDatabaseAccessRestrictions(client, d.Id())
-		if err != nil {
-			return err
-		}
-		err = changeDatabase(d)
-		if err != nil {
-			return err
-		}
-		assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
-	} else {
-		log.Printf("[DEBUG] No change to database details detected")
-		assign_string_set(d, &database_server_opts.AllowAccess, "allow_access")
-	}
+	assign_string_set(d, &database_server_opts.AllowAccess, "allow_access")
 	return updateDatabaseServerAttributes(d, client, database_server_opts)
-}
-
-func changeDatabase(
-	d *schema.ResourceData,
-) error {
-	var db = &MysqlDatabase{}
-	if d.HasChange("database_name") {
-		oraw, nraw := d.GetChange("database_name")
-		old_database_name := oraw.(string)
-		new_database_name := nraw.(string)
-		if old_database_name != "" {
-			log.Printf("[INFO] database changed - removing %s", old_database_name)
-			db.DropDatabase(old_database_name)
-		}
-		log.Printf("[INFO] Creating database %s", new_database_name)
-		db.CreateDatabase(new_database_name)
-		if !d.HasChange("database_username") {
-			database_username := d.Get("database_username").(string)
-			log.Printf("[INFO] adding grants for user %s", database_username)
-			db.GrantPrivileges(new_database_name, database_username)
-		}
-	}
-	if d.HasChange("database_username") {
-		oraw, nraw := d.GetChange("database_username")
-		old_database_username := oraw.(string)
-		new_database_username := nraw.(string)
-		database_password := d.Get("database_password").(string)
-		database_name := d.Get("database_name").(string)
-		if old_database_username != "" {
-			log.Printf("[INFO] removing user %s", old_database_username)
-			db.DropUser(old_database_username)
-		}
-		log.Printf("[INFO] adding user %s", new_database_username)
-		db.CreateUser(new_database_username, database_password)
-		log.Printf("[INFO] adding grants for user %s", new_database_username)
-		db.GrantPrivileges(database_name, new_database_username)
-	} else if d.HasChange("database_password") {
-		database_username := d.Get("database_username").(string)
-		database_password := d.Get("database_password").(string)
-		log.Printf("[INFO] updating password for user %s", database_username)
-		db.SetPassword(database_username, database_password)
-	}
-	log.Printf("[INFO] Statements to execute are %v", db.Statements)
-	return db.OpenExec(
-		d.Get("admin_username").(string),
-		d.Get("admin_password").(string),
-		d.Get("public_hostname").(string),
-	)
-}
-
-func removeDatabaseAccessRestrictions(
-	client *brightbox.Client,
-	db_server_id string,
-) error {
-	log.Printf("[DEBUG] Removing access restrictions from %s", db_server_id)
-	opts := getBlankDatabaseServerOpts()
-	opts.Id = db_server_id
-	opts.AllowAccess = &allow_any
-	_, err := updateDatabaseServer(client, opts)
-	return err
 }
 
 func updateDatabaseServer(
@@ -366,17 +270,6 @@ func updateDatabaseServer(
 		return nil, fmt.Errorf("Error updating database_server: %s", err)
 	}
 	return database_server, nil
-}
-
-func databaseDetailsChanged(
-	d *schema.ResourceData,
-) bool {
-	return false
-	/*
-		return d.HasChange("database_name") ||
-			d.HasChange("database_username") ||
-			d.HasChange("database_password")
-	*/
 }
 
 func getBlankDatabaseServerOpts() *brightbox.DatabaseServerOptions {

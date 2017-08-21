@@ -161,6 +161,11 @@ func dataSourceBrightboxImagesImageAttributes(
 ) error {
 	log.Printf("[DEBUG] openstack_images_image details: %#v", image)
 
+	// Handle refresh of an image that has been deleted.
+	if image.Status == "deleted" {
+		d.SetId("")
+		return nil
+	}
 	d.SetId(image.Id)
 	d.Set("name", image.Name)
 	d.Set("username", image.Username)

@@ -24,8 +24,8 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 					testAccCheckBrightboxCloudipAttributes(&cloudip),
 					resource.TestCheckResourceAttr(
 						"brightbox_cloudip.foobar", "name", "unmapped"),
-					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "target", ""),
+					resource.TestCheckNoResourceAttr(
+						"brightbox_cloudip.foobar", "target"),
 				),
 			},
 		},
@@ -47,8 +47,8 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 					testAccCheckBrightboxCloudipAttributes(&cloudip),
 					resource.TestCheckResourceAttr(
 						"brightbox_cloudip.foobar", "name", "unmapped"),
-					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "target", ""),
+					resource.TestCheckNoResourceAttr(
+						"brightbox_cloudip.foobar", "target"),
 				),
 			},
 			resource.TestStep{
@@ -57,8 +57,8 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
 					resource.TestCheckResourceAttr(
 						"brightbox_cloudip.foobar", "name", ""),
-					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "target", ""),
+					resource.TestCheckNoResourceAttr(
+						"brightbox_cloudip.foobar", "target"),
 				),
 			},
 		},
@@ -209,7 +209,7 @@ resource "brightbox_cloudip" "foobar" {
 }
 `
 
-const testAccCheckBrightboxCloudipConfig_mapped = `
+var testAccCheckBrightboxCloudipConfig_mapped = fmt.Sprintf(`
 
 resource "brightbox_cloudip" "foobar" {
 	name = "mapped"
@@ -217,12 +217,12 @@ resource "brightbox_cloudip" "foobar" {
 }
 
 resource "brightbox_server" "boofar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "map_cip_test"
 }
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
 
-const testAccCheckBrightboxCloudipConfig_remapped = `
+var testAccCheckBrightboxCloudipConfig_remapped = fmt.Sprintf(`
 
 resource "brightbox_cloudip" "foobar" {
 	name = "remapped"
@@ -230,12 +230,12 @@ resource "brightbox_cloudip" "foobar" {
 }
 
 resource "brightbox_server" "boofar" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "map_cip_test"
 }
 
 resource "brightbox_server" "fred" {
-	image = "img-8pcus"
+	image = "${data.brightbox_image.foobar.id}"
 	name = "remap_cip_test"
 }
-`
+%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
