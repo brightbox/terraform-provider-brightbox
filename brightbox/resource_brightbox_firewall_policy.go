@@ -15,9 +15,6 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 		Read:   resourceBrightboxFirewallPolicyRead,
 		Update: resourceBrightboxFirewallPolicyUpdate,
 		Delete: resourceBrightboxFirewallPolicyDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"server_group": &schema.Schema{
