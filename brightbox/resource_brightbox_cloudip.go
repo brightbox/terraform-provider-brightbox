@@ -3,6 +3,7 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/brightbox/gobrightbox"
@@ -16,6 +17,9 @@ func resourceBrightboxCloudip() *schema.Resource {
 		Read:   resourceBrightboxCloudipRead,
 		Update: resourceBrightboxCloudipUpdate,
 		Delete: resourceBrightboxCloudipDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -202,6 +206,11 @@ func resourceBrightboxCloudipRead(
 
 	cloudip, err := client.CloudIP(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] CloudIP not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("Error retrieving Cloud IP details: %s", err)
 	}
 
