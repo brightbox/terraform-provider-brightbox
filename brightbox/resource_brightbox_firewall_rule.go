@@ -3,6 +3,7 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -110,6 +111,11 @@ func resourceBrightboxFirewallRuleRead(
 
 	firewall_rule, err := client.FirewallRule(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] Firewall Rule not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("Error retrieving Firewall Rule details: %s", err)
 	}
 

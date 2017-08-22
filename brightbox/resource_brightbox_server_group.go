@@ -3,6 +3,7 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/brightbox/gobrightbox"
@@ -16,6 +17,9 @@ func resourceBrightboxServerGroup() *schema.Resource {
 		Read:   resourceBrightboxServerGroupRead,
 		Update: resourceBrightboxServerGroupUpdate,
 		Delete: resourceBrightboxServerGroupDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -75,6 +79,11 @@ func resourceBrightboxServerGroupRead(
 
 	server_group, err := client.ServerGroup(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] Server Group not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("Error retrieving Server Group details: %s", err)
 	}
 

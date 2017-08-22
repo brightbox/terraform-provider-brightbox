@@ -275,6 +275,11 @@ func resourceBrightboxLoadBalancerRead(
 	log.Printf("[DEBUG] Load Balancer read called for %s", d.Id())
 	load_balancer, err := client.LoadBalancer(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] Load Balancer not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("Error retrieving Load Balancer details: %s", err)
 	}
 

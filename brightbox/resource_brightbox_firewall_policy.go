@@ -3,6 +3,7 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -97,6 +98,11 @@ func resourceBrightboxFirewallPolicyDelete(
 	log.Printf("[INFO] Deleting Firewall Policy %s", d.Id())
 	err := client.DestroyFirewallPolicy(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] Firewall Policy not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("Error deleting Firewall Policy (%s): %s", d.Id(), err)
 	}
 	return nil

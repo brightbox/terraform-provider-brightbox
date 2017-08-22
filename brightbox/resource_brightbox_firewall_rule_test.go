@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -12,6 +13,9 @@ import (
 func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 	var firewall_rule brightbox.FirewallRule
 	var firewall_policy brightbox.FirewallPolicy
+	rInt := acctest.RandInt()
+	name := fmt.Sprintf("foo-%d", rInt)
+	updated_name := fmt.Sprintf("bar-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -19,23 +23,23 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxFirewallRuleConfig_basic,
+				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.terraform", &firewall_policy),
-					testAccCheckBrightboxEmptyFirewallRuleAttributes(&firewall_rule),
+					testAccCheckBrightboxEmptyFirewallRuleAttributes(&firewall_rule, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", "outbound_rule"),
+						"brightbox_firewall_rule.rule1", "description", name),
 					resource.TestCheckResourceAttrPtr(
 						"brightbox_firewall_rule.rule1", "firewall_policy", &firewall_policy.Id),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckBrightboxFirewallRuleConfig_updated,
+				Config: testAccCheckBrightboxFirewallRuleConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", "updated"),
+						"brightbox_firewall_rule.rule1", "description", updated_name),
 				),
 			},
 		},
@@ -44,6 +48,8 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 
 func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 	var firewall_rule brightbox.FirewallRule
+	rInt := acctest.RandInt()
+	name := fmt.Sprintf("foo-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -51,11 +57,11 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxFirewallRuleConfig_basic,
+				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", "outbound_rule"),
+						"brightbox_firewall_rule.rule1", "description", name),
 				),
 			},
 			resource.TestStep{
@@ -134,41 +140,45 @@ func testAccCheckBrightboxFirewallRuleExists(n string, firewall_policy *brightbo
 	}
 }
 
-func testAccCheckBrightboxEmptyFirewallRuleAttributes(firewall_policy *brightbox.FirewallRule) resource.TestCheckFunc {
+func testAccCheckBrightboxEmptyFirewallRuleAttributes(firewall_policy *brightbox.FirewallRule, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if firewall_policy.Description != "outbound_rule" {
+		if firewall_policy.Description != name {
 			return fmt.Errorf("Bad description: %s", firewall_policy.Description)
 		}
 		return nil
 	}
 }
 
-const testAccCheckBrightboxFirewallRuleConfig_basic = `
+func testAccCheckBrightboxFirewallRuleConfig_basic(rInt int) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_firewall_policy" "terraform" {
 }
 
 resource "brightbox_firewall_rule" "rule1" {
 	firewall_policy = "${brightbox_firewall_policy.terraform.id}"
-	description = "outbound_rule"
+	description = "foo-%d"
 	destination = "any"
 }
 
-`
+`, rInt)
+}
 
-const testAccCheckBrightboxFirewallRuleConfig_updated = `
+func testAccCheckBrightboxFirewallRuleConfig_updated(rInt int) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_firewall_policy" "terraform" {
 }
 
 resource "brightbox_firewall_rule" "rule1" {
 	firewall_policy = "${brightbox_firewall_policy.terraform.id}"
-	description = "updated"
+	description = "bar-%d"
 	destination = "any"
 }
 
-`
+`, rInt)
+}
 
 const testAccCheckBrightboxFirewallRuleConfig_empty = `
 

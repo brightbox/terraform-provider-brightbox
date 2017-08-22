@@ -16,7 +16,8 @@ script:
 - make test
 - make vendor-status
 - make vet
-
+after_success:
+- test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash
 branches:
   only:
   - master

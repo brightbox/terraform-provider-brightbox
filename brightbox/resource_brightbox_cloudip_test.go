@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccBrightboxCloudip_Basic(t *testing.T) {
 	var cloudip brightbox.CloudIP
+	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -18,12 +20,12 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_basic,
+				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
-					testAccCheckBrightboxCloudipAttributes(&cloudip),
+					testAccCheckBrightboxCloudipAttributes(&cloudip, rInt),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "unmapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckNoResourceAttr(
 						"brightbox_cloudip.foobar", "target"),
 				),
@@ -34,6 +36,7 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 
 func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 	var cloudip brightbox.CloudIP
+	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -41,12 +44,12 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_basic,
+				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
-					testAccCheckBrightboxCloudipAttributes(&cloudip),
+					testAccCheckBrightboxCloudipAttributes(&cloudip, rInt),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "unmapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckNoResourceAttr(
 						"brightbox_cloudip.foobar", "target"),
 				),
@@ -67,6 +70,7 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 
 func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 	var cloudip brightbox.CloudIP
+	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -74,11 +78,11 @@ func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_mapped,
+				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "mapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("bar-%d", rInt)),
 				),
 			},
 		},
@@ -87,6 +91,7 @@ func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 
 func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 	var cloudip brightbox.CloudIP
+	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -94,35 +99,35 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_basic,
+				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "unmapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_mapped,
+				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "mapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("bar-%d", rInt)),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_remapped,
+				Config: testAccCheckBrightboxCloudipConfig_remapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "remapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("baz-%d", rInt)),
 				),
 			},
 			resource.TestStep{
-				Config: testAccCheckBrightboxCloudipConfig_basic,
+				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.foobar", &cloudip),
 					resource.TestCheckResourceAttr(
-						"brightbox_cloudip.foobar", "name", "unmapped"),
+						"brightbox_cloudip.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
 		},
@@ -185,22 +190,23 @@ func testAccCheckBrightboxCloudipExists(n string, cloudip *brightbox.CloudIP) re
 	}
 }
 
-func testAccCheckBrightboxCloudipAttributes(cloudip *brightbox.CloudIP) resource.TestCheckFunc {
+func testAccCheckBrightboxCloudipAttributes(cloudip *brightbox.CloudIP, rInt int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if cloudip.Name != "unmapped" {
+		if cloudip.Name != fmt.Sprintf("foo-%d", rInt) {
 			return fmt.Errorf("Bad name: %s", cloudip.Name)
 		}
 		return nil
 	}
 }
 
-const testAccCheckBrightboxCloudipConfig_basic = `
-
+func testAccCheckBrightboxCloudipConfig_basic(rInt int) string {
+	return fmt.Sprintf(`
 resource "brightbox_cloudip" "foobar" {
-	name = "unmapped"
+	name = "foo-%d"
 }
-`
+`, rInt)
+}
 
 const testAccCheckBrightboxCloudipConfig_empty_name = `
 
@@ -209,33 +215,37 @@ resource "brightbox_cloudip" "foobar" {
 }
 `
 
-var testAccCheckBrightboxCloudipConfig_mapped = fmt.Sprintf(`
+func testAccCheckBrightboxCloudipConfig_mapped(rInt int) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_cloudip" "foobar" {
-	name = "mapped"
+	name = "bar-%d"
 	target = "${brightbox_server.boofar.interface}"
 }
 
 resource "brightbox_server" "boofar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "map_cip_test"
+	name = "bar-%d"
 }
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
 
-var testAccCheckBrightboxCloudipConfig_remapped = fmt.Sprintf(`
+func testAccCheckBrightboxCloudipConfig_remapped(rInt int) string {
+	return fmt.Sprintf(`
 
 resource "brightbox_cloudip" "foobar" {
-	name = "remapped"
+	name = "baz-%d"
 	target = "${brightbox_server.fred.interface}"
 }
 
 resource "brightbox_server" "boofar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "map_cip_test"
+	name = "bar-%d"
 }
 
 resource "brightbox_server" "fred" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "remap_cip_test"
+	name = "baz-%d"
 }
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s`, rInt, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}

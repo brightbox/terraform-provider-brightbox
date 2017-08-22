@@ -1,3 +1,4 @@
+dist/
 test.tf
 *override.tf
 .goxc.local.json
