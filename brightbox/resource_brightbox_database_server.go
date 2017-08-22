@@ -3,6 +3,7 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/brightbox/gobrightbox"
@@ -305,6 +306,11 @@ func resourceBrightboxDatabaseServerRead(
 	log.Printf("[DEBUG] Database Server read called for %s", d.Id())
 	database_server, err := client.DatabaseServer(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("Error retrieving Database Server details: %s", err)
 	}
 	setDatabaseServerAttributes(d, database_server)
