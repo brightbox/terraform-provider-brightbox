@@ -1,0 +1,3 @@
+builds:
+  -
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
