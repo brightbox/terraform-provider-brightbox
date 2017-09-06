@@ -1,6 +1,5 @@
 # Specify the provider and access details
-provider "brightbox" {
-}
+provider "brightbox" {}
 
 resource "brightbox_cloudip" "default" {
   target = "${brightbox_server.web.interface}"
@@ -13,54 +12,53 @@ resource "brightbox_server_group" "default" {
 }
 
 resource "brightbox_firewall_policy" "default" {
-  name = "Used by terraform"
+  name         = "Used by terraform"
   server_group = "${brightbox_server_group.default.id}"
 }
 
 resource "brightbox_firewall_rule" "default_ssh" {
-    destination_port = 22
-    protocol = "tcp"
-    source = "any"
-    description = "SSH access from anywhere"
-    firewall_policy = "${brightbox_firewall_policy.default.id}"
+  destination_port = 22
+  protocol         = "tcp"
+  source           = "any"
+  description      = "SSH access from anywhere"
+  firewall_policy  = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_firewall_rule" "default_http" {
-    destination_port = 80
-    protocol = "tcp"
-    source = "any"
-    description = "HTTP access from anywhere"
-    firewall_policy = "${brightbox_firewall_policy.default.id}"
+  destination_port = 80
+  protocol         = "tcp"
+  source           = "any"
+  description      = "HTTP access from anywhere"
+  firewall_policy  = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_firewall_rule" "default_https" {
-    destination_port = 443
-    protocol = "tcp"
-    source = "any"
-    description = "HTTPs access from anywhere"
-    firewall_policy = "${brightbox_firewall_policy.default.id}"
+  destination_port = 443
+  protocol         = "tcp"
+  source           = "any"
+  description      = "HTTPs access from anywhere"
+  firewall_policy  = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_firewall_rule" "default_outbound" {
-    destination = "any"
-    description = "Outbound internet access"
-    firewall_policy = "${brightbox_firewall_policy.default.id}"
+  destination     = "any"
+  description     = "Outbound internet access"
+  firewall_policy = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_firewall_rule" "default_icmp" {
-	protocol = "icmp"
-	source = "any"
-	icmp_type_name = "any"
-        firewall_policy = "${brightbox_firewall_policy.default.id}"
+  protocol        = "icmp"
+  source          = "any"
+  icmp_type_name  = "any"
+  firewall_policy = "${brightbox_firewall_policy.default.id}"
 }
 
 resource "brightbox_server" "web" {
-
   depends_on = ["brightbox_firewall_policy.default"]
 
-  name = "Terraform web server example"
+  name  = "Terraform web server example"
   image = "${data.brightbox_image.ubuntu_lts.id}"
-  type = "${var.web_type}"
+  type  = "${var.web_type}"
 
   # Our Security group to allow HTTP and SSH access
   server_groups = ["${brightbox_server_group.default.id}"]
@@ -72,8 +70,8 @@ resource "brightbox_server" "web" {
 }
 
 data "brightbox_image" "ubuntu_lts" {
-	name = "^ubuntu-xenial.*server$"
-	arch = "x86_64"
-	official = true
-	most_recent = true
+  name        = "^ubuntu-xenial.*server$"
+  arch        = "x86_64"
+  official    = true
+  most_recent = true
 }

@@ -24,9 +24,6 @@ func TestAccBrightboxServer_importBasic(t *testing.T) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"user_data",
-				}, //we ignore user_data as we do not set to state
 			},
 		},
 	})

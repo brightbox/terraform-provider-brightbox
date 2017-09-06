@@ -17,16 +17,18 @@ type Server struct {
 	CreatedAt *time.Time `json:"created_at"`
 	// DeletedAt is nil if the server has not yet been deleted
 	DeletedAt         *time.Time `json:"deleted_at"`
-	ServerType        ServerType `json:"server_type"`
+	StartedAt         *time.Time `json:"started_at"`
+	UserData          string   `json:"user_data"`
 	CompatibilityMode bool       `json:"compatibility_mode"`
+	ServerConsole
 	Account           Account
-	Zone              Zone
 	Image             Image
+	ServerType        ServerType `json:"server_type"`
+	Zone              Zone
+	Snapshots         []Image
 	CloudIPs          []CloudIP `json:"cloud_ips"`
 	Interfaces        []ServerInterface
-	Snapshots         []Image
 	ServerGroups      []ServerGroup `json:"server_groups"`
-	ServerConsole
 }
 
 // ServerConsole is embedded into Server and contains the fields used in reponse

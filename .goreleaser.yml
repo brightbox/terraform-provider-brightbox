@@ -1,3 +1,33 @@
+project_name: terraform-provider-brightbox
+release:
+  github:
+    owner: brightbox
+    name: terraform-provider-brightbox
 builds:
-  -
-    binary: "{{ .ProjectName }}_v{{ .Version }}"
+- goos:
+  - linux
+  - darwin
+  goarch:
+  - amd64
+  - "386"
+  goarm:
+  - "6"
+  main: .
+  ldflags: -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+  binary: terraform-provider-brightbox
+archive:
+  format: tar.gz
+  name_template: '{{ .Binary }}_{{.Version}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{
+    .Arm }}{{ end }}'
+  files:
+  - licence*
+  - LICENCE*
+  - license*
+  - LICENSE*
+  - readme*
+  - README*
+  - changelog*
+  - CHANGELOG*
+  - install.sh
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}

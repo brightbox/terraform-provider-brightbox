@@ -1,18 +1,19 @@
-# Specify the provider and access details
-provider "brightbox" {}
+---
+layout: "brightbox"
+page_title: "Brightbox: brightbox_load_balancer"
+sidebar_current: "docs-brightbox-resource-load-balancer"
+description: |-
+  Provides a Brightbox Load Balancer resource. This can be used to create, modify, and delete Load Balancers.
+---
 
-resource "brightbox_cloudip" "lb" {
-  target = "${brightbox_load_balancer.lb.id}"
-}
+# brightbox\_load\_balancer
 
-resource "brightbox_cloudip" "server1" {
-  target = "${brightbox_server.server1.interface}"
-}
+Provides a Brightbox Load Balancer resource. This can be used to create,
+modify, and delete Load Balancers.
 
-resource "brightbox_cloudip" "server2" {
-  target = "${brightbox_server.server2.interface}"
-}
+## Example Usage
 
+```hcl
 resource "brightbox_load_balancer" "lb" {
   name = "Terraform weblayer example"
 
@@ -98,88 +99,43 @@ L6c41r4AZ3Iyvr3MYoSohogBbAnd6TW14NjvBHceREhAqvmIWlWmAQ==
 -----END RSA PRIVATE KEY-----
 EOF
 }
+```
 
-resource "brightbox_container" "backups" {
-  name        = "terraform_backups"
-  description = "Terraform example backup area"
-}
+## Argument Reference
 
-resource "brightbox_database_server" "database" {
-  name                = "Terraform weblayer example database"
-  database_engine     = "mysql"
-  database_version    = "5.6"
-  maintenance_weekday = 6
-  maintenance_hour    = 6
-  database_name       = "backend"
-  database_username   = "dbserver"
-  database_password   = "nice-password"
-  allow_access        = ["${brightbox_server_group.weblayer.id}"]
-}
+The following arguments are supported:
 
-resource "brightbox_server_group" "weblayer" {
-  name = "Used by the terraform"
-}
+* `name` - (Optional) A label assigned to the Load Balancer
+* `policy` - (Optional) Method of load balancing to use, either `least-connections` or `round-robin`
+* `certificate_pem` - (Optional) A X509 SSL certificate in PEM format. Must be included along with `certificate_key`. If intermediate certificates are required they should be concatenated after the main certificate
+* `certificate_private_key` - (Optional) The RSA private key used to sign the certificate in PEM format. Must be included along with `certificate_pem`
+* `sslv3` - (Optional) Allow SSL v3 to be used. Default is `false`
+* `buffer_size` - (Optional) Buffer size in bytes
+* `nodes` - (Optional) An array of Server IDs
+* `listener` - (Required) An array of listener blocks. The Listener block is described below
+* `healthcheck` - (Required) A healthcheck block. The Healthcheck block is described below
 
-resource "brightbox_firewall_policy" "weblayer" {
-  name         = "Used by terraform"
-  server_group = "${brightbox_server_group.weblayer.id}"
-}
+Listener (`listener`) supports the following:
+* `protocol` - (Required) Protocol of the listener. One of `tcp`, `http`, `https`, `http+ws`, `https+wss`
+* `in` - (Required) Port to listen on
+* `out` - (Required) Port to pass through to
+* `timeout` - (Optional) Timeout of connection in milliseconds. Default is 50000
 
-resource "brightbox_firewall_rule" "weblayer_ssh" {
-  destination_port = 22
-  protocol         = "tcp"
-  source           = "any"
-  description      = "SSH access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.weblayer.id}"
-}
+Health Check (`healthcheck`) supports the following:
+* `type` - (Required) Type of health check required: `tcp` or `http`
+* `port` - (Required) Port to connect to to check health
+* `request` - (Optional) Path used for HTTP check
+* `interval` - (Optional) Frequency of checks in milliseconds
+* `timeout` - (Optional) Timeout of health check in milliseconds
+* `threshold_up` - (Optional) Number of checks that must pass before connection is considered healthy
+* `threshold_down` - (Optional) Number of checks that must fail before connection is considered unhealthy
 
-resource "brightbox_firewall_rule" "weblayer_http" {
-  destination_port = 80
-  protocol         = "tcp"
-  source           = "any"
-  description      = "HTTP access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.weblayer.id}"
-}
 
-resource "brightbox_firewall_rule" "weblayer_https" {
-  destination_port = 443
-  protocol         = "tcp"
-  source           = "any"
-  description      = "HTTPs access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.weblayer.id}"
-}
+## Attributes Reference
 
-resource "brightbox_firewall_rule" "weblayer_outbound" {
-  destination     = "any"
-  description     = "Outbound internet access"
-  firewall_policy = "${brightbox_firewall_policy.weblayer.id}"
-}
+The following attributes are exported
 
-resource "brightbox_firewall_rule" "weblayer_icmp" {
-  protocol        = "icmp"
-  source          = "any"
-  icmp_type_name  = "any"
-  firewall_policy = "${brightbox_firewall_policy.weblayer.id}"
-}
+* `id` - The ID of the Load Balancer
+* `status` - Current state of the load balancer. Usually `creating` or `active`
+* `locked` - True if the database server has been set to locked and cannot be deleted
 
-resource "brightbox_server" "server1" {
-  depends_on = ["brightbox_firewall_policy.weblayer"]
-
-  name  = "Terraform web server example 1"
-  image = "${var.web_image}"
-  type  = "${var.web_type}"
-
-  # Our Security group to allow HTTP and SSH access
-  server_groups = ["${brightbox_server_group.weblayer.id}"]
-}
-
-resource "brightbox_server" "server2" {
-  depends_on = ["brightbox_firewall_policy.weblayer"]
-
-  name  = "Terraform web server example 2"
-  image = "${var.web_image}"
-  type  = "${var.web_type}"
-
-  # Our Security group to allow HTTP and SSH access
-  server_groups = ["${brightbox_server_group.weblayer.id}"]
-}
