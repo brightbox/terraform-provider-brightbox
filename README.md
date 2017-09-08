@@ -1,6 +1,6 @@
 Terraform Provider for [Brightbox Cloud](https://www.brightbox.com)
 =======================================
-
+[![Build Status](https://travis-ci.org/brightbox/terraform-provider-brightbox.svg?branch=master)](https://travis-ci.org/brightbox/terraform-provider-brightbox)
 
 Requirements
 ------------
