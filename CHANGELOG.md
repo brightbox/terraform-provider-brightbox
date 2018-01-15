@@ -1,3 +1,7 @@
+## 0.1.3 (January 15, 2018)
+
+- Ensure static binaries
+
 ## 0.1.2 (September 6, 2017)
 
 - Add plugin installer script
