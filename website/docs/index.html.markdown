@@ -115,7 +115,7 @@ Usage:
 
 ```hcl
 $ export BRIGHTBOX_CLIENT="cli-testy"
-$ export BRIGHTBOX_PASSWORD="secretcode"
+$ export BRIGHTBOX_CLIENT_SECRET="secretcode"
 $ terraform plan
 ```
 
