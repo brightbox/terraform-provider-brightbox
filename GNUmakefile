@@ -1,10 +1,12 @@
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 
+export CGO_ENABLED=0
+
 default: build
 
 build: fmtcheck
-	go install
+	go install -ldflags="-s -w"
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
