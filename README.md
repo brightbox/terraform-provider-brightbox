@@ -5,8 +5,9 @@ Terraform Provider for [Brightbox Cloud](https://www.brightbox.com)
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.8 (to build the provider plugin)
+-	[Terraform](https://www.terraform.io/downloads.html) 0.11.x
+-	[Go](https://golang.org/doc/install) 1.10 (to build the provider plugin)
+-	[Dep](https://golang.github.io/dep/) v0.4.1 (to manage dependencies)
 
 Usage
 ---------------------

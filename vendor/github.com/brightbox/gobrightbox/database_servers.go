@@ -28,16 +28,6 @@ type DatabaseServer struct {
 	DatabaseServerType DatabaseServerType `json:"database_server_type"`
 }
 
-// DatabaseServerType represents a database server type
-// https://api.gb1.brightbox.com/1.0/#database_type
-type DatabaseServerType struct {
-	Id          string
-	Name        string
-	Description string
-	DiskSize    int `json:"disk_size"`
-	RAM         int
-}
-
 // DatabaseServerOptions is used in conjunction with CreateDatabaseServer and
 // UpdateDatabaseServer to create and update database servers.
 type DatabaseServerOptions struct {
@@ -49,6 +39,7 @@ type DatabaseServerOptions struct {
 	AllowAccess        *[]string `json:"allow_access,omitempty"`
 	Snapshot           string    `json:"snapshot,omitempty"`
 	Zone               string    `json:"zone,omitempty"`
+	DatabaseType       string    `json:"database_type,omitempty"`
 	MaintenanceWeekday *int      `json:"maintenance_weekday,omitempty"`
 	MaintenanceHour    *int      `json:"maintenance_hour,omitempty"`
 }
