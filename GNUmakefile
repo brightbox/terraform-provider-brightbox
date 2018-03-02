@@ -5,6 +5,7 @@ export CGO_ENABLED=0
 
 default: build
 
+
 build: fmtcheck
 	go install -ldflags="-s -w"
 
@@ -14,8 +15,14 @@ test: fmtcheck
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m 
 
+testaccjunit: fmtcheck go-junit-report
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m | go-junit-report | tee report.xml
+
+go-junit-report:
+	go get -u github.com/jstemmer/go-junit-report
+	
 vet:
 	@echo "go vet ."
 	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
@@ -45,5 +52,5 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile
+.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile go-junit-report
 

@@ -28,6 +28,7 @@ token
 *.iml
 *.test
 *.iml
+report.xml
 
 website/vendor
 
