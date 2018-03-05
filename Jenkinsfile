@@ -44,6 +44,7 @@ pipeline {
 	target="/go/src/\${target%.git}"
 	cd "\${target}"
 	make testaccjunit
+	cp report.xml $WORKSPACE
 	"""
       }
       post {
