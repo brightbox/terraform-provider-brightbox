@@ -24,7 +24,15 @@ pipeline {
   stages {
     stage("Vet") {
       steps {
-        sh 'make vet'
+        sh """
+	target=$(git ls-remote --get-url)
+	target="${target#https://}"
+	target="/go/src/${target%.git}"
+	mkdir -p "${target}"
+        cp -a "$WORKSPACE" "${target}"
+	cd "${target}"
+	make vet
+	"""
       }
     }
     stage("Acceptance Tests") {
