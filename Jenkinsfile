@@ -19,6 +19,7 @@ pipeline {
     docker {
       image 'golang'
       label 'docker'
+      args '-v /tmp:/.cache'
     }
   }
   stages {
@@ -37,7 +38,13 @@ pipeline {
     }
     stage("Acceptance Tests") {
       steps {
-	sh 'make testaccjunit'
+	sh """
+	target=\$(git ls-remote --get-url)
+	target="\${target#https://}"
+	target="/go/src/\${target%.git}"
+	cd "\${target}"
+	make testaccjunit
+	"""
       }
       post {
         always {
