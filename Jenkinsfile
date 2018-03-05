@@ -25,12 +25,12 @@ pipeline {
     stage("Vet") {
       steps {
         sh """
-	target=$(git ls-remote --get-url)
-	target="${target#https://}"
-	target="/go/src/${target%.git}"
-	mkdir -p "${target}"
-        cp -a "$WORKSPACE" "${target}"
-	cd "${target}"
+	target=\$(git ls-remote --get-url)
+	target="\${target#https://}"
+	target="/go/src/\${target%.git}"
+	mkdir -p "\${target}"
+        cp -a "$WORKSPACE" "\${target}"
+	cd "\${target}"
 	make vet
 	"""
       }
