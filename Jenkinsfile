@@ -28,7 +28,7 @@ pipeline {
 	target=\$(git ls-remote --get-url)
 	target="\${target#https://}"
 	target="/go/src/\${target%.git}"
-	mkdir -p "\${target}"
+	mkdir -p "$(dirname \${target})"
         cp -a "$WORKSPACE" "\${target}"
 	cd "\${target}"
 	make vet
