@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"path/filepath"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -75,7 +77,10 @@ func resourceBrightboxContainerCreate(
 		return err
 	}
 	d.SetPartial("orbit_url")
-	container_url := createContainerUrl(createStorageUrl(d), d.Get("name").(string))
+	container_url, err := createContainerUrl(d, d.Get("name").(string))
+	if err != nil {
+		return err
+	}
 	log.Printf("[INFO] Creating container at %s in Orbit", container_url)
 	log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
 	err = createContainer(container_url, composite.OrbitAuthToken)
@@ -94,10 +99,13 @@ func resourceBrightboxContainerDelete(
 	composite := meta.(*CompositeClient)
 	client := composite.ApiClient
 
-	container_url := createContainerUrl(createStorageUrl(d), d.Get("name").(string))
+	container_url, err := createContainerUrl(d, d.Get("name").(string))
+	if err != nil {
+		return err
+	}
 	log.Printf("[INFO] Removing container %s in Orbit", container_url)
 	log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
-	err := destroyContainer(container_url, composite.OrbitAuthToken)
+	err = destroyContainer(container_url, composite.OrbitAuthToken)
 	if err != nil {
 		return err
 	}
@@ -123,14 +131,20 @@ func resourceBrightboxContainerUpdate(
 		oraw, nraw := d.GetChange("name")
 		old_name := oraw.(string)
 		new_name := nraw.(string)
-		old_url := createContainerUrl(createStorageUrl(d), old_name)
-		log.Printf("[INFO] Removing old container %s in Orbit", old_url)
-		log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
-		err := destroyContainer(old_url, composite.OrbitAuthToken)
+		old_url, err := createContainerUrl(d, old_name)
 		if err != nil {
 			return err
 		}
-		new_url := createContainerUrl(createStorageUrl(d), new_name)
+		log.Printf("[INFO] Removing old container %s in Orbit", old_url)
+		log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
+		err = destroyContainer(old_url, composite.OrbitAuthToken)
+		if err != nil {
+			return err
+		}
+		new_url, err := createContainerUrl(d, new_name)
+		if err != nil {
+			return err
+		}
 		log.Printf("[INFO] Creating new container %s in Orbit", new_url)
 		log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
 		err = createContainer(new_url, composite.OrbitAuthToken)
@@ -224,12 +238,17 @@ func createApiClient(
 	return nil
 }
 
-func createContainerUrl(base_url string, name string) string {
-	return base_url + "/" + name
-}
+func createContainerUrl(d *schema.ResourceData, name string) (string, error) {
 
-func createStorageUrl(d *schema.ResourceData) string {
-	return d.Get("orbit_url").(string) + d.Get("account_id").(string)
+	base_url, err := url.Parse(d.Get("orbit_url").(string))
+	if err != nil {
+		return "", err
+	}
+	rel_url, err := url.Parse(filepath.Join(base_url.EscapedPath(), d.Get("account_id").(string), name))
+	if err != nil {
+		return "", err
+	}
+	return base_url.ResolveReference(rel_url).String(), nil
 }
 
 func manipulateContainer(url string, token *string, action string) error {
