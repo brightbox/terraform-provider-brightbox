@@ -48,6 +48,21 @@ pipeline {
         }
       }
     }
+    stage("Snapshot Build") {
+      when {
+        not { branch 'master' }
+      }
+      steps {
+	sh """
+	target=\$(git ls-remote --get-url)
+	target="\${target#https://}"
+	target="/go/src/\${target%.git}"
+	cd "\${target}"
+	go get -u github.com/goreleaser/goreleaser
+	goreleaser --snapshot
+	"""
+      }
+    }
   }
 }
       
