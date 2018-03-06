@@ -58,6 +58,7 @@ pipeline {
 	target="\${target#https://}"
 	target="/go/src/\${target%.git}"
 	cd "\${target}"
+	git fetch --tags
 	go get -u github.com/goreleaser/goreleaser
 	goreleaser --snapshot
 	"""
