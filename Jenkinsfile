@@ -5,6 +5,7 @@ pipeline {
     BRIGHTBOX_CLIENT="${BUILDER_USR}"
     BRIGHTBOX_CLIENT_SECRET="${BUILDER_PSW}"
     BRIGHTBOX_API_URL = credentials('ab3d6198-ad49-4e27-9542-d69cc6a05cc5')
+    GITHUB_TOKEN = credentials('72fdf567-7449-48df-abba-751c9de588cb')
   }
   options {
     disableConcurrentBuilds()
@@ -61,6 +62,22 @@ pipeline {
 	git fetch --tags
 	go get -u github.com/goreleaser/goreleaser
 	goreleaser --snapshot
+	"""
+      }
+    }
+    stage("Release Build") {
+      when {
+        branch 'master'
+      }
+      steps {
+	sh """
+	target=\$(git ls-remote --get-url)
+	target="\${target#https://}"
+	target="/go/src/\${target%.git}"
+	cd "\${target}"
+	git fetch --tags
+	go get -u github.com/goreleaser/goreleaser
+	goreleaser
 	"""
       }
     }
