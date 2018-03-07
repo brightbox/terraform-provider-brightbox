@@ -28,7 +28,6 @@ pipeline {
 	mkdir -p "\$(dirname \${target})"
         cp -a "$WORKSPACE" "\${target}"
 	cd "\${target}"
-	make get-tools
 	make vet
 	"""
       }

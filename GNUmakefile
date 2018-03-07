@@ -30,7 +30,7 @@ get-tools: go-junit-report go-releaser
 
 release: go-releaser
 	git fetch --tags
-	goreleaser --debug $(RELEASEARGS)
+	goreleaser $(RELEASEARGS)
 	
 vet:
 	@echo "go vet ."
