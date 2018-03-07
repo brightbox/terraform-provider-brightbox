@@ -21,10 +21,10 @@ testaccjunit: fmtcheck go-junit-report
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m | go-junit-report | tee report.xml
 
 go-junit-report:
-	go get -u github.com/jstemmer/go-junit-report
+	go get github.com/jstemmer/go-junit-report
 
 go-releaser:
-	go get -u github.com/goreleaser/goreleaser
+	go get github.com/goreleaser/goreleaser
 
 get-tools: go-junit-report go-releaser
 
