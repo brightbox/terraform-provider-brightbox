@@ -15,7 +15,7 @@ pipeline {
     docker {
       image 'golang'
       label 'docker'
-      args '-v /tmp:/.cache'
+      args '-v /tmp:/.cache --network host'
     }
   }
   stages {
