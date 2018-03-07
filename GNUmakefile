@@ -22,6 +22,15 @@ testaccjunit: fmtcheck go-junit-report
 
 go-junit-report:
 	go get -u github.com/jstemmer/go-junit-report
+
+go-releaser:
+	go get -u github.com/goreleaser/goreleaser
+
+get-tools: go-junit-report go-releaser
+
+release: go-releaser
+	git fetch --tags
+	goreleaser $(RELEASERARGS)
 	
 vet:
 	@echo "go vet ."
@@ -52,5 +61,5 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile go-junit-report
+.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile go-junit-report go-releaser get-tools
 

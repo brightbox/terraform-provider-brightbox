@@ -28,6 +28,7 @@ pipeline {
 	mkdir -p "\$(dirname \${target})"
         cp -a "$WORKSPACE" "\${target}"
 	cd "\${target}"
+	make get-tools
 	make vet
 	"""
       }
@@ -59,9 +60,7 @@ pipeline {
 	target="\${target#https://}"
 	target="/go/src/\${target%.git}"
 	cd "\${target}"
-	git fetch --tags
-	go get -u github.com/goreleaser/goreleaser
-	goreleaser --snapshot
+	RELEASEARGS="--snapshot" make release
 	"""
       }
     }
@@ -75,14 +74,9 @@ pipeline {
 	target="\${target#https://}"
 	target="/go/src/\${target%.git}"
 	cd "\${target}"
-	git fetch --tags
-	go get -u github.com/goreleaser/goreleaser
-	goreleaser
+	make release
 	"""
       }
     }
   }
 }
-      
-
-
