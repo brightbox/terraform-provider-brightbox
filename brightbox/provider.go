@@ -56,7 +56,8 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"brightbox_image": dataSourceBrightboxImage(),
+			"brightbox_image":         dataSourceBrightboxImage(),
+			"brightbox_database_type": dataSourceBrightboxDatabaseType(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"brightbox_server":          resourceBrightboxServer(),
