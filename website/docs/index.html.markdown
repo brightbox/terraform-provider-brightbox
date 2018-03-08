@@ -19,6 +19,7 @@ Use the navigation to the left to read about the available resources.
 ```hcl
 # Configure the Brightbox Provider
 provider "brightbox" {
+  version = "~> 1.0"
   username = "${var.user_email_address}"
   password = "${var.user_secret_password}"
   account = "${var.account_to_work_on}"
@@ -50,6 +51,7 @@ Usage:
 
 ```hcl
 provider "brightbox" {
+  version = "~> 1.0"
   username = "someone@example.com"
   password = "secretpassword"
 }
@@ -61,6 +63,7 @@ by adding an `account` argument.
 
 ```hcl
 provider "brightbox" {
+  version = "~> 1.0"
   username = "someone@example.com"
   password = "secretpassword"
   account  = "acc-diffr"
@@ -76,6 +79,7 @@ Usage:
 
 ```hcl
 provider "brightbox" {
+  version = "~> 1.0"
   apiclient = "cli-testy"
   apisecret = "secretcode"
 }
@@ -89,7 +93,9 @@ You can provide your username and password via the `BRIGHTBOX_USER_NAME` and
 `BRIGHTBOX_PASSWORD` environment variables. If required you can provide a non-default account with the `BRIGHTBOX_ACCOUNT` variable.
 
 ```hcl
-provider "brightbox" {}
+provider "brightbox" {
+  version = "~> 1.0"
+}
 ```
 
 Usage:
@@ -108,7 +114,9 @@ You can provide your api client id and secret via the `BRIGHTBOX_CLIENT` and
 the account that issued the client id.
 
 ```hcl
-provider "brightbox" {}
+provider "brightbox" {
+  version = "~> 1.0"
+}
 ```
 
 Usage:
