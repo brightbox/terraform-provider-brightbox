@@ -1,3 +1,12 @@
+## 1.0.0 (March 8, 2018)
+
+- Update README
+- Update weblayer example
+- Update website docs
+- Add Database Type Support
+- Add tagrelease shell script
+- Add Database Type support
+
 ## 0.1.4 (March 8, 2018)
 
 - Remove Jenkinsfile debugging
