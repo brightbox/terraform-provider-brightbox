@@ -115,9 +115,6 @@ resource "brightbox_database_server" "database" {
   database_type       = "${data.brightbox_database_type.4gb.id}"
   maintenance_weekday = 6
   maintenance_hour    = 6
-  database_name       = "backend"
-  database_username   = "dbserver"
-  database_password   = "nice-password"
   allow_access        = ["${brightbox_server_group.weblayer.id}"]
 }
 
