@@ -15,6 +15,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("bar-%d", rInt)
 	updatedName := fmt.Sprintf("baz-%d", rInt)
+	var cloudip brightbox.CloudIP
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -57,6 +58,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
 					resource.TestCheckNoResourceAttr(
 						"brightbox_database_server.default", "allow_access"),
@@ -74,6 +77,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_hour", "4"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
@@ -95,6 +100,33 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_hour", "4"),
 					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "database_engine", "mysql"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "database_version", "5.6"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "allow_access.#", "3"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "allow_access.2131663435", "158.152.1.65/32"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckBrightboxDatabaseServerConfig_map_cloudip(updatedName, rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxCloudipExists("brightbox_cloudip.barfar", &cloudip),
+					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "name", updatedName),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "description", updatedName),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "maintenance_weekday", "5"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "maintenance_hour", "4"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
@@ -114,6 +146,10 @@ func testAccCheckBrightboxDatabaseServerAndOthersDestroy(s *terraform.State) err
 		return err
 	}
 	err = testAccCheckBrightboxServerGroupDestroy(s)
+	if err != nil {
+		return err
+	}
+	err = testAccCheckBrightboxCloudipDestroy(s)
 	if err != nil {
 		return err
 	}
@@ -197,6 +233,9 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightb
 		if database_server.DatabaseVersion != "5.6" {
 			return fmt.Errorf("Bad database version: %s", database_server.DatabaseVersion)
 		}
+		if database_server.DatabaseServerType.Id != "dbt-eqlbg" {
+			return fmt.Errorf("Bad database server type: %v", database_server.DatabaseServerType)
+		}
 		if database_server.MaintenanceWeekday != 6 {
 			return fmt.Errorf("Bad MaintenanceWeekday: %d", database_server.MaintenanceWeekday)
 		}
@@ -227,8 +266,13 @@ resource "brightbox_database_server" "default" {
 	description = "%s"
 	database_engine = "mysql"
 	database_version = "5.6"
+	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 6
 	maintenance_hour = 6
+}
+
+data "brightbox_database_type" "foobar" {
+	name = "^SSD 4GB$"
 }
 `, name, name)
 }
@@ -243,8 +287,13 @@ resource "brightbox_database_server" "default" {
 	description = "%s"
 	database_engine = "mysql"
 	database_version = "5.6"
+	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 5
 	maintenance_hour = 4
+}
+
+data "brightbox_database_type" "foobar" {
+	name = "^SSD 4GB$"
 }
 `, name, name)
 }
@@ -274,4 +323,15 @@ resource "brightbox_server_group" "barfoo" {
 }
 
 %s`, name, name, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
+
+func testAccCheckBrightboxDatabaseServerConfig_map_cloudip(name string, rInt int) string {
+	return fmt.Sprintf(`
+%s
+
+	resource "brightbox_cloudip" "barfar" {
+		name = "baz-%d"
+		target = "${brightbox_database_server.default.id}"
+	}
+`, testAccCheckBrightboxDatabaseServerConfig_update_access(name), rInt)
 }
