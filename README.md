@@ -1,6 +1,5 @@
 Terraform Provider for [Brightbox Cloud](https://www.brightbox.com)
 =======================================
-[![Build Status](https://travis-ci.org/brightbox/terraform-provider-brightbox.svg?branch=master)](https://travis-ci.org/brightbox/terraform-provider-brightbox)
 
 Requirements
 ------------
@@ -13,9 +12,9 @@ Usage
 ---------------------
 
 ```
-# For example, restrict brightbox version to 0.1.x
+# For example, restrict brightbox version to 1.x.x
 provider "brightbox" {
-  version = "~> 0.1"
+  version = "~> 1.0"
 }
 ```
 
@@ -61,7 +60,7 @@ https://www.brightbox.com/docs/guides/terraform/getting-started/
 Developing the Provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.8+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.10+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
