@@ -5,7 +5,7 @@ pipeline {
     BRIGHTBOX_CLIENT="${BUILDER_USR}"
     BRIGHTBOX_CLIENT_SECRET="${BUILDER_PSW}"
     BRIGHTBOX_API_URL = credentials('ab3d6198-ad49-4e27-9542-d69cc6a05cc5')
-    GITHUB_TOKEN = credentials('95f5babd-9b94-413b-8e7f-da59f9763b33')
+    GITHUB_TOKEN = credentials('16f3b3ae-6330-45fc-8fae-4b5a889d42ea')
   }
   options {
     disableConcurrentBuilds()
