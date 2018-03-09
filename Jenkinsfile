@@ -5,7 +5,7 @@ pipeline {
     BRIGHTBOX_CLIENT="${BUILDER_USR}"
     BRIGHTBOX_CLIENT_SECRET="${BUILDER_PSW}"
     BRIGHTBOX_API_URL = credentials('ab3d6198-ad49-4e27-9542-d69cc6a05cc5')
-    GITHUB = credentials('16f3b3ae-6330-45fc-8fae-4b5a889d42ea')
+    GITHUB = credentials('03dee9c7-c93d-4ae0-b45c-3d2cb7b672c4')
     GITHUB_TOKEN = "${GITHUB_PSW}"
   }
   options {
