@@ -1,3 +1,8 @@
+## 1.0.1 (March 9, 2018)
+
+- Switch github credentials
+- Remove incorrect database fields
+
 ## 1.0.0 (March 8, 2018)
 
 - Update README
