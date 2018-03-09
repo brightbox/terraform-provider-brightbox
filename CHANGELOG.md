@@ -1,3 +1,8 @@
+## 1.0.2 (March 9, 2018)
+
+- On correct UUID
+- Access un/pw github credentials properly in Jenkinsfile
+
 ## 1.0.1 (March 9, 2018)
 
 - Switch github credentials
