@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/brightbox/gobrightbox"
@@ -57,8 +58,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "maintenance_hour", "6"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestMatchResourceAttr(
+						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
 					resource.TestCheckNoResourceAttr(
@@ -77,8 +78,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_hour", "4"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestMatchResourceAttr(
+						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
@@ -99,8 +100,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_hour", "4"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestMatchResourceAttr(
+						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
@@ -124,8 +125,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_hour", "4"),
-					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_type", "dbt-eqlbg"),
+					resource.TestMatchResourceAttr(
+						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
@@ -215,6 +216,10 @@ func testAccCheckBrightboxDatabaseServerExists(n string, database_server *bright
 func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightbox.DatabaseServer, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
+		databaseTypeRs, ok := s.RootModule().Resources["data.brightbox_database_type.foobar"]
+		if !ok {
+			return fmt.Errorf("can't find database type foobar in state")
+		}
 		if database_server.Name != name {
 			return fmt.Errorf("Bad name: %s", database_server.Name)
 		}
@@ -233,7 +238,7 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightb
 		if database_server.DatabaseVersion != "5.6" {
 			return fmt.Errorf("Bad database version: %s", database_server.DatabaseVersion)
 		}
-		if database_server.DatabaseServerType.Id != "dbt-eqlbg" {
+		if database_server.DatabaseServerType.Id != databaseTypeRs.Primary.Attributes["id"] {
 			return fmt.Errorf("Bad database server type: %v", database_server.DatabaseServerType)
 		}
 		if database_server.MaintenanceWeekday != 6 {
