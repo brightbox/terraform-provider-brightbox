@@ -1,3 +1,7 @@
+## 1.0.3 (March 13, 2018)
+
+- Make database type check region independent
+
 ## 1.0.2 (March 9, 2018)
 
 - On correct UUID
