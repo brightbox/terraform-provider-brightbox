@@ -1,16 +1,13 @@
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 
-export CGO_ENABLED=0
-
 default: build
 
 
 build: fmtcheck
-	go install -ldflags="-s -w"
+	CGO_ENABLED=0 go install -ldflags="-s -w"
 
 test: fmtcheck
-	go test -i $(TEST) || exit 1
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
