@@ -34,14 +34,12 @@ func resourceBrightboxServer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 
 			"type": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 				ForceNew: true,
 			},
 
@@ -49,7 +47,6 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 				ForceNew: true,
 			},
 

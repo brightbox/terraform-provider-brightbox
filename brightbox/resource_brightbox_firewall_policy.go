@@ -20,18 +20,15 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 			"server_group": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 		},
 	}

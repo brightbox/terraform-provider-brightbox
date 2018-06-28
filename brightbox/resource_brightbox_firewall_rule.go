@@ -24,37 +24,30 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 			"protocol": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"source": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"source_port": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"destination": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"destination_port": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"icmp_type_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 		},
 	}

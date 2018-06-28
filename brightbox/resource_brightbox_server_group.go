@@ -25,13 +25,11 @@ func resourceBrightboxServerGroup() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 		},
 	}

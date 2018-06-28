@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+const (
+	mapped   = "mapped"
+	unmapped = "unmapped"
+)
+
 func resourceBrightboxCloudip() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBrightboxCloudipCreate,
@@ -25,13 +30,11 @@ func resourceBrightboxCloudip() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 
 			"target": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 
 			"status": &schema.Schema{
@@ -58,7 +61,6 @@ func resourceBrightboxCloudip() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 			},
 		},
 	}
@@ -122,7 +124,7 @@ func unmapCloudIP(
 	if err != nil {
 		return fmt.Errorf("Error retrieving details of Cloud IP %s: %s", cloudip_id, err)
 	}
-	if cloudip.Status == "mapped" {
+	if cloudip.Status == mapped {
 		log.Printf("[INFO] Unmapping Cloud IP %s", cloudip_id)
 		err := client.UnMapCloudIP(cloudip_id)
 		if err != nil {
@@ -164,14 +166,14 @@ func waitForMapped(
 	client *brightbox.Client,
 	cloudip_id string,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(client, cloudip_id, "unmapped", "mapped")
+	return waitForCloudip(client, cloudip_id, unmapped, mapped)
 }
 
 func waitForUnmapped(
 	client *brightbox.Client,
 	cloudip_id string,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(client, cloudip_id, "mapped", "unmapped")
+	return waitForCloudip(client, cloudip_id, mapped, unmapped)
 }
 
 func cloudipStateRefresh(client *brightbox.Client, cloudip_id string) resource.StateRefreshFunc {

@@ -24,24 +24,20 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"policy": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 			},
 			"certificate_pem": &schema.Schema{
 				Type:      schema.TypeString,
 				Optional:  true,
-				Default:   nil,
 				StateFunc: hash_string,
 			},
 			"certificate_private_key": &schema.Schema{
 				Type:      schema.TypeString,
 				Optional:  true,
-				Default:   nil,
 				StateFunc: hash_string,
 			},
 			"sslv3": &schema.Schema{
@@ -61,7 +57,6 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 			},
 			"nodes": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -115,31 +110,26 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
-							Default:  nil,
 						},
 						"interval": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
-							Default:  nil,
 						},
 						"timeout": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
-							Default:  nil,
 						},
 						"threshold_up": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
-							Default:  nil,
 						},
 						"threshold_down": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
-							Default:  nil,
 						},
 					},
 				},

@@ -39,7 +39,6 @@ func resourceBrightboxContainer() *schema.Resource {
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"auth_user": &schema.Schema{
 				Type:     schema.TypeString,

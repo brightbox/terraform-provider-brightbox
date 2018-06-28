@@ -24,45 +24,38 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 			},
 			"maintenance_weekday": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 			},
 			"maintenance_hour": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 			},
 			"database_engine": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
-				Default:  nil,
 			},
 			"database_version": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
-				Default:  nil,
 			},
 			"database_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
-				Default:  nil,
 			},
 			"allow_access": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -73,14 +66,12 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			"snapshot": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
 				ForceNew: true,
 			},
 			"zone": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Default:  nil,
 				ForceNew: true,
 			},
 			"admin_username": &schema.Schema{
