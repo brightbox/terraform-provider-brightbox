@@ -6,20 +6,23 @@ pipeline {
   triggers {
     cron('@weekly')
   }
-  agent none
+  agent {
+    docker {
+      image 'golang'
+      label "docker"
+      args "-v /tmp:/.cache"
+    }
+  }
   stages {
-    stage("Test") {
-      agent {
-        docker {
-	  image 'golang'
-	  label "docker"
-	}
-      }
+    stage("Prepare dependencies") {
       steps {
 	sh 'go get -u github.com/jstemmer/go-junit-report'
         sh 'go get -t -v -d'
+      }
+    }
+    stage("Test") {
+      steps {
         sh 'go test -v | go-junit-report | tee report.xml'
-	sh 'pwd'
       }
       post {
         always {

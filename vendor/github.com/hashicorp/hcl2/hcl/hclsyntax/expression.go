@@ -2,6 +2,7 @@ package hclsyntax
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/zclconf/go-cty/cty"
@@ -415,6 +416,21 @@ func (e *FunctionCallExpr) Range() hcl.Range {
 
 func (e *FunctionCallExpr) StartRange() hcl.Range {
 	return hcl.RangeBetween(e.NameRange, e.OpenParenRange)
+}
+
+// Implementation for hcl.ExprCall.
+func (e *FunctionCallExpr) ExprCall() *hcl.StaticCall {
+	ret := &hcl.StaticCall{
+		Name:      e.Name,
+		NameRange: e.NameRange,
+		Arguments: make([]hcl.Expression, len(e.Args)),
+		ArgsRange: hcl.RangeBetween(e.OpenParenRange, e.CloseParenRange),
+	}
+	// Need to convert our own Expression objects into hcl.Expression.
+	for i, arg := range e.Args {
+		ret.Arguments[i] = arg
+	}
+	return ret
 }
 
 type ConditionalExpr struct {
@@ -1154,7 +1170,7 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	// both to tuples/lists and to other values, and in the latter case
 	// the value will be treated as an implicit single-value list. We'll
 	// deal with that here first.
-	if !(sourceVal.Type().IsTupleType() || sourceVal.Type().IsListType()) {
+	if !(sourceVal.Type().IsTupleType() || sourceVal.Type().IsListType() || sourceVal.Type().IsSetType()) {
 		sourceVal = cty.ListVal([]cty.Value{sourceVal})
 	}
 
@@ -1211,13 +1227,24 @@ func (e *SplatExpr) StartRange() hcl.Range {
 // assigns it a value.
 type AnonSymbolExpr struct {
 	SrcRange hcl.Range
-	values   map[*hcl.EvalContext]cty.Value
+
+	// values and its associated lock are used to isolate concurrent
+	// evaluations of a symbol from one another. It is the calling application's
+	// responsibility to ensure that the same splat expression is not evalauted
+	// concurrently within the _same_ EvalContext, but it is fine and safe to
+	// do cuncurrent evaluations with distinct EvalContexts.
+	values     map[*hcl.EvalContext]cty.Value
+	valuesLock sync.RWMutex
 }
 
 func (e *AnonSymbolExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	if ctx == nil {
 		return cty.DynamicVal, nil
 	}
+
+	e.valuesLock.RLock()
+	defer e.valuesLock.RUnlock()
+
 	val, exists := e.values[ctx]
 	if !exists {
 		return cty.DynamicVal, nil
@@ -1228,6 +1255,9 @@ func (e *AnonSymbolExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 // setValue sets a temporary local value for the expression when evaluated
 // in the given context, which must be non-nil.
 func (e *AnonSymbolExpr) setValue(ctx *hcl.EvalContext, val cty.Value) {
+	e.valuesLock.Lock()
+	defer e.valuesLock.Unlock()
+
 	if e.values == nil {
 		e.values = make(map[*hcl.EvalContext]cty.Value)
 	}
@@ -1238,6 +1268,9 @@ func (e *AnonSymbolExpr) setValue(ctx *hcl.EvalContext, val cty.Value) {
 }
 
 func (e *AnonSymbolExpr) clearValue(ctx *hcl.EvalContext) {
+	e.valuesLock.Lock()
+	defer e.valuesLock.Unlock()
+
 	if e.values == nil {
 		return
 	}
