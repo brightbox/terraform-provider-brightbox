@@ -108,7 +108,7 @@ func assignCloudIP(
 	if err != nil {
 		return nil, fmt.Errorf("Error assigning Cloud IP %s to target %s: %s", cloudip_id, target_id, err)
 	}
-	cloudip, err := waitForMapped(client, cloudip_id)
+	cloudip, err := waitForMappedCloudIp(client, cloudip_id)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func unmapCloudIP(
 		if err != nil {
 			return fmt.Errorf("Error unmapping Cloud IP %s: %s", cloudip_id, err)
 		}
-		_, err = waitForUnmapped(client, cloudip_id)
+		_, err = waitForUnmappedCloudIp(client, cloudip_id)
 		if err != nil {
 			return err
 		}
@@ -162,14 +162,14 @@ func waitForCloudip(
 	return active_cloudip.(*brightbox.CloudIP), err
 }
 
-func waitForMapped(
+func waitForMappedCloudIp(
 	client *brightbox.Client,
 	cloudip_id string,
 ) (*brightbox.CloudIP, error) {
 	return waitForCloudip(client, cloudip_id, unmapped, mapped)
 }
 
-func waitForUnmapped(
+func waitForUnmappedCloudIp(
 	client *brightbox.Client,
 	cloudip_id string,
 ) (*brightbox.CloudIP, error) {
