@@ -151,7 +151,7 @@ func resourceBrightboxDatabaseServerCreate(
 		return err
 	}
 	database_server_opts := getBlankDatabaseServerOpts()
-	assign_string_set_always(d, &database_server_opts.AllowAccess, "allow_access")
+	database_server_opts.AllowAccess = map_from_string_set(d, "allow_access")
 	return updateDatabaseServerAttributes(d, client, database_server_opts)
 }
 

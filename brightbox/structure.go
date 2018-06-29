@@ -46,11 +46,11 @@ func assign_string(d *schema.ResourceData, target **string, index string) {
 
 func assign_string_set(d *schema.ResourceData, target **[]string, index string) {
 	if d.HasChange(index) {
-		assign_string_set_always(d, target, index)
+		*target = map_from_string_set(d, index)
 	}
 }
 
-func assign_string_set_always(d *schema.ResourceData, target **[]string, index string) {
+func map_from_string_set(d *schema.ResourceData, index string) *[]string {
 	var temp []string
 	if attr := d.Get(index).(*schema.Set); attr.Len() > 0 {
 		temp = make([]string, attr.Len())
@@ -58,7 +58,7 @@ func assign_string_set_always(d *schema.ResourceData, target **[]string, index s
 			temp[i] = v.(string)
 		}
 	}
-	*target = &temp
+	return &temp
 }
 
 func assign_int(d *schema.ResourceData, target **int, index string) {
