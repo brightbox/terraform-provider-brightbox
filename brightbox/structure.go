@@ -53,8 +53,9 @@ func assign_string_set(d *schema.ResourceData, target **[]string, index string) 
 func assign_string_set_always(d *schema.ResourceData, target **[]string, index string) {
 	var temp []string
 	if attr := d.Get(index).(*schema.Set); attr.Len() > 0 {
-		for _, v := range attr.List() {
-			temp = append(temp, v.(string))
+		temp = make([]string, attr.Len())
+		for i, v := range attr.List() {
+			temp[i] = v.(string)
 		}
 	}
 	*target = &temp
