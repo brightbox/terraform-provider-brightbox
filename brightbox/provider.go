@@ -39,6 +39,7 @@ func Provider() terraform.ResourceProvider {
 			"password": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc(passwordEnvVar, nil),
 				Description: "Brightbox Cloud Password for User Name",
 			},
