@@ -95,6 +95,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			},
 			"healthcheck": &schema.Schema{
 				Type:     schema.TypeList,
+				MaxItems: 1,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -352,31 +353,27 @@ func addUpdateableLoadBalancerOptions(
 func assign_healthcheck(d *schema.ResourceData, target **brightbox.LoadBalancerHealthcheck) error {
 	if d.HasChange("healthcheck") {
 		hc := d.Get("healthcheck").([]interface{})
-		if len(hc) > 1 {
-			return fmt.Errorf("Only one health check per Load Balancer is supported")
-		} else if len(hc) > 0 {
-			check := hc[0].(map[string]interface{})
-			temp := brightbox.LoadBalancerHealthcheck{
-				Type: check["type"].(string),
-				Port: check["port"].(int),
-			}
-			if attr, ok := check["request"]; ok {
-				temp.Request = attr.(string)
-			}
-			if attr, ok := check["interval"]; ok {
-				temp.Interval = attr.(int)
-			}
-			if attr, ok := check["timeout"]; ok {
-				temp.Timeout = attr.(int)
-			}
-			if attr, ok := check["threshold_up"]; ok {
-				temp.ThresholdUp = attr.(int)
-			}
-			if attr, ok := check["threshold_down"]; ok {
-				temp.ThresholdDown = attr.(int)
-			}
-			*target = &temp
+		check := hc[0].(map[string]interface{})
+		temp := brightbox.LoadBalancerHealthcheck{
+			Type: check["type"].(string),
+			Port: check["port"].(int),
 		}
+		if attr, ok := check["request"]; ok {
+			temp.Request = attr.(string)
+		}
+		if attr, ok := check["interval"]; ok {
+			temp.Interval = attr.(int)
+		}
+		if attr, ok := check["timeout"]; ok {
+			temp.Timeout = attr.(int)
+		}
+		if attr, ok := check["threshold_up"]; ok {
+			temp.ThresholdUp = attr.(int)
+		}
+		if attr, ok := check["threshold_down"]; ok {
+			temp.ThresholdDown = attr.(int)
+		}
+		*target = &temp
 	}
 	return nil
 }
