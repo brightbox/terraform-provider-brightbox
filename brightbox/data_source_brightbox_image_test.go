@@ -9,8 +9,10 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
+const latest = "bionic-18.04"
+
 var accountRe = regexp.MustCompile("acc-.....")
-var disktypeRe = regexp.MustCompile("uefi1.img")
+var disktypeRe = regexp.MustCompile("disk1.img")
 
 func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -57,13 +59,13 @@ func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 	})
 }
 
-func TestAccBrightboxImageDataSource_ubuntu_xenial_official(t *testing.T) {
+func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: TestAccBrightboxImageDataSourceConfig_ubuntu_xenial_official,
+				Config: TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
@@ -77,7 +79,7 @@ func TestAccBrightboxImageDataSource_ubuntu_xenial_official(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "arch", "x86_64"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "name", "ubuntu-xenial-16.04-amd64-server-uefi1"),
+						"data.brightbox_image.foobar", "name", fmt.Sprintf("ubuntu-%s-amd64-server", latest)),
 					resource.TestMatchResourceAttr(
 						"data.brightbox_image.foobar", "description", disktypeRe),
 					resource.TestCheckResourceAttr(
@@ -125,14 +127,13 @@ data "brightbox_image" "foobar" {
 }
 `
 
-// Select latest ubuntu with uefi1 image
+// Select latest ubuntu
 // Checks name matches partial name
-const TestAccBrightboxImageDataSourceConfig_ubuntu_xenial_official = `
+var TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official = fmt.Sprintf(`
 data "brightbox_image" "foobar" {
-	name = "^ubuntu-xenial.*server"
+	name = "^ubuntu-%s.*server"
 	arch = "x86_64"
 	official = true
-	description = "uefi1.img"
 	most_recent = true
 }
-`
+`, latest)
