@@ -1,3 +1,26 @@
+## 1.0.4 (July 2, 2018)
+
+- Rewrite structures to standard format
+- Refactor Load Balancer
+- Refactor Cloud Ip
+- Refactor Firewall Policy
+- Refactor Firewall Rule
+- Refactor Server Group
+- Add sensitive marker to container client key
+- Remove redundant returns in brightbox server
+- Refactor Container code
+- Refactor Validate Functions
+- Add sensitive marker the provider password entry
+- Enforce healthcheck max items in schema
+- Remove redundant test in cloudip
+- Refactor image test to latest ubuntu image
+- Use map_from_string_set function
+- Use make rather than append to create string slice
+- Improve name of curried function
+- Tidy up code
+- Allow tests to run with 1.10
+- Update vendor
+
 ## 1.0.3 (March 13, 2018)
 
 - Make database type check region independent
