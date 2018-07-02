@@ -56,18 +56,7 @@ func resourceBrightboxFirewallPolicyCreate(
 
 	d.SetId(firewall_policy.Id)
 
-	setFirewallPolicyAttributes(d, firewall_policy)
-
-	return nil
-}
-
-func setFirewallPolicyAttributes(
-	d *schema.ResourceData,
-	firewall_policy *brightbox.FirewallPolicy,
-) {
-	d.Set("name", firewall_policy.Name)
-	d.Set("description", firewall_policy.Description)
-	d.Set("server_group", firewall_policy.ServerGroup)
+	return setFirewallPolicyAttributes(d, firewall_policy)
 }
 
 func resourceBrightboxFirewallPolicyRead(
@@ -81,9 +70,7 @@ func resourceBrightboxFirewallPolicyRead(
 		return fmt.Errorf("Error retrieving Firewall Policy details: %s", err)
 	}
 
-	setFirewallPolicyAttributes(d, firewall_policy)
-
-	return nil
+	return setFirewallPolicyAttributes(d, firewall_policy)
 }
 
 func resourceBrightboxFirewallPolicyDelete(
@@ -125,8 +112,7 @@ func resourceBrightboxFirewallPolicyUpdate(
 		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewall_policy_opts.Id, err)
 	}
 
-	setFirewallPolicyAttributes(d, firewall_policy)
-	return nil
+	return setFirewallPolicyAttributes(d, firewall_policy)
 }
 
 func addUpdateableFirewallPolicyOptions(
@@ -136,5 +122,15 @@ func addUpdateableFirewallPolicyOptions(
 	assign_string(d, &opts.Name, "name")
 	assign_string(d, &opts.Description, "description")
 	assign_string(d, &opts.ServerGroup, "server_group")
+	return nil
+}
+
+func setFirewallPolicyAttributes(
+	d *schema.ResourceData,
+	firewall_policy *brightbox.FirewallPolicy,
+) error {
+	d.Set("name", firewall_policy.Name)
+	d.Set("description", firewall_policy.Description)
+	d.Set("server_group", firewall_policy.ServerGroup)
 	return nil
 }
