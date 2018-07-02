@@ -38,8 +38,9 @@ func resourceBrightboxContainer() *schema.Resource {
 				Computed: true,
 			},
 			"auth_key": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"account_id": &schema.Schema{
 				Type:     schema.TypeString,
