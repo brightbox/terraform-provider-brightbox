@@ -93,9 +93,73 @@ func resourceBrightboxCloudipCreate(
 		}
 	}
 
-	setCloudipAttributes(d, cloudip)
+	return setCloudipAttributes(d, cloudip)
+}
 
-	return nil
+func resourceBrightboxCloudipRead(
+	d *schema.ResourceData,
+	meta interface{},
+) error {
+	client := meta.(*CompositeClient).ApiClient
+
+	cloudip, err := client.CloudIP(d.Id())
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing_resource:") {
+			log.Printf("[WARN] CloudIP not found, removing from state: %s", d.Id())
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("Error retrieving Cloud IP details: %s", err)
+	}
+
+	return setCloudipAttributes(d, cloudip)
+}
+
+func resourceBrightboxCloudipDelete(
+	d *schema.ResourceData,
+	meta interface{},
+) error {
+	client := meta.(*CompositeClient).ApiClient
+	return removeCloudIP(client, d.Id())
+}
+
+func resourceBrightboxCloudipUpdate(
+	d *schema.ResourceData,
+	meta interface{},
+) error {
+	client := meta.(*CompositeClient).ApiClient
+
+	d.Partial(true)
+
+	if d.HasChange("target") {
+		err := unmapCloudIP(client, d.Id())
+		if err != nil {
+			return err
+		}
+		if target_id, ok := d.GetOk("target"); ok {
+			_, err := assignCloudIP(client, d.Id(), target_id.(string))
+			if err != nil {
+				return err
+			}
+		}
+		d.SetPartial("target")
+	}
+
+	cloudip_opts := &brightbox.CloudIPOptions{
+		Id: d.Id(),
+	}
+	err := addUpdateableCloudipOptions(d, cloudip_opts)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] Cloud IP update configuration: %#v", cloudip_opts)
+
+	cloudip, err := client.UpdateCloudIP(cloudip_opts)
+	if err != nil {
+		return fmt.Errorf("Error updating Cloud IP (%s): %s", cloudip_opts.Id, err)
+	}
+
+	return setCloudipAttributes(d, cloudip)
 }
 
 func assignCloudIP(
@@ -190,43 +254,15 @@ func cloudipStateRefresh(client *brightbox.Client, cloudip_id string) resource.S
 func setCloudipAttributes(
 	d *schema.ResourceData,
 	cloudip *brightbox.CloudIP,
-) {
+) error {
 	d.Set("name", cloudip.Name)
 	d.Set("public_ip", cloudip.PublicIP)
 	d.Set("status", cloudip.Status)
 	d.Set("locked", cloudip.Locked)
 	d.Set("reverse_dns", cloudip.ReverseDns)
 	d.Set("fqdn", cloudip.Fqdn)
-
-}
-
-func resourceBrightboxCloudipRead(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).ApiClient
-
-	cloudip, err := client.CloudIP(d.Id())
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] CloudIP not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error retrieving Cloud IP details: %s", err)
-	}
-
-	setCloudipAttributes(d, cloudip)
-
+	d.Partial(false)
 	return nil
-}
-
-func resourceBrightboxCloudipDelete(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).ApiClient
-	return removeCloudIP(client, d.Id())
 }
 
 func removeCloudIP(client *brightbox.Client, id string) error {
@@ -240,47 +276,6 @@ func removeCloudIP(client *brightbox.Client, id string) error {
 	if err != nil {
 		return fmt.Errorf("Error deleting Cloud IP (%s): %s", id, err)
 	}
-	return nil
-}
-
-func resourceBrightboxCloudipUpdate(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).ApiClient
-
-	d.Partial(true)
-
-	if d.HasChange("target") {
-		err := unmapCloudIP(client, d.Id())
-		if err != nil {
-			return err
-		}
-		if target_id, ok := d.GetOk("target"); ok {
-			_, err := assignCloudIP(client, d.Id(), target_id.(string))
-			if err != nil {
-				return err
-			}
-		}
-		d.SetPartial("target")
-	}
-
-	cloudip_opts := &brightbox.CloudIPOptions{
-		Id: d.Id(),
-	}
-	err := addUpdateableCloudipOptions(d, cloudip_opts)
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] Cloud IP update configuration: %#v", cloudip_opts)
-
-	cloudip, err := client.UpdateCloudIP(cloudip_opts)
-	if err != nil {
-		return fmt.Errorf("Error updating Cloud IP (%s): %s", cloudip_opts.Id, err)
-	}
-
-	setCloudipAttributes(d, cloudip)
-	d.Partial(false)
 	return nil
 }
 
