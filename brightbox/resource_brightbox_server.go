@@ -25,32 +25,32 @@ func resourceBrightboxServer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"image": &schema.Schema{
+			"image": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-			},
-
-			"zone": &schema.Schema{
+			"type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"user_data": &schema.Schema{
+			"zone": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
+			"user_data": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data_base64"},
@@ -64,7 +64,7 @@ func resourceBrightboxServer() *schema.Resource {
 				ValidateFunc:  mustBeBase64Encoded,
 			},
 
-			"server_groups": &schema.Schema{
+			"server_groups": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
@@ -72,56 +72,56 @@ func resourceBrightboxServer() *schema.Resource {
 				Set:      schema.HashString,
 			},
 
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"locked": &schema.Schema{
+			"locked": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
 
-			"interface": &schema.Schema{
+			"interface": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"ipv6_address": &schema.Schema{
+			"ipv6_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"ipv4_address": &schema.Schema{
+			"ipv4_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"ipv4_address_private": &schema.Schema{
+			"ipv4_address_private": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"hostname": &schema.Schema{
+			"hostname": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"fqdn": &schema.Schema{
+			"fqdn": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"public_hostname": &schema.Schema{
+			"public_hostname": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"ipv6_hostname": &schema.Schema{
+			"ipv6_hostname": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

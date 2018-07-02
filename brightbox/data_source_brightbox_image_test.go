@@ -19,7 +19,7 @@ func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: TestAccBrightboxImageDataSourceConfig_blank_disk,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
@@ -64,7 +64,7 @@ func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),

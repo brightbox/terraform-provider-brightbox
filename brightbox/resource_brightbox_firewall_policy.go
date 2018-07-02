@@ -17,16 +17,16 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 		Delete: resourceBrightboxFirewallPolicyDelete,
 
 		Schema: map[string]*schema.Schema{
-			"server_group": &schema.Schema{
+			"server_group": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},

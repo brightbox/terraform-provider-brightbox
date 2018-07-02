@@ -24,29 +24,29 @@ func resourceBrightboxContainer() *schema.Resource {
 		Delete: resourceBrightboxContainerDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: mustNotBeEmptyString,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"auth_user": &schema.Schema{
+			"auth_user": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"auth_key": &schema.Schema{
+			"auth_key": {
 				Type:      schema.TypeString,
 				Computed:  true,
 				Sensitive: true,
 			},
-			"account_id": &schema.Schema{
+			"account_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"orbit_url": &schema.Schema{
+			"orbit_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_ORBIT_URL", defaultOrbitAuthUrl),

@@ -21,70 +21,70 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 		Delete: resourceBrightboxLoadBalancerDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"policy": &schema.Schema{
+			"policy": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"certificate_pem": &schema.Schema{
+			"certificate_pem": {
 				Type:      schema.TypeString,
 				Optional:  true,
 				StateFunc: hash_string,
 			},
-			"certificate_private_key": &schema.Schema{
+			"certificate_private_key": {
 				Type:      schema.TypeString,
 				Optional:  true,
 				StateFunc: hash_string,
 			},
-			"sslv3": &schema.Schema{
+			"sslv3": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"locked": &schema.Schema{
+			"locked": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"buffer_size": &schema.Schema{
+			"buffer_size": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
 			},
-			"nodes": &schema.Schema{
+			"nodes": {
 				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 				Computed: true,
 				Set:      schema.HashString,
 			},
-			"listener": &schema.Schema{
+			"listener": {
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"protocol": &schema.Schema{
+						"protocol": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"in": &schema.Schema{
+						"in": {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
 
-						"out": &schema.Schema{
+						"out": {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
 
-						"timeout": &schema.Schema{
+						"timeout": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Default:  50000,
@@ -93,41 +93,41 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				},
 				Set: resourceBrightboxLbListenerHash,
 			},
-			"healthcheck": &schema.Schema{
+			"healthcheck": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": &schema.Schema{
+						"type": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"port": &schema.Schema{
+						"port": {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
-						"request": &schema.Schema{
+						"request": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
-						"interval": &schema.Schema{
+						"interval": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
-						"timeout": &schema.Schema{
+						"timeout": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
-						"threshold_up": &schema.Schema{
+						"threshold_up": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
-						"threshold_down": &schema.Schema{
+						"threshold_down": {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,

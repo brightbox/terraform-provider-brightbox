@@ -21,7 +21,7 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxServerGroupDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
@@ -32,7 +32,7 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 						"brightbox_server_group.foobar", "description", name),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxServerGroupConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
@@ -56,7 +56,7 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxServerGroupDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
@@ -67,7 +67,7 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 						"brightbox_server_group.foobar", "description", name),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxServerGroupConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),

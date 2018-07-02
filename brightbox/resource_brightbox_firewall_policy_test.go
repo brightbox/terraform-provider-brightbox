@@ -21,7 +21,7 @@ func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxFirewallPolicyDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
@@ -32,7 +32,7 @@ func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
 						"brightbox_firewall_policy.foobar", "description", name),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
@@ -56,7 +56,7 @@ func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxFirewallPolicyDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
@@ -67,7 +67,7 @@ func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
 						"brightbox_firewall_policy.foobar", "description", name),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
@@ -91,7 +91,7 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxFirewallPolicyAndGroupDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
@@ -100,7 +100,7 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 						"brightbox_firewall_policy.foobar", "server_group", &server_group.Id),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_remap(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
@@ -109,7 +109,7 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 						"brightbox_firewall_policy.foobar", "server_group", &server_group.Id),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_unmap(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),

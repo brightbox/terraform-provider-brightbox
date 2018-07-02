@@ -23,7 +23,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxDatabaseServerAndOthersDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
@@ -44,7 +44,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "allow_access"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_clear_names,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
@@ -66,7 +66,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "allow_access"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_maintenance(updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
@@ -88,7 +88,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "allow_access"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_access(updatedName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
@@ -112,7 +112,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "allow_access.2131663435", "158.152.1.65/32"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_map_cloudip(updatedName, rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.barfar", &cloudip),

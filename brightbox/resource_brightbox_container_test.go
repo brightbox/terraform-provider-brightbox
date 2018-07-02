@@ -17,7 +17,7 @@ func TestAccBrightboxContainer_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxContainerDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &api_client),
@@ -32,7 +32,7 @@ func TestAccBrightboxContainer_Basic(t *testing.T) {
 						"brightbox_container.foobar", "account_id", &api_client.Account.Id),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxContainerConfig_updated,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &api_client),
@@ -54,7 +54,7 @@ func TestAccBrightboxContainer_clear_names(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxContainerDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &container),
@@ -65,7 +65,7 @@ func TestAccBrightboxContainer_clear_names(t *testing.T) {
 						"brightbox_container.foobar", "description", "initial"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxContainerConfig_blank_desc,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &container),

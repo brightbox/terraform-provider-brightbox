@@ -21,72 +21,72 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 		Delete: resourceBrightboxDatabaseServerDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"maintenance_weekday": &schema.Schema{
+			"maintenance_weekday": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
 			},
-			"maintenance_hour": &schema.Schema{
+			"maintenance_hour": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
 			},
-			"database_engine": &schema.Schema{
+			"database_engine": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"database_version": &schema.Schema{
+			"database_version": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"database_type": &schema.Schema{
+			"database_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"allow_access": &schema.Schema{
+			"allow_access": {
 				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 				Set:      schema.HashString,
 			},
-			"snapshot": &schema.Schema{
+			"snapshot": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"zone": &schema.Schema{
+			"zone": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"admin_username": &schema.Schema{
+			"admin_username": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"admin_password": &schema.Schema{
+			"admin_password": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"locked": &schema.Schema{
+			"locked": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},

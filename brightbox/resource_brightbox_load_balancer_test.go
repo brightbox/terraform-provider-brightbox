@@ -17,7 +17,7 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxLoadBalancerAndServerDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
@@ -36,7 +36,7 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						"brightbox_load_balancer.default", "nodes.#", "1"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_timeout,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
@@ -48,7 +48,7 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						"brightbox_load_balancer.default", "listener.1462547963.timeout", "10000"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_healthcheck,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
@@ -66,7 +66,7 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						"brightbox_load_balancer.default", "listener.1462547963.timeout", "10000"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_add_listener,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
@@ -84,7 +84,7 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						"brightbox_load_balancer.default", "certificate_pem", "a5f8997fb16293ae7827f974b9cc120c8c776d02"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_remove_listener,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),

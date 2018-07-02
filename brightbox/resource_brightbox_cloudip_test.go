@@ -24,7 +24,7 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -47,7 +47,7 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -57,7 +57,7 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 						resourceName, "target"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_empty_name,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -80,7 +80,7 @@ func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -101,7 +101,7 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -109,7 +109,7 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -117,7 +117,7 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 						resourceName, "name", fmt.Sprintf("bar-%d", rInt)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_remapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
@@ -125,7 +125,7 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 						resourceName, "name", fmt.Sprintf("baz-%d", rInt)),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),

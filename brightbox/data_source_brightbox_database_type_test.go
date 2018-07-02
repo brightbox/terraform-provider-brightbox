@@ -13,7 +13,7 @@ func TestAccBrightboxDatabaseType_basic(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: TestAccBrightboxDatabaseTypeConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatabaseTypeDataSourceID("data.brightbox_database_type.foobar"),

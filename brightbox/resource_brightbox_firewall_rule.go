@@ -17,35 +17,35 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 		Delete: resourceBrightboxFirewallRuleDelete,
 
 		Schema: map[string]*schema.Schema{
-			"firewall_policy": &schema.Schema{
+			"firewall_policy": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"protocol": &schema.Schema{
+			"protocol": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"source": &schema.Schema{
+			"source": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"source_port": &schema.Schema{
+			"source_port": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"destination": &schema.Schema{
+			"destination": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"destination_port": &schema.Schema{
+			"destination_port": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"icmp_type_name": &schema.Schema{
+			"icmp_type_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},

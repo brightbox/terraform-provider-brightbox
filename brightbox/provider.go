@@ -18,38 +18,38 @@ const (
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"apiclient": &schema.Schema{
+			"apiclient": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT", defaultClientID),
 				Description: "Brightbox Cloud API Client",
 			},
-			"apisecret": &schema.Schema{
+			"apisecret": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT_SECRET", defaultClientSecret),
 				Description: "Brightbox Cloud API Client Secret",
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_USER_NAME", nil),
 				Description: "Brightbox Cloud User Name",
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc(passwordEnvVar, nil),
 				Description: "Brightbox Cloud Password for User Name",
 			},
-			"account": &schema.Schema{
+			"account": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_ACCOUNT", nil),
 				Description: "Brightbox Cloud Account to operate on",
 			},
-			"apiurl": &schema.Schema{
+			"apiurl": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_API_URL", brightbox.DefaultRegionApiURL),

@@ -22,7 +22,7 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
@@ -34,7 +34,7 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 						"brightbox_firewall_rule.rule1", "firewall_policy", &firewall_policy.Id),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
@@ -56,7 +56,7 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
@@ -64,7 +64,7 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 						"brightbox_firewall_rule.rule1", "description", name),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
