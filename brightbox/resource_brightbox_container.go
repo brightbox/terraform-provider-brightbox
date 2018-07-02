@@ -25,16 +25,9 @@ func resourceBrightboxContainer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-					value := v.(string)
-					if value == "" {
-						errors = append(errors, fmt.Errorf(
-							"%q cannot be empty", k))
-					}
-					return
-				},
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: mustNotBeEmptyString,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,

@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -108,4 +109,30 @@ func isBase64Encoded(data string) bool {
 func base64Decode(data string) (string, error) {
 	result, err := base64.StdEncoding.DecodeString(data)
 	return string(result), err
+}
+
+func stringValidateFunc(v interface{}, name string, failureTest func(string) bool, formatString string) (warns []string, errors []error) {
+	value := v.(string)
+	if failureTest(value) {
+		errors = append(errors, fmt.Errorf(formatString, name))
+	}
+	return
+}
+
+func mustNotBeEmptyString(v interface{}, name string) ([]string, []error) {
+	return stringValidateFunc(
+		v,
+		name,
+		func(value string) bool { return value == "" },
+		"%q cannot be empty",
+	)
+}
+
+func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
+	return stringValidateFunc(
+		v,
+		name,
+		func(value string) bool { return !isBase64Encoded(value) },
+		"%q must be base64-encoded",
+	)
 }

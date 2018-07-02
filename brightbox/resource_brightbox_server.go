@@ -61,15 +61,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data"},
-				ValidateFunc: func(v interface{}, name string) (warns []string, errs []error) {
-					s := v.(string)
-					if !isBase64Encoded(s) {
-						errs = append(errs, fmt.Errorf(
-							"%s: must be base64-encoded", name,
-						))
-					}
-					return
-				},
+				ValidateFunc:  mustBeBase64Encoded,
 			},
 
 			"server_groups": &schema.Schema{
