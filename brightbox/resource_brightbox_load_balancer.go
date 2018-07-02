@@ -156,7 +156,7 @@ func resourceBrightboxLbListenerHash(
 func setLoadBalancerAttributes(
 	d *schema.ResourceData,
 	load_balancer *brightbox.LoadBalancer,
-) {
+) error {
 	d.Set("name", load_balancer.Name)
 	d.Set("status", load_balancer.Status)
 	d.Set("locked", load_balancer.Locked)
@@ -200,6 +200,7 @@ func setLoadBalancerAttributes(
 	}
 	healthchecks = append(healthchecks, chk)
 	d.Set("healthcheck", healthchecks)
+	return nil
 }
 
 func loadBalancerStateRefresh(client *brightbox.Client, loadBalancerID string) resource.StateRefreshFunc {
@@ -252,9 +253,7 @@ func resourceBrightboxLoadBalancerCreate(
 		return err
 	}
 
-	setLoadBalancerAttributes(d, active_load_balancer.(*brightbox.LoadBalancer))
-
-	return nil
+	return setLoadBalancerAttributes(d, active_load_balancer.(*brightbox.LoadBalancer))
 }
 
 func resourceBrightboxLoadBalancerRead(
@@ -274,9 +273,7 @@ func resourceBrightboxLoadBalancerRead(
 		return fmt.Errorf("Error retrieving Load Balancer details: %s", err)
 	}
 
-	setLoadBalancerAttributes(d, load_balancer)
-
-	return nil
+	return setLoadBalancerAttributes(d, load_balancer)
 }
 
 func resourceBrightboxLoadBalancerUpdate(
@@ -303,9 +300,7 @@ func resourceBrightboxLoadBalancerUpdate(
 		return fmt.Errorf("Error updating load_balancer: %s", err)
 	}
 
-	setLoadBalancerAttributes(d, load_balancer)
-
-	return nil
+	return setLoadBalancerAttributes(d, load_balancer)
 }
 
 func resourceBrightboxLoadBalancerDelete(
