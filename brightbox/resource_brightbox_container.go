@@ -61,15 +61,14 @@ func resourceBrightboxContainerCreate(
 ) error {
 	composite := meta.(*CompositeClient)
 	client := composite.ApiClient
-	log.Printf("[DEBUG] Setting Partial")
-	d.Partial(true)
+
 	log.Printf("[INFO] Creating API client")
-	err := createApiClient(d, client)
+	api_client, err := createApiClient(d, client)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error creating Api Client: %s", err)
 	}
-	d.SetPartial("orbit_url")
-	container_url, err := createContainerUrl(d, d.Get("name").(string))
+	setInitialAccountAttributes(d, api_client)
+	container_url, err := createContainerUrl(d, api_client.Name)
 	if err != nil {
 		return err
 	}
@@ -79,9 +78,7 @@ func resourceBrightboxContainerCreate(
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Clearing Partial")
-	d.Partial(false)
-	return nil
+	return setContainerAttributes(d, api_client)
 }
 
 func resourceBrightboxContainerDelete(
@@ -117,8 +114,6 @@ func resourceBrightboxContainerUpdate(
 	composite := meta.(*CompositeClient)
 	client := composite.ApiClient
 
-	log.Printf("[DEBUG] Setting Partial")
-	d.Partial(true)
 	if d.HasChange("name") {
 		oraw, nraw := d.GetChange("name")
 		old_name := oraw.(string)
@@ -149,21 +144,16 @@ func resourceBrightboxContainerUpdate(
 		api_client_opts := &brightbox.ApiClientOptions{
 			Id: d.Get("auth_user").(string),
 		}
-		err := addUpdateableApiClientOptions(d, api_client_opts)
-		if err != nil {
-			return err
-		}
+		addUpdateableApiClientOptions(d, api_client_opts)
 		log.Printf("[DEBUG] ApiClient update configuration: %#v", api_client_opts)
 
 		api_client, err := client.UpdateApiClient(api_client_opts)
 		if err != nil {
 			return fmt.Errorf("Error updating ApiClient (%s): %s", api_client_opts.Id, err)
 		}
-		setApiClientAttributes(d, api_client)
+		return setContainerAttributes(d, api_client)
 	}
-
-	d.Partial(false)
-	return nil
+	return resourceBrightboxContainerRead(d, meta)
 }
 
 func resourceBrightboxContainerRead(
@@ -177,57 +167,66 @@ func resourceBrightboxContainerRead(
 		return fmt.Errorf("Error retrieving ApiClient details: %s", err)
 	}
 
-	setApiClientAttributes(d, api_client)
-
-	return nil
+	return setContainerAttributes(d, api_client)
 }
 
-func setApiClientAttributes(
+func setInitialAccountAttributes(
 	d *schema.ResourceData,
 	api_client *brightbox.ApiClient,
 ) {
+	log.Printf("[DEBUG] Setting Partial")
+	d.Partial(true)
+	setAccountAttributes(d, api_client)
+	log.Printf("[DEBUG] Setting Key details")
+	d.Set("auth_key", api_client.Secret)
+	d.SetPartial("auth_key")
+}
+
+func setAccountAttributes(
+	d *schema.ResourceData,
+	api_client *brightbox.ApiClient,
+) {
+	log.Printf("[DEBUG] Setting Account details")
+	d.SetId(api_client.Id)
+	d.Set("auth_user", api_client.Id)
+	d.SetPartial("auth_user")
+	d.Set("account_id", api_client.Account.Id)
+	d.SetPartial("account_id")
+}
+
+func setContainerAttributes(
+	d *schema.ResourceData,
+	api_client *brightbox.ApiClient,
+) error {
+	setAccountAttributes(d, api_client)
+	log.Printf("[DEBUG] Setting Container details")
 	d.Set("name", api_client.Name)
-	d.Set("description", api_client.Description)
 	d.SetPartial("name")
+	d.Set("description", api_client.Description)
 	d.SetPartial("description")
+	log.Printf("[DEBUG] Clearing Partial")
+	d.Partial(false)
+	return nil
 }
 
 func addUpdateableApiClientOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ApiClientOptions,
-) error {
+) {
 	assign_string(d, &opts.Name, "name")
 	assign_string(d, &opts.Description, "description")
-	return nil
 }
 
 func createApiClient(
 	d *schema.ResourceData,
 	client *brightbox.Client,
-) error {
+) (*brightbox.ApiClient, error) {
 	permission_group := default_container_permission
 	api_client_opts := &brightbox.ApiClientOptions{
 		PermissionsGroup: &permission_group,
 	}
-	err := addUpdateableApiClientOptions(d, api_client_opts)
-	if err != nil {
-		return err
-	}
-
-	api_client, err := client.CreateApiClient(api_client_opts)
-	if err != nil {
-		return fmt.Errorf("Error creating Api Client: %s", err)
-	}
-
-	d.SetId(api_client.Id)
-	setApiClientAttributes(d, api_client)
-	d.Set("auth_user", api_client.Id)
-	d.SetPartial("auth_user")
-	d.Set("auth_key", api_client.Secret)
-	d.SetPartial("auth_key")
-	d.Set("account_id", api_client.Account.Id)
-	d.SetPartial("account_id")
-	return nil
+	addUpdateableApiClientOptions(d, api_client_opts)
+	return client.CreateApiClient(api_client_opts)
 }
 
 func createContainerUrl(d *schema.ResourceData, name string) (string, error) {
