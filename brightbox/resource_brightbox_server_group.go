@@ -55,18 +55,7 @@ func resourceBrightboxServerGroupCreate(
 
 	d.SetId(server_group.Id)
 
-	setServerGroupAttributes(d, server_group)
-
-	return nil
-}
-
-func setServerGroupAttributes(
-	d *schema.ResourceData,
-	server_group *brightbox.ServerGroup,
-) {
-	d.Set("name", server_group.Name)
-	d.Set("description", server_group.Description)
-
+	return setServerGroupAttributes(d, server_group)
 }
 
 func resourceBrightboxServerGroupRead(
@@ -85,9 +74,7 @@ func resourceBrightboxServerGroupRead(
 		return fmt.Errorf("Error retrieving Server Group details: %s", err)
 	}
 
-	setServerGroupAttributes(d, server_group)
-
-	return nil
+	return setServerGroupAttributes(d, server_group)
 }
 
 func resourceBrightboxServerGroupDelete(
@@ -135,8 +122,7 @@ func resourceBrightboxServerGroupUpdate(
 		return fmt.Errorf("Error updating Server Group (%s): %s", server_group_opts.Id, err)
 	}
 
-	setServerGroupAttributes(d, server_group)
-	return nil
+	return setServerGroupAttributes(d, server_group)
 }
 
 func addUpdateableServerGroupOptions(
@@ -145,6 +131,15 @@ func addUpdateableServerGroupOptions(
 ) error {
 	assign_string(d, &opts.Name, "name")
 	assign_string(d, &opts.Description, "description")
+	return nil
+}
+
+func setServerGroupAttributes(
+	d *schema.ResourceData,
+	server_group *brightbox.ServerGroup,
+) error {
+	d.Set("name", server_group.Name)
+	d.Set("description", server_group.Description)
 	return nil
 }
 
