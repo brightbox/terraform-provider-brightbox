@@ -77,23 +77,7 @@ func resourceBrightboxFirewallRuleCreate(
 
 	d.SetId(firewall_rule.Id)
 
-	setFirewallRuleAttributes(d, firewall_rule)
-
-	return nil
-}
-
-func setFirewallRuleAttributes(
-	d *schema.ResourceData,
-	firewall_rule *brightbox.FirewallRule,
-) {
-	d.Set("firewall_policy", firewall_rule.FirewallPolicy)
-	d.Set("protocol", firewall_rule.Protocol)
-	d.Set("source", firewall_rule.Source)
-	d.Set("source_port", firewall_rule.SourcePort)
-	d.Set("destination", firewall_rule.Destination)
-	d.Set("destination_port", firewall_rule.DestinationPort)
-	d.Set("icmp_type_name", firewall_rule.IcmpTypeName)
-	d.Set("description", firewall_rule.Description)
+	return setFirewallRuleAttributes(d, firewall_rule)
 }
 
 func resourceBrightboxFirewallRuleRead(
@@ -112,9 +96,7 @@ func resourceBrightboxFirewallRuleRead(
 		return fmt.Errorf("Error retrieving Firewall Rule details: %s", err)
 	}
 
-	setFirewallRuleAttributes(d, firewall_rule)
-
-	return nil
+	return setFirewallRuleAttributes(d, firewall_rule)
 }
 
 func resourceBrightboxFirewallRuleDelete(
@@ -151,8 +133,7 @@ func resourceBrightboxFirewallRuleUpdate(
 		return fmt.Errorf("Error updating Firewall Rule (%s): %s", firewall_rule_opts.Id, err)
 	}
 
-	setFirewallRuleAttributes(d, firewall_rule)
-	return nil
+	return setFirewallRuleAttributes(d, firewall_rule)
 }
 
 func addUpdateableFirewallRuleOptions(
@@ -166,5 +147,20 @@ func addUpdateableFirewallRuleOptions(
 	assign_string(d, &opts.DestinationPort, "destination_port")
 	assign_string(d, &opts.IcmpTypeName, "icmp_type_name")
 	assign_string(d, &opts.Description, "description")
+	return nil
+}
+
+func setFirewallRuleAttributes(
+	d *schema.ResourceData,
+	firewall_rule *brightbox.FirewallRule,
+) error {
+	d.Set("firewall_policy", firewall_rule.FirewallPolicy)
+	d.Set("protocol", firewall_rule.Protocol)
+	d.Set("source", firewall_rule.Source)
+	d.Set("source_port", firewall_rule.SourcePort)
+	d.Set("destination", firewall_rule.Destination)
+	d.Set("destination_port", firewall_rule.DestinationPort)
+	d.Set("icmp_type_name", firewall_rule.IcmpTypeName)
+	d.Set("description", firewall_rule.Description)
 	return nil
 }
