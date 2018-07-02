@@ -174,9 +174,7 @@ func resourceBrightboxServerCreate(
 		return err
 	}
 
-	setServerAttributes(d, active_server.(*brightbox.Server))
-
-	return nil
+	return setServerAttributes(d, active_server.(*brightbox.Server))
 }
 
 func resourceBrightboxServerRead(
@@ -191,10 +189,7 @@ func resourceBrightboxServerRead(
 		return fmt.Errorf("Error retrieving server details: %s", err)
 	}
 
-	setServerAttributes(d, server)
-
-	return nil
-
+	return setServerAttributes(d, server)
 }
 
 func resourceBrightboxServerDelete(
