@@ -1,8 +1,10 @@
 dist: trusty
-sudo: false
+sudo: required
+services:
+- docker
 language: go
 go:
-- 1.8.1
+- 1.10
 
 install:
 # This script is used by the Travis build to install a cookie for
@@ -16,8 +18,11 @@ script:
 - make test
 - make vendor-status
 - make vet
-after_success:
-- test -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash
+- make website-test
+
+branches:
+  only:
+  - master
 matrix:
   fast_finish: true
   allow_failures:
