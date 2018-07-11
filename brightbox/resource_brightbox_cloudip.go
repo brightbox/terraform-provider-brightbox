@@ -261,6 +261,9 @@ func setCloudipAttributes(
 	d.Set("locked", cloudip.Locked)
 	d.Set("reverse_dns", cloudip.ReverseDns)
 	d.Set("fqdn", cloudip.Fqdn)
+	if cloudip.Interface != nil {
+		d.Set("target", cloudip.Interface.Id)
+	}
 	d.Partial(false)
 	return nil
 }
