@@ -64,11 +64,10 @@ func TestAccBrightboxServer_importUserDataBase64(t *testing.T) {
 			},
 
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"user_data_base64"},
-
 			},
 		},
 	})
