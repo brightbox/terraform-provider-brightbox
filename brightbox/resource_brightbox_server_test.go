@@ -60,7 +60,7 @@ func TestAccBrightboxServer_Blank(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckBrightboxServerConfig_blank,
+				Config: testAccCheckBrightboxServerConfig_blank(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"brightbox_server.foobar", "name", ""),
@@ -352,10 +352,15 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "foo-%d"
 	type = "1gb.ssd"
+	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	user_data = "foo:-with-character's"
 }
 
-%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+resource "brightbox_server_group" "barfoo" {
+	name = "bar-%d"
+}
+
+%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
 func testAccCheckBrightboxServerConfig_base64_userdata(rInt int) string {
@@ -364,10 +369,15 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "foo-%d"
 	type = "1gb.ssd"
+	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	user_data_base64 = "${base64encode("hello world")}"
 }
 
-%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+resource "brightbox_server_group" "barfoo" {
+	name = "bar-%d"
+}
+
+%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
 func testAccCheckBrightboxServerConfig_userdata_update(rInt int) string {
@@ -376,10 +386,15 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "foo-%d"
 	type = "1gb.ssd"
+	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	user_data = "foo:-with-different-character's"
 }
 
-%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+resource "brightbox_server_group" "barfoo" {
+	name = "bar-%d"
+}
+
+%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
 func testAccCheckBrightboxServerConfig_rename(rInt int) string {
@@ -388,21 +403,33 @@ resource "brightbox_server" "foobar" {
 	name = "baz-%d"
 	type = "1gb.ssd"
 	image = "${data.brightbox_image.foobar.id}"
+	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	user_data = "foo:-with-character's"
 }
 
-%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+resource "brightbox_server_group" "barfoo" {
+	name = "bar-%d"
 }
 
-var testAccCheckBrightboxServerConfig_blank = fmt.Sprintf(`
+%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
+
+func testAccCheckBrightboxServerConfig_blank(rInt int) string {
+	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = ""
 	type = "1gb.ssd"
+	server_groups = ["${brightbox_server_group.barfoo.id}"]
 	user_data = "foo:-with-character's"
 }
 
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+resource "brightbox_server_group" "barfoo" {
+	name = "bar-%d"
+}
+
+%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
 
 func testAccCheckBrightboxServerConfig_server_group(rInt int) string {
 	return fmt.Sprintf(`

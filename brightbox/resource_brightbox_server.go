@@ -66,8 +66,8 @@ func resourceBrightboxServer() *schema.Resource {
 
 			"server_groups": {
 				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
+				Required: true,
+				MinItems: 1,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
@@ -306,16 +306,20 @@ func setServerAttributes(
 		setPrimaryCloudIp(d, &server.CloudIPs[0])
 	}
 
-	srvGrpIds := []string{}
-	for _, sg := range server.ServerGroups {
-		srvGrpIds = append(srvGrpIds, sg.Id)
-	}
-	d.Set("server_groups", srvGrpIds)
+	d.Set("server_groups", schema.NewSet(schema.HashString, flattenServerGroups(server.ServerGroups)))
 
 	setUserDataDetails(d, server.UserData)
 	setConnectionDetails(d)
 	return nil
 
+}
+
+func flattenServerGroups(list []brightbox.ServerGroup) []interface{} {
+	srvGrpIds := make([]interface{}, len(list))
+	for i, sg := range list {
+		srvGrpIds[i] = sg.Id
+	}
+	return srvGrpIds
 }
 
 func setUserDataDetails(d *schema.ResourceData, base64_userdata string) {

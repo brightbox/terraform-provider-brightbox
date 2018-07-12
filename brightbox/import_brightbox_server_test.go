@@ -31,6 +31,7 @@ func TestAccBrightboxServer_importBasic(t *testing.T) {
 
 func TestAccBrightboxServer_importBlank(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
+	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -38,7 +39,7 @@ func TestAccBrightboxServer_importBlank(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxServerConfig_blank,
+				Config: testAccCheckBrightboxServerConfig_blank(rInt),
 			},
 
 			{
