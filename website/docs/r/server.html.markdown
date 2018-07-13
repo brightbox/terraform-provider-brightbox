@@ -21,6 +21,7 @@ resource "brightbox_server" "web" {
   name   = "web-1"
   zone = "gb1a"
   type = "512mb.ssd"
+  server_groups = [ "grp-testy" ]
 }
 ```
 
@@ -29,13 +30,14 @@ resource "brightbox_server" "web" {
 The following arguments are supported:
 
 * `image` - (Required) The Server image ID
+* `server_groups` (Required) - An array of server group ids the server
+should be added to. At least one server group must be specified.
 * `name` - (Optional) The Server name
 * `type` - (Optional) The handle of the server type required (`1gb.ssd`, etc)
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
 * `user_data` (Optional) - A string of the desired User Data for the Server.
 * `user_data_base64` (Optional) - Already encrypted User Data - for use
 with the template provider.
-* `server_groups` (Optional) - An array of server group ids the server should be added to.
 
 ~> **NOTE:** Only one of `user_data` or `user_data_base64` can be specified
 

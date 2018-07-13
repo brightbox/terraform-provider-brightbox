@@ -23,6 +23,7 @@ resource "brightbox_server" "web" {
   name   = "web-1"
   zone = "gb1a"
   type = "512mb.ssd"
+  server_groups = [ "grp-testy" ]
 }
 ```
 

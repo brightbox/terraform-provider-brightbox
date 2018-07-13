@@ -36,6 +36,7 @@ data "brightbox_database_type" "4gb" {
 resource "brightbox_server" "foobar" {
 	name = "database access"
 	image = "img-testy"
+	server_groups = [ "${brightbox_server_group.barfoo.id}" ]
 }
 
 resource "brightbox_server_group" "barfoo" {
@@ -47,6 +48,7 @@ resource "brightbox_server_group" "barfoo" {
 
 The following arguments are supported:
 
+* `allow_access` (Required) - A list of server group ids, server ids or IPv4 address references the database server should be accessible from. There must be at least one entry in the list
 * `name` - (Optional) A label assigned to the Database Server
 * `description` - (Optional) A further description of the Database Server
 * `maintenance_weekday` - (Optional) Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed. Default is 0 (Sunday). 
@@ -54,7 +56,6 @@ The following arguments are supported:
 * `database_engine` - (Optional) Database engine to request. Default is mysql.
 * `database_version` - (Optional) Database version to request. Default is 5.5.
 * `database_type` - (Optional) ID of the Database Type required.
-* `allow_access` (Optional) - An array of server group ids, server ids or IPv4 address references the database server should be accessible from
 * `snapshot` (Optional) - Database snapshot id to build from
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
 
