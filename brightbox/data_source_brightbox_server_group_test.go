@@ -14,11 +14,11 @@ func TestAccBrightboxDataServerGroup_basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: TestAccBrightboxDataServerGroupConfig_basic,
+				Config: TestAccBrightboxDataServerGroupConfig_default,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataServerGroupDataSourceID("data.brightbox_server_group.foobar"),
+					testAccCheckDataServerGroupDataSourceID("data.brightbox_server_group.default"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_server_group.foobar", "name", "default"),
+						"data.brightbox_server_group.default", "name", "default"),
 				),
 			},
 		},
@@ -40,8 +40,8 @@ func testAccCheckDataServerGroupDataSourceID(n string) resource.TestCheckFunc {
 	}
 }
 
-const TestAccBrightboxDataServerGroupConfig_basic = `
-data "brightbox_server_group" "foobar" {
+const TestAccBrightboxDataServerGroupConfig_default = `
+data "brightbox_server_group" "default" {
 	name = "^default$"
 }
 `

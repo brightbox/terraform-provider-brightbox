@@ -40,8 +40,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
-					resource.TestCheckNoResourceAttr(
-						"brightbox_database_server.default", "allow_access"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "allow_access.#", "1"),
 				),
 			},
 			{
@@ -62,8 +62,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
-					resource.TestCheckNoResourceAttr(
-						"brightbox_database_server.default", "allow_access"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "allow_access.#", "1"),
 				),
 			},
 			{
@@ -84,8 +84,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_version", "5.6"),
-					resource.TestCheckNoResourceAttr(
-						"brightbox_database_server.default", "allow_access"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "allow_access.#", "1"),
 				),
 			},
 			{
@@ -256,7 +256,7 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightb
 		if database_server.AdminPassword != "" {
 			return fmt.Errorf("Exposed API AdminPassword: %s", database_server.AdminPassword)
 		}
-		if len(database_server.AllowAccess) != 0 {
+		if len(database_server.AllowAccess) != 1 {
 			return fmt.Errorf("Bad AllowAccess list: %#v", database_server.AllowAccess)
 		}
 		return nil
@@ -274,12 +274,14 @@ resource "brightbox_database_server" "default" {
 	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 6
 	maintenance_hour = 6
+	allow_access = [ "${data.brightbox_server_group.default.id}" ]
 }
 
 data "brightbox_database_type" "foobar" {
 	name = "^SSD 4GB$"
 }
-`, name, name)
+%s
+`, name, name, TestAccBrightboxDataServerGroupConfig_default)
 }
 
 var testAccCheckBrightboxDatabaseServerConfig_clear_names = testAccCheckBrightboxDatabaseServerConfig_basic("")
@@ -295,12 +297,14 @@ resource "brightbox_database_server" "default" {
 	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 5
 	maintenance_hour = 4
+	allow_access = [ "${data.brightbox_server_group.default.id}" ]
 }
 
 data "brightbox_database_type" "foobar" {
 	name = "^SSD 4GB$"
 }
-`, name, name)
+%s
+`, name, name, TestAccBrightboxDataServerGroupConfig_default)
 }
 
 func testAccCheckBrightboxDatabaseServerConfig_update_access(name string) string {
@@ -321,13 +325,15 @@ resource "brightbox_database_server" "default" {
 resource "brightbox_server" "foobar" {
 	name = "database test"
 	image = "${data.brightbox_image.foobar.id}"
+	server_groups = [ "${data.brightbox_server_group.default.id}" ]
 }
 
 resource "brightbox_server_group" "barfoo" {
 	name = "database test"
 }
 
-%s`, name, name, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s%s`, name, name, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default)
 }
 
 func testAccCheckBrightboxDatabaseServerConfig_map_cloudip(name string, rInt int) string {

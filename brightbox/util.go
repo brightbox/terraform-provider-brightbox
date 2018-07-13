@@ -62,6 +62,14 @@ func map_from_string_set(d *schema.ResourceData, index string) *[]string {
 	return &temp
 }
 
+func flatten_string_slice(list []string) []interface{} {
+	temp := make([]interface{}, len(list))
+	for i, v := range list {
+		temp[i] = v
+	}
+	return temp
+}
+
 func assign_int(d *schema.ResourceData, target **int, index string) {
 	if d.HasChange(index) {
 		var temp int

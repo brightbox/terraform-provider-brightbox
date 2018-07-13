@@ -60,7 +60,8 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			"allow_access": {
 				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
+				Required: true,
+				MinItems: 1,
 				Set:      schema.HashString,
 			},
 			"snapshot": {
@@ -126,7 +127,7 @@ func setAllowAccessAttribute(
 	d *schema.ResourceData,
 	database_server *brightbox.DatabaseServer,
 ) {
-	d.Set("allow_access", database_server.AllowAccess)
+	d.Set("allow_access", schema.NewSet(schema.HashString, flatten_string_slice(database_server.AllowAccess)))
 	d.SetPartial("allow_access")
 }
 

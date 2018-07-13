@@ -213,9 +213,12 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
+
 }
 
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
 
 var testAccCheckBrightboxLoadBalancerConfig_new_timeout = fmt.Sprintf(`
 
@@ -245,9 +248,11 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
 
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
 
 var testAccCheckBrightboxLoadBalancerConfig_new_healthcheck = fmt.Sprintf(`
 
@@ -276,9 +281,11 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
 
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
 
 var testAccCheckBrightboxLoadBalancerConfig_add_listener = fmt.Sprintf(`
 
@@ -365,9 +372,11 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
 
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
 
 var testAccCheckBrightboxLoadBalancerConfig_remove_listener = fmt.Sprintf(`
 
@@ -400,6 +409,8 @@ resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
 	name = "load_balancer_test"
 	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
 
-%s`, TestAccBrightboxImageDataSourceConfig_blank_disk)
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
