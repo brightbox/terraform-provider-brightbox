@@ -11,19 +11,15 @@ output "server2 address" {
 }
 
 output "database address" {
-  value = "${brightbox_database_server.database.public_hostname}"
+  value = "${brightbox_cloudip.database.fqdn}"
 }
 
 output "database_username" {
-  value = "${brightbox_database_server.database.database_username}"
+  value = "${brightbox_database_server.database.admin_username}"
 }
 
 output "database_password" {
-  value = "${brightbox_database_server.database.database_password}"
-}
-
-output "database_name" {
-  value = "${brightbox_database_server.database.database_name}"
+  value = "${brightbox_database_server.database.admin_password}"
 }
 
 output "orbit_backup_userid" {
