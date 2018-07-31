@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/brightbox/terraform-provider-brightbox/brightbox"
 	"github.com/hashicorp/terraform/plugin"
+	"github.com/terraform-providers/terraform-provider-brightbox/brightbox"
 )
 
 func main() {

@@ -1,3 +1,6 @@
+## 1.0.5 (Unreleased)
+- Terraform provider official release
+
 ## 1.0.4 (July 2, 2018)
 
 - Rewrite structures to standard format
