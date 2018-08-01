@@ -1,4 +1,4 @@
-## 1.0.5 (Unreleased)
+## 1.0.5 (August 01, 2018)
 - Terraform provider official release
 
 ## 1.0.4 (July 2, 2018)
