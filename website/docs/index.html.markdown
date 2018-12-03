@@ -3,14 +3,13 @@ layout: "brightbox"
 page_title: "Provider: Brightbox"
 sidebar_current: "docs-brightbox-index"
 description: |-
-  The Brightbox provider is used to interact with the resources supported by Brightbox Cloud. The provider needs to be configured with the proper credentials before it can be used.
+  The Brightbox provider is used to interact with services on Brightbox. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
 # Brightbox Provider
 
-The Brightbox provider is used to interact with the resources supported
-by Brightbox Cloud. The provider needs to be configured with the proper
-credentials before it can be used.
+The Brightbox provider is used to interact with services on [Brightbox](https://www.brightbox.com/).
+The provider needs to be configured with the proper credentials before it can be used.
 
 Use the navigation to the left to read about the available resources.
 
