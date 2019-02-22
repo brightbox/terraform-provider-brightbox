@@ -45,13 +45,13 @@ func assign_string(d *schema.ResourceData, target **string, index string) {
 	}
 }
 
-func assign_string_set(d *schema.ResourceData, target **[]string, index string) {
+func assign_string_set(d *schema.ResourceData, target *[]string, index string) {
 	if d.HasChange(index) {
 		*target = map_from_string_set(d, index)
 	}
 }
 
-func map_from_string_set(d *schema.ResourceData, index string) *[]string {
+func map_from_string_set(d *schema.ResourceData, index string) []string {
 	var temp []string
 	if attr := d.Get(index).(*schema.Set); attr.Len() > 0 {
 		temp = make([]string, attr.Len())
@@ -59,7 +59,7 @@ func map_from_string_set(d *schema.ResourceData, index string) *[]string {
 			temp[i] = v.(string)
 		}
 	}
-	return &temp
+	return temp
 }
 
 func flatten_string_slice(list []string) []interface{} {

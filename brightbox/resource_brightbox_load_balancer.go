@@ -373,19 +373,19 @@ func assign_healthcheck(d *schema.ResourceData, target **brightbox.LoadBalancerH
 	return nil
 }
 
-func assign_listeners(d *schema.ResourceData, target **[]brightbox.LoadBalancerListener) {
+func assign_listeners(d *schema.ResourceData, target *[]brightbox.LoadBalancerListener) {
 	if d.HasChange("listener") {
 		*target = expandListeners(d.Get("listener").(*schema.Set).List())
 	}
 }
 
-func assign_nodes(d *schema.ResourceData, target **[]brightbox.LoadBalancerNode) {
+func assign_nodes(d *schema.ResourceData, target *[]brightbox.LoadBalancerNode) {
 	if d.HasChange("nodes") {
 		*target = expandNodes(d.Get("nodes").(*schema.Set).List())
 	}
 }
 
-func expandListeners(configured []interface{}) *[]brightbox.LoadBalancerListener {
+func expandListeners(configured []interface{}) []brightbox.LoadBalancerListener {
 	listeners := make([]brightbox.LoadBalancerListener, len(configured))
 
 	for i, listen_source := range configured {
@@ -397,16 +397,16 @@ func expandListeners(configured []interface{}) *[]brightbox.LoadBalancerListener
 			listeners[i].Timeout = attr.(int)
 		}
 	}
-	return &listeners
+	return listeners
 }
 
-func expandNodes(configured []interface{}) *[]brightbox.LoadBalancerNode {
+func expandNodes(configured []interface{}) []brightbox.LoadBalancerNode {
 	nodes := make([]brightbox.LoadBalancerNode, len(configured))
 
 	for i, data := range configured {
 		nodes[i].Node = data.(string)
 	}
-	return &nodes
+	return nodes
 }
 
 func output_load_balancer_options(opts *brightbox.LoadBalancerOptions) {
@@ -414,7 +414,7 @@ func output_load_balancer_options(opts *brightbox.LoadBalancerOptions) {
 		log.Printf("[DEBUG] Load Balancer Name %v", *opts.Name)
 	}
 	if opts.Nodes != nil {
-		log.Printf("[DEBUG] Load Balancer Nodes %#v", *opts.Nodes)
+		log.Printf("[DEBUG] Load Balancer Nodes %#v", opts.Nodes)
 	}
 	if opts.Policy != nil {
 		log.Printf("[DEBUG] Load Balancer Policy %v", *opts.Policy)
@@ -423,7 +423,7 @@ func output_load_balancer_options(opts *brightbox.LoadBalancerOptions) {
 		log.Printf("[DEBUG] Load Balancer BufferSize %v", *opts.BufferSize)
 	}
 	if opts.Listeners != nil {
-		log.Printf("[DEBUG] Load Balancer Listeners %#v", *opts.Listeners)
+		log.Printf("[DEBUG] Load Balancer Listeners %#v", opts.Listeners)
 	}
 	if opts.Healthcheck != nil {
 		log.Printf("[DEBUG] Load Balancer Healthcheck %#v", *opts.Healthcheck)

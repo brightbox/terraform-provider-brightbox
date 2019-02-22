@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -247,7 +248,7 @@ func updateDatabaseServerAttributes(
 	client *brightbox.Client,
 	database_server_opts *brightbox.DatabaseServerOptions,
 ) error {
-	if *database_server_opts == blank_database_server_opts {
+	if cmp.Equal(*database_server_opts, blank_database_server_opts) {
 		// Shouldn't ever get here
 		return fmt.Errorf("[ERROR] No database update changes detected for %s", d.Id())
 	}
@@ -336,7 +337,7 @@ func output_database_server_options(opts *brightbox.DatabaseServerOptions) {
 		log.Printf("[DEBUG] Database Server Type %v", opts.DatabaseType)
 	}
 	if opts.AllowAccess != nil {
-		log.Printf("[DEBUG] Database Server AllowAccess %#v", *opts.AllowAccess)
+		log.Printf("[DEBUG] Database Server AllowAccess %#v", opts.AllowAccess)
 	}
 	if opts.Snapshot != "" {
 		log.Printf("[DEBUG] Database Server Snapshot %v", opts.Snapshot)
