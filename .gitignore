@@ -19,7 +19,6 @@ website/node_modules
 *.backup
 ./*.tfstate
 .terraform/
-token
 *.log
 *.bak
 *~
