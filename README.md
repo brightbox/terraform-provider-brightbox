@@ -6,7 +6,6 @@ Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.11.x
 -	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
--	[Dep](https://golang.github.io/dep/) v0.4.1 (to manage dependencies)
 
 Usage
 ---------------------
