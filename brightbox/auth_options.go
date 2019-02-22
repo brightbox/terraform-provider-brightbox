@@ -2,8 +2,10 @@ package brightbox
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform/helper/logging"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -54,8 +56,9 @@ func (authd *authdetails) tokenisedAuth() (*brightbox.Client, error) {
 		authd.currentToken = token
 	}
 	log.Printf("[DEBUG] Refreshing current token if required")
-	oauthConnection := conf.Client(oauth2.NoContext, authd.currentToken)
-	return brightbox.NewClient(authd.APIURL, authd.Account, oauthConnection)
+	oauthClient := conf.Client(oauth2.NoContext, authd.currentToken)
+
+	return newClient(authd.APIURL, authd.Account, oauthClient)
 }
 
 func (authd *authdetails) apiClientAuth() (*brightbox.Client, error) {
@@ -66,7 +69,7 @@ func (authd *authdetails) apiClientAuth() (*brightbox.Client, error) {
 		TokenURL:     authd.tokenURL(),
 	}
 	log.Printf("[DEBUG] Obtaining API client authorisation for client %s", authd.APIClient)
-	oauthConnection := conf.Client(oauth2.NoContext)
+	oauthClient := conf.Client(oauth2.NoContext)
 	if authd.currentToken == nil {
 		log.Printf("[DEBUG] Retrieving auth token for %s", conf.ClientID)
 		token, err := conf.Token(oauth2.NoContext)
@@ -75,5 +78,12 @@ func (authd *authdetails) apiClientAuth() (*brightbox.Client, error) {
 		}
 		authd.currentToken = token
 	}
-	return brightbox.NewClient(authd.APIURL, authd.Account, oauthConnection)
+
+	return newClient(authd.APIURL, authd.Account, oauthClient)
+}
+
+func newClient(apiURL, account string, client *http.Client) (*brightbox.Client, error) {
+	client.Transport = logging.NewTransport("Brightbox", client.Transport)
+
+	return brightbox.NewClient(apiURL, account, client)
 }
