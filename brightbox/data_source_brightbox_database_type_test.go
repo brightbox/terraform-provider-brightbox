@@ -22,7 +22,7 @@ func TestAccBrightboxDatabaseType_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.brightbox_database_type.foobar", "ram", "4096"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_database_type.foobar", "disk_size", "40960"),
+						"data.brightbox_database_type.foobar", "disk_size", "61440"),
 				),
 			},
 		},
