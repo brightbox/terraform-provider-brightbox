@@ -2,8 +2,11 @@ package brightbox
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/go-cleanhttp"
+	"github.com/hashicorp/terraform/helper/logging"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -98,4 +101,22 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	return config.Client()
+}
+
+func makeHttpRequest(req *http.Request) (resp *http.Response, err error) {
+	client := cleanhttp.DefaultClient()
+	client.Transport = logging.NewTransport("Brightbox", client.Transport)
+
+	resp, err = client.Do(req)
+	if err != nil {
+		if resp != nil {
+			defer resp.Body.Close()
+		}
+		return resp, fmt.Errorf("Error accessing Orbit: %s", err)
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
+		defer resp.Body.Close()
+		return resp, fmt.Errorf("HTTP error response %v", resp.Status)
+	}
+	return resp, nil
 }
