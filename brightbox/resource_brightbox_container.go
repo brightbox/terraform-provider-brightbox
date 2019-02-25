@@ -231,7 +231,6 @@ func createApiClient(
 }
 
 func createContainerUrl(d *schema.ResourceData, name string) (string, error) {
-
 	base_url, err := url.Parse(d.Get("orbit_url").(string))
 	if err != nil {
 		return "", err
@@ -263,19 +262,4 @@ func createContainer(url string, token *string) error {
 
 func destroyContainer(url string, token *string) error {
 	return manipulateContainer(url, token, "DELETE")
-}
-
-func makeHttpRequest(req *http.Request) (resp *http.Response, err error) {
-	resp, err = http.DefaultClient.Do(req)
-	if err != nil {
-		if resp != nil {
-			defer resp.Body.Close()
-		}
-		return resp, fmt.Errorf("Error accessing Orbit: %s", err)
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
-		defer resp.Body.Close()
-		return resp, fmt.Errorf("HTTP error response %v", resp.Status)
-	}
-	return resp, nil
 }

@@ -5,6 +5,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/brightbox/gobrightbox v0.2.1
 	github.com/google/go-cmp v0.2.0
+	github.com/hashicorp/go-cleanhttp v0.5.0
 	github.com/hashicorp/go-getter v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v0.7.0 // indirect
 	github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104 // indirect
