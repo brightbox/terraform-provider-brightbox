@@ -8,26 +8,19 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-const (
-	// Terraform application client credentials
-	defaultClientID     = "app-dkmch"
-	defaultClientSecret = "uogoelzgt0nwawb"
-	passwordEnvVar      = "BRIGHTBOX_PASSWORD"
-)
-
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"apiclient": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT", defaultClientID),
+				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT", nil),
 				Description: "Brightbox Cloud API Client",
 			},
 			"apisecret": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT_SECRET", defaultClientSecret),
+				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT_SECRET", nil),
 				Description: "Brightbox Cloud API Client Secret",
 			},
 			"username": {
@@ -40,7 +33,7 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
-				DefaultFunc: schema.EnvDefaultFunc(passwordEnvVar, nil),
+				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_PASSWORD", nil),
 				Description: "Brightbox Cloud Password for User Name",
 			},
 			"account": {
@@ -85,7 +78,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		APIURL:    d.Get("apiurl").(string),
 	}
 
-	if config.APIClient == defaultClientID && config.APISecret == defaultClientSecret {
+	if config.APIClient != "" && config.APISecret != "" {
 		if config.Account == "" {
 			return nil,
 				fmt.Errorf("Must specify Account with User Credentials")
