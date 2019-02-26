@@ -19,6 +19,9 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 		Read:   resourceBrightboxLoadBalancerRead,
 		Update: resourceBrightboxLoadBalancerUpdate,
 		Delete: resourceBrightboxLoadBalancerDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -200,6 +203,12 @@ func setLoadBalancerAttributes(
 	}
 	healthchecks = append(healthchecks, chk)
 	d.Set("healthcheck", healthchecks)
+	log.Printf("[DEBUG] Certificate details are %#v", load_balancer.Certificate)
+	if load_balancer.Certificate == nil {
+		d.Set("sslv3", false)
+	} else {
+		d.Set("sslv3", load_balancer.Certificate.SslV3)
+	}
 	return nil
 }
 
