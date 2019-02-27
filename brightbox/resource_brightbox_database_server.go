@@ -20,6 +20,9 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 		Read:   resourceBrightboxDatabaseServerRead,
 		Update: resourceBrightboxDatabaseServerUpdate,
 		Delete: resourceBrightboxDatabaseServerDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -102,7 +105,7 @@ func setDatabaseServerAttributes(
 ) {
 	d.Set("name", database_server.Name)
 	d.SetPartial("name")
-	d.Set("Description", database_server.Description)
+	d.Set("description", database_server.Description)
 	d.SetPartial("description")
 	d.Set("status", database_server.Status)
 	d.SetPartial("status")
