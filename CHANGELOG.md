@@ -1,4 +1,9 @@
 ## 1.0.6 (Unreleased)
+- Switch to Go Modules #3
+- Add request/response logging in debug mode
+- Add import support for loadbalancers
+- Add import support for database servers
+
 ## 1.0.5 (August 01, 2018)
 - Terraform provider official release
 
