@@ -3,6 +3,8 @@
 - Add request/response logging in debug mode
 - Add import support for loadbalancers
 - Add import support for database servers
+- Add import support for firewall policy
+- Add import support for firewall rule
 
 ## 1.0.5 (August 01, 2018)
 - Terraform provider official release
