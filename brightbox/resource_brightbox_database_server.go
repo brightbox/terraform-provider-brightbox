@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/google/go-cmp/cmp"
@@ -22,6 +21,11 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 		Delete: resourceBrightboxDatabaseServerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -196,9 +200,9 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 		Pending:    []string{"creating"},
 		Target:     []string{"active"},
 		Refresh:    databaseServerStateRefresh(client, database_server.Id),
-		Timeout:    5 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
 	}
 	active_database_server, err := stateConf.WaitForState()
 	if err != nil {
@@ -301,9 +305,9 @@ func resourceBrightboxDatabaseServerDelete(
 		Pending:    []string{"deleting", "active"},
 		Target:     []string{"deleted"},
 		Refresh:    databaseServerStateRefresh(client, d.Id()),
-		Timeout:    5 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
 	}
 	_, err = stateConf.WaitForState()
 	if err != nil {

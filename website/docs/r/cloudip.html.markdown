@@ -49,8 +49,17 @@ The following attributes are exported:
 
 ## Import
 
-CloudIPs can be imported using the  `id`, e.g.
+CloudIPs can be imported using the `id`, e.g.
 
 ```
 terraform import brightbox_cloudip.mycloudip cip-vsalc
 ```
+
+<a id="timeouts"></a>
+## Timeouts
+
+`brightbox_cloudip` provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - (Default `5 minutes`) Used for Mapping Cloud IPs
+- `delete` - (Default `5 minutes`) Used for Unmapping Cloud IPs

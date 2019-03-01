@@ -52,3 +52,11 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The ID of the Firewall Rule
+
+## Import
+
+Firewall Rules can be imported using the `id`, e.g.
+
+```
+terraform import brightbox_firewall_rule.myrule fwr-ghjkl
+```

@@ -66,3 +66,12 @@ Servers can be imported using the server `id`, e.g.
 ```
 terraform import brightbox_server.myserver srv-ojy3o
 ```
+
+<a id="timeouts"></a>
+## Timeouts
+
+`brightbox_server` provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - (Default `5 minutes`) Used for Creating Servers
+- `delete` - (Default `5 minutes`) Used for Deleting Servers

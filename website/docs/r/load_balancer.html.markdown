@@ -139,3 +139,20 @@ The following attributes are exported
 * `status` - Current state of the load balancer. Usually `creating` or `active`
 * `locked` - True if the database server has been set to locked and cannot be deleted
 
+## Import
+
+Load Balancers can be imported using the `id`, e.g.
+
+```
+terraform import brightbox_load_balancer.mylba lba-12345
+```
+
+<a id="timeouts"></a>
+## Timeouts
+
+`brightbox_load_balancer` provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - (Default `5 minutes`) Used for Creating Load Balancers
+- `delete` - (Default `5 minutes`) Used for Deleting Load Balancers
+

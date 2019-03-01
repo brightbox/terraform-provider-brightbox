@@ -3,7 +3,6 @@ package brightbox
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -22,6 +21,11 @@ func resourceBrightboxServer() *schema.Resource {
 		Delete: resourceBrightboxServerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -165,9 +169,9 @@ func resourceBrightboxServerCreate(
 		Pending:    []string{"creating"},
 		Target:     []string{"active", "inactive"},
 		Refresh:    serverStateRefresh(client, server.Id),
-		Timeout:    5 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
 	}
 	active_server, err := stateConf.WaitForState()
 	if err != nil {
@@ -207,9 +211,9 @@ func resourceBrightboxServerDelete(
 		Pending:    []string{"deleting", "active", "inactive"},
 		Target:     []string{"deleted"},
 		Refresh:    serverStateRefresh(client, d.Id()),
-		Timeout:    5 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
 	}
 	_, err = stateConf.WaitForState()
 	if err != nil {

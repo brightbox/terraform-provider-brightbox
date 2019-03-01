@@ -36,3 +36,11 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The ID of the Firewall Policy
+
+## Import
+
+Firewall Policies can be imported using the `id`, e.g.
+
+```
+terraform import brightbox_firewall_policy.mypolicy fwp-zxcvb
+```

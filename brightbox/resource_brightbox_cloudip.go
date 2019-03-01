@@ -12,8 +12,11 @@ import (
 )
 
 const (
-	mapped   = "mapped"
-	unmapped = "unmapped"
+	mapped             = "mapped"
+	unmapped           = "unmapped"
+	defaultTimeout     = 5 * time.Minute
+	minimumRefreshWait = 3 * time.Second
+	checkDelay         = 10 * time.Second
 )
 
 func resourceBrightboxCloudip() *schema.Resource {
@@ -24,6 +27,11 @@ func resourceBrightboxCloudip() *schema.Resource {
 		Delete: resourceBrightboxCloudipDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -87,7 +95,7 @@ func resourceBrightboxCloudipCreate(
 	d.SetId(cloudip.Id)
 
 	if target_id, ok := d.GetOk("target"); ok {
-		cloudip, err = assignCloudIP(client, cloudip.Id, target_id.(string))
+		cloudip, err = assignCloudIP(client, cloudip.Id, target_id.(string), d.Timeout(schema.TimeoutCreate))
 		if err != nil {
 			return err
 		}
@@ -120,7 +128,7 @@ func resourceBrightboxCloudipDelete(
 	meta interface{},
 ) error {
 	client := meta.(*CompositeClient).ApiClient
-	return removeCloudIP(client, d.Id())
+	return removeCloudIP(client, d.Id(), d.Timeout(schema.TimeoutDelete))
 }
 
 func resourceBrightboxCloudipUpdate(
@@ -132,12 +140,12 @@ func resourceBrightboxCloudipUpdate(
 	d.Partial(true)
 
 	if d.HasChange("target") {
-		err := unmapCloudIP(client, d.Id())
+		err := unmapCloudIP(client, d.Id(), d.Timeout(schema.TimeoutDelete))
 		if err != nil {
 			return err
 		}
 		if target_id, ok := d.GetOk("target"); ok {
-			_, err := assignCloudIP(client, d.Id(), target_id.(string))
+			_, err := assignCloudIP(client, d.Id(), target_id.(string), d.Timeout(schema.TimeoutCreate))
 			if err != nil {
 				return err
 			}
@@ -166,13 +174,14 @@ func assignCloudIP(
 	client *brightbox.Client,
 	cloudip_id string,
 	target_id string,
+	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
 	log.Printf("[INFO] Assigning Cloud IP %s to target %s", cloudip_id, target_id)
 	err := client.MapCloudIP(cloudip_id, target_id)
 	if err != nil {
 		return nil, fmt.Errorf("Error assigning Cloud IP %s to target %s: %s", cloudip_id, target_id, err)
 	}
-	cloudip, err := waitForMappedCloudIp(client, cloudip_id)
+	cloudip, err := waitForMappedCloudIp(client, cloudip_id, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +191,7 @@ func assignCloudIP(
 func unmapCloudIP(
 	client *brightbox.Client,
 	cloudip_id string,
+	timeout time.Duration,
 ) error {
 	log.Printf("[INFO] Checking mapping of Cloud IP %s", cloudip_id)
 	cloudip, err := client.CloudIP(cloudip_id)
@@ -194,7 +204,7 @@ func unmapCloudIP(
 		if err != nil {
 			return fmt.Errorf("Error unmapping Cloud IP %s: %s", cloudip_id, err)
 		}
-		_, err = waitForUnmappedCloudIp(client, cloudip_id)
+		_, err = waitForUnmappedCloudIp(client, cloudip_id, timeout)
 		if err != nil {
 			return err
 		}
@@ -207,6 +217,7 @@ func unmapCloudIP(
 func waitForCloudip(
 	client *brightbox.Client,
 	cloudip_id string,
+	timeout time.Duration,
 	pending string,
 	target string,
 ) (*brightbox.CloudIP, error) {
@@ -214,8 +225,8 @@ func waitForCloudip(
 		Pending:    []string{pending},
 		Target:     []string{target},
 		Refresh:    cloudipStateRefresh(client, cloudip_id),
-		Timeout:    5 * time.Minute,
-		MinTimeout: 3 * time.Second,
+		Timeout:    timeout,
+		MinTimeout: minimumRefreshWait,
 	}
 
 	active_cloudip, err := stateConf.WaitForState()
@@ -229,15 +240,17 @@ func waitForCloudip(
 func waitForMappedCloudIp(
 	client *brightbox.Client,
 	cloudip_id string,
+	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(client, cloudip_id, unmapped, mapped)
+	return waitForCloudip(client, cloudip_id, timeout, unmapped, mapped)
 }
 
 func waitForUnmappedCloudIp(
 	client *brightbox.Client,
 	cloudip_id string,
+	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(client, cloudip_id, mapped, unmapped)
+	return waitForCloudip(client, cloudip_id, timeout, mapped, unmapped)
 }
 
 func cloudipStateRefresh(client *brightbox.Client, cloudip_id string) resource.StateRefreshFunc {
@@ -282,9 +295,9 @@ func setCloudipAttributes(
 	return nil
 }
 
-func removeCloudIP(client *brightbox.Client, id string) error {
+func removeCloudIP(client *brightbox.Client, id string, timeout time.Duration) error {
 	log.Printf("[DEBUG] Unmapping Cloud IP %s", id)
-	err := unmapCloudIP(client, id)
+	err := unmapCloudIP(client, id, timeout)
 	if err != nil {
 		return err
 	}

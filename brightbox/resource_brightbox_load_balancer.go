@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/hashcode"
@@ -21,6 +20,11 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 		Delete: resourceBrightboxLoadBalancerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -253,9 +257,9 @@ func resourceBrightboxLoadBalancerCreate(
 		Pending:    []string{"creating"},
 		Target:     []string{"active"},
 		Refresh:    loadBalancerStateRefresh(client, load_balancer.Id),
-		Timeout:    5 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
 	}
 	active_load_balancer, err := stateConf.WaitForState()
 	if err != nil {
@@ -327,9 +331,9 @@ func resourceBrightboxLoadBalancerDelete(
 		Pending:    []string{"deleting", "active"},
 		Target:     []string{"deleted"},
 		Refresh:    loadBalancerStateRefresh(client, d.Id()),
-		Timeout:    5 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
 	}
 	_, err = stateConf.WaitForState()
 	if err != nil {

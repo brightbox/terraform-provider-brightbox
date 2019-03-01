@@ -69,3 +69,19 @@ The following attributes are exported:
 * `status` - Current state of the database server, usually `active` or `deleted`
 * `locked` - True if database server has been set to locked and cannot be deleted
 
+## Import
+
+Database Servers can be imported using the `id`, e.g.
+
+```
+terraform import brightbox_database_server.mydatabase dbs-qwert
+```
+
+<a id="timeouts"></a>
+## Timeouts
+
+`brightbox_database_server` provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - (Default `5 minutes`) Used for Creating Databases
+- `delete` - (Default `5 minutes`) Used for Deleting Databases
