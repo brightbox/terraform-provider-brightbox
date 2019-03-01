@@ -15,6 +15,9 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 		Read:   resourceBrightboxFirewallRuleRead,
 		Update: resourceBrightboxFirewallRuleUpdate,
 		Delete: resourceBrightboxFirewallRuleDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"firewall_policy": {
@@ -154,7 +157,7 @@ func setFirewallRuleAttributes(
 	d *schema.ResourceData,
 	firewall_rule *brightbox.FirewallRule,
 ) error {
-	d.Set("firewall_policy", firewall_rule.FirewallPolicy)
+	d.Set("firewall_policy", firewall_rule.FirewallPolicy.Id)
 	d.Set("protocol", firewall_rule.Protocol)
 	d.Set("source", firewall_rule.Source)
 	d.Set("source_port", firewall_rule.SourcePort)
