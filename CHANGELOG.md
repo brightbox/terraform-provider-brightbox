@@ -1,4 +1,9 @@
 ## 1.1.0 (Unreleased)
+- Add timeout support for loadbalancers
+- Add timeout support for database servers
+- Add timeout support for servers
+- Add timeout support for Cloud IPs
+
 ## 1.0.6 (March 04, 2019)
 - Switch to Go Modules #3
 - Add request/response logging in debug mode
