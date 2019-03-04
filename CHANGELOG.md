@@ -1,4 +1,4 @@
-## 1.0.6 (Unreleased)
+## 1.0.6 (March 04, 2019)
 - Switch to Go Modules #3
 - Add request/response logging in debug mode
 - Add import support for loadbalancers
