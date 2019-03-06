@@ -88,8 +88,9 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Computed: true,
 			},
 			"admin_password": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"status": {
 				Type:     schema.TypeString,

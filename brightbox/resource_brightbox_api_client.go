@@ -30,8 +30,9 @@ func resourceBrightboxApiClient() *schema.Resource {
 				Optional: true,
 			},
 			"secret": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"permissions_group": {
 				Type:         schema.TypeString,
