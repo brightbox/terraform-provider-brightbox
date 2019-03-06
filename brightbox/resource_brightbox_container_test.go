@@ -21,7 +21,7 @@ func TestAccBrightboxContainer_Basic(t *testing.T) {
 				Config: testAccCheckBrightboxContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &api_client),
-					testAccCheckBrightboxApiClientAttributes(&api_client),
+					testAccCheckBrightboxContainerApiClientAttributes(&api_client),
 					resource.TestCheckResourceAttr(
 						"brightbox_container.foobar", "name", "initial"),
 					resource.TestCheckResourceAttr(
@@ -58,7 +58,7 @@ func TestAccBrightboxContainer_clear_names(t *testing.T) {
 				Config: testAccCheckBrightboxContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &container),
-					testAccCheckBrightboxApiClientAttributes(&container),
+					testAccCheckBrightboxContainerApiClientAttributes(&container),
 					resource.TestCheckResourceAttr(
 						"brightbox_container.foobar", "name", "initial"),
 					resource.TestCheckResourceAttr(
@@ -135,7 +135,7 @@ func testAccCheckBrightboxContainerExists(n string, api_client *brightbox.ApiCli
 	}
 }
 
-func testAccCheckBrightboxApiClientAttributes(api_client *brightbox.ApiClient) resource.TestCheckFunc {
+func testAccCheckBrightboxContainerApiClientAttributes(api_client *brightbox.ApiClient) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		if api_client.Name != "initial" {

@@ -145,7 +145,7 @@ func resourceBrightboxContainerUpdate(
 		api_client_opts := &brightbox.ApiClientOptions{
 			Id: d.Get("auth_user").(string),
 		}
-		addUpdateableApiClientOptions(d, api_client_opts)
+		addContainerUpdateableApiClientOptions(d, api_client_opts)
 		log.Printf("[DEBUG] ApiClient update configuration: %#v", api_client_opts)
 
 		api_client, err := client.UpdateApiClient(api_client_opts)
@@ -210,7 +210,7 @@ func setContainerAttributes(
 	return nil
 }
 
-func addUpdateableApiClientOptions(
+func addContainerUpdateableApiClientOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ApiClientOptions,
 ) {
@@ -226,7 +226,7 @@ func createApiClient(
 	api_client_opts := &brightbox.ApiClientOptions{
 		PermissionsGroup: &permission_group,
 	}
-	addUpdateableApiClientOptions(d, api_client_opts)
+	addContainerUpdateableApiClientOptions(d, api_client_opts)
 	return client.CreateApiClient(api_client_opts)
 }
 
