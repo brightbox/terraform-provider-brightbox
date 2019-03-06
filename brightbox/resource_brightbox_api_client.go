@@ -7,7 +7,10 @@ import (
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
+
+var valid_permissions_groups = []string{"full", "storage"}
 
 func resourceBrightboxApiClient() *schema.Resource {
 	return &schema.Resource{
@@ -31,9 +34,10 @@ func resourceBrightboxApiClient() *schema.Resource {
 				Computed: true,
 			},
 			"permissions_group": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "full",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      valid_permissions_groups[0],
+				ValidateFunc: validation.StringInSlice(valid_permissions_groups, false),
 			},
 			"account": {
 				Type:     schema.TypeString,
