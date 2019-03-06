@@ -27,6 +27,14 @@ resource "brightbox_server" "web" {
 }
 ```
 
+Cloud ips can just be reserved
+
+```hcl
+resource "brightbox_cloudip" "myapp-public" {
+  name = "Reserved for use by application"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
