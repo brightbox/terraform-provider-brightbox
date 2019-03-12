@@ -31,9 +31,11 @@ resource "brightbox_server" "web" {
 
 The following arguments are supported:
 
-* `target` - (Required) The CloudIP mapping target. This is the interface from a server, or the id of a load balancer or cloud sql resource
+* `target` - (Required) The CloudIP mapping target. This is the interface id from a server, or the id of a load balancer, server group or cloud sql resource.
 * `name` - (Optional) a label to assign to the CloudIP
 * `reverse_dns` - (Optional) The reverse DNS entry for the CloudIP
+
+Note that the default group for each account cannot be used as the target for a cloud ip.
 
 ## Attributes Reference
 

@@ -261,8 +261,22 @@ func setCloudipAttributes(
 	d.Set("locked", cloudip.Locked)
 	d.Set("reverse_dns", cloudip.ReverseDns)
 	d.Set("fqdn", cloudip.Fqdn)
+	// Set the server id first and let interface override it
+	// Server and interface should appear together, but catch at least one
+	if cloudip.Server != nil {
+		d.Set("target", cloudip.Server.Id)
+	}
 	if cloudip.Interface != nil {
 		d.Set("target", cloudip.Interface.Id)
+	}
+	if cloudip.LoadBalancer != nil {
+		d.Set("target", cloudip.LoadBalancer.Id)
+	}
+	if cloudip.DatabaseServer != nil {
+		d.Set("target", cloudip.DatabaseServer.Id)
+	}
+	if cloudip.ServerGroup != nil {
+		d.Set("target", cloudip.ServerGroup.Id)
 	}
 	d.Partial(false)
 	return nil
