@@ -1,10 +1,14 @@
 package brightbox
 
 import (
+	"context"
 	"log"
-	"net/http"
+	"strings"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/terraform/helper/logging"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
@@ -19,71 +23,102 @@ type authdetails struct {
 	password     string
 	Account      string
 	APIURL       string
-	currentToken *oauth2.Token
+	OrbitUrl     string
+	currentToken oauth2.TokenSource
 }
 
 // Authenticate the details and return a client
-func (authd *authdetails) authenticatedClient() (*brightbox.Client, error) {
-	switch {
-	case authd.currentToken != nil:
-		return authd.tokenisedAuth()
-	case authd.UserName != "" || authd.password != "":
-		return authd.tokenisedAuth()
-	default:
-		return authd.apiClientAuth()
+func (authd *authdetails) authenticatedClient() (*brightbox.Client, *gophercloud.ServiceClient, error) {
+	authContext := contextWithLoggedHttpClient()
+	if authd.currentToken == nil {
+		switch {
+		case authd.UserName != "" || authd.password != "":
+			if err := authd.getUserTokenSource(authContext); err != nil {
+				return nil, nil, err
+			}
+		default:
+			authd.getApiClientTokenSource(authContext)
+		}
+		//	log.Printf("[DEBUG] Authenticating with Tokensource")
+		//	if _, err := authd.currentToken.Token(); err != nil {
+		//		return nil, nil, err
+		//	}
+		//	log.Printf("[DEBUG] Authenticated")
 	}
+	log.Printf("[DEBUG] Fetching API Client")
+	httpClient := oauth2.NewClient(authContext, authd.currentToken)
+	// httpClient.Transport = logging.NewTransport("Brightbox", httpClient.Transport)
+	apiclient, err := brightbox.NewClient(authd.APIURL, authd.Account, httpClient)
+	if err != nil {
+		return nil, nil, err
+	}
+	log.Printf("[DEBUG] Fetching Orbit Service Client")
+	serviceclient, err := authd.getServiceClient(authContext)
+	if err != nil {
+		return nil, nil, err
+	}
+	return apiclient, serviceclient, nil
 }
 
 func (authd *authdetails) tokenURL() string {
-	return authd.APIURL + "/token"
+	return strings.TrimSuffix(authd.APIURL, "/") + "/token"
 }
 
-func (authd *authdetails) tokenisedAuth() (*brightbox.Client, error) {
+func (authd *authdetails) getUserTokenSource(ctx context.Context) error {
 	conf := oauth2.Config{
 		ClientID:     authd.APIClient,
 		ClientSecret: authd.APISecret,
 		Scopes:       infrastructureScope,
 		Endpoint: oauth2.Endpoint{
-			TokenURL: authd.tokenURL(),
+			AuthURL:   authd.APIURL,
+			TokenURL:  authd.tokenURL(),
+			AuthStyle: oauth2.AuthStyleInHeader,
 		},
 	}
-	if authd.currentToken == nil {
-		log.Printf("[DEBUG] Obtaining authentication for user %s", authd.UserName)
-		token, err := conf.PasswordCredentialsToken(oauth2.NoContext, authd.UserName, authd.password)
-		if err != nil {
-			return nil, err
-		}
-		authd.currentToken = token
+	log.Printf("[DEBUG] Obtaining Tokensource for user %s", authd.UserName)
+	token, err := conf.PasswordCredentialsToken(ctx, authd.UserName, authd.password)
+	if err != nil {
+		return err
 	}
-	log.Printf("[DEBUG] Refreshing current token if required")
-	oauthClient := conf.Client(oauth2.NoContext, authd.currentToken)
-
-	return newClient(authd.APIURL, authd.Account, oauthClient)
+	authd.currentToken = conf.TokenSource(ctx, token)
+	return nil
 }
 
-func (authd *authdetails) apiClientAuth() (*brightbox.Client, error) {
+func (authd *authdetails) getApiClientTokenSource(ctx context.Context) {
 	conf := clientcredentials.Config{
 		ClientID:     authd.APIClient,
 		ClientSecret: authd.APISecret,
 		Scopes:       infrastructureScope,
 		TokenURL:     authd.tokenURL(),
+		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
-	log.Printf("[DEBUG] Obtaining API client authorisation for client %s", authd.APIClient)
-	oauthClient := conf.Client(oauth2.NoContext)
-	if authd.currentToken == nil {
-		log.Printf("[DEBUG] Retrieving auth token for %s", conf.ClientID)
-		token, err := conf.Token(oauth2.NoContext)
-		if err != nil {
-			return nil, err
-		}
-		authd.currentToken = token
-	}
-
-	return newClient(authd.APIURL, authd.Account, oauthClient)
+	log.Printf("[DEBUG] Obtaining Tokensource for client %s", authd.APIClient)
+	authd.currentToken = conf.TokenSource(ctx)
 }
 
-func newClient(apiURL, account string, client *http.Client) (*brightbox.Client, error) {
+func contextWithLoggedHttpClient() context.Context {
+	client := cleanhttp.DefaultClient()
 	client.Transport = logging.NewTransport("Brightbox", client.Transport)
+	return context.WithValue(context.Background(), oauth2.HTTPClient, client)
+}
 
-	return brightbox.NewClient(apiURL, account, client)
+func (authd *authdetails) getServiceClient(ctx context.Context) (*gophercloud.ServiceClient, error) {
+	pc, err := authd.getProviderClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("[DEBUG] Obtaining Orbit Service Client")
+	return openstack.NewObjectStorageV1(pc, gophercloud.EndpointOpts{})
+}
+
+func (authd *authdetails) getProviderClient(ctx context.Context) (*gophercloud.ProviderClient, error) {
+	log.Printf("[DEBUG] Obtaining Provider Client")
+	client, err := openstack.NewClient(authd.OrbitUrl)
+	if err != nil {
+		return nil, err
+	}
+	client.EndpointLocator = func(opts gophercloud.EndpointOpts) (string, error) {
+		return authd.OrbitUrl, nil
+	}
+	return client, err
 }
