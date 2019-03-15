@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccBrightboxContainer_Basic(t *testing.T) {
-	var api_client brightbox.ApiClient
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -20,34 +19,24 @@ func TestAccBrightboxContainer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &api_client),
-					testAccCheckBrightboxContainerApiClientAttributes(&api_client),
+					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
 					resource.TestCheckResourceAttr(
 						"brightbox_container.foobar", "name", "initial"),
-					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "description", "initial"),
-					resource.TestCheckResourceAttrPtr(
-						"brightbox_container.foobar", "auth_user", &api_client.Id),
-					resource.TestCheckResourceAttrPtr(
-						"brightbox_container.foobar", "account_id", &api_client.Account.Id),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxContainerConfig_updated,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &api_client),
+					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
 					resource.TestCheckResourceAttr(
 						"brightbox_container.foobar", "name", "updated"),
-					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "description", "updated"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccBrightboxContainer_clear_names(t *testing.T) {
-	var container brightbox.ApiClient
+func TestAccBrightboxContainer_metadata(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -55,24 +44,27 @@ func TestAccBrightboxContainer_clear_names(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxContainerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxContainerConfig_basic,
+				Config: testAccCheckBrightboxContainerConfig_metadata,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &container),
-					testAccCheckBrightboxContainerApiClientAttributes(&container),
+					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
 					resource.TestCheckResourceAttr(
 						"brightbox_container.foobar", "name", "initial"),
-					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "description", "initial"),
 				),
 			},
 			{
-				Config: testAccCheckBrightboxContainerConfig_blank_desc,
+				Config: testAccCheckBrightboxContainerConfig_metadata_add,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar", &container),
+					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
 					resource.TestCheckResourceAttr(
 						"brightbox_container.foobar", "name", "initial"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxContainerConfig_metadata,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "description", ""),
+						"brightbox_container.foobar", "name", "initial"),
 				),
 			},
 		},
@@ -80,69 +72,34 @@ func TestAccBrightboxContainer_clear_names(t *testing.T) {
 }
 
 func testAccCheckBrightboxContainerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).ApiClient
+	client := testAccProvider.Meta().(*CompositeClient).OrbitClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_container" {
 			continue
 		}
 
-		// Try to find the ApiClient
-		_, err := client.ApiClient(rs.Primary.ID)
+		// Try to find the container
+		getresult := containers.Get(client, rs.Primary.ID, nil)
 
 		// Wait
 
-		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for container %s to be destroyed: %s",
-					rs.Primary.ID, err)
-			}
+		err := getresult.Err
+		if err != nil && err.Error() != "Resource not found" {
+			return fmt.Errorf(
+				"Error waiting for container %s to be destroyed: %s",
+				rs.Primary.ID, getresult.Err)
 		}
 	}
 
 	return nil
 }
 
-func testAccCheckBrightboxContainerExists(n string, api_client *brightbox.ApiClient) resource.TestCheckFunc {
+func testAccCheckBrightboxContainerExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
+		_, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ApiClient ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).ApiClient
-
-		// Try to find the ApiClient
-		retrieveApiClient, err := client.ApiClient(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveApiClient.Id != rs.Primary.ID {
-			return fmt.Errorf("ApiClient not found")
-		}
-
-		*api_client = *retrieveApiClient
-
-		return nil
-	}
-}
-
-func testAccCheckBrightboxContainerApiClientAttributes(api_client *brightbox.ApiClient) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		if api_client.Name != "initial" {
-			return fmt.Errorf("Bad name: %s", api_client.Name)
-		}
-		if api_client.Description != "initial" {
-			return fmt.Errorf("Bad description: %s", api_client.Description)
 		}
 		return nil
 	}
@@ -152,7 +109,6 @@ const testAccCheckBrightboxContainerConfig_basic = `
 
 resource "brightbox_container" "foobar" {
 	name = "initial"
-	description = "initial"
 }
 `
 
@@ -160,14 +116,30 @@ const testAccCheckBrightboxContainerConfig_updated = `
 
 resource "brightbox_container" "foobar" {
 	name = "updated"
-	description = "updated"
 }
 `
 
-const testAccCheckBrightboxContainerConfig_blank_desc = `
+const testAccCheckBrightboxContainerConfig_metadata = `
 
 resource "brightbox_container" "foobar" {
 	name = "initial"
-	description = ""
+	container_read = [ "acc-testy", "acc-12345"]
+	metadata {
+		"foo"= "bar"
+		"bar"= "baz" 
+	}
+}
+`
+
+const testAccCheckBrightboxContainerConfig_metadata_add = `
+
+resource "brightbox_container" "foobar" {
+	name = "initial"
+	metadata = {
+		"foo"= "bar"
+		"bar"= "foo"
+	}
+	container_read = [ "acc-testy", "acc-12345", "acc-98765"]
+	}
 }
 `

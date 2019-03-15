@@ -3,6 +3,7 @@ package brightbox
 import (
 	"context"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/brightbox/gobrightbox"
@@ -39,19 +40,23 @@ func (authd *authdetails) authenticatedClient() (*brightbox.Client, *gophercloud
 		default:
 			authd.getApiClientTokenSource(authContext)
 		}
-		//	log.Printf("[DEBUG] Authenticating with Tokensource")
-		//	if _, err := authd.currentToken.Token(); err != nil {
-		//		return nil, nil, err
-		//	}
-		//	log.Printf("[DEBUG] Authenticated")
 	}
 	log.Printf("[DEBUG] Fetching API Client")
 	httpClient := oauth2.NewClient(authContext, authd.currentToken)
-	// httpClient.Transport = logging.NewTransport("Brightbox", httpClient.Transport)
 	apiclient, err := brightbox.NewClient(authd.APIURL, authd.Account, httpClient)
 	if err != nil {
 		return nil, nil, err
 	}
+	if apiclient.AccountId == "" {
+		log.Printf("[INFO] Obtaining default account")
+		api_client, err := apiclient.ApiClient(authd.APIClient)
+		if err != nil {
+			return nil, nil, err
+		}
+		apiclient.AccountId = api_client.Account.Id
+		authd.Account = apiclient.AccountId
+	}
+
 	log.Printf("[DEBUG] Fetching Orbit Service Client")
 	serviceclient, err := authd.getServiceClient(authContext)
 	if err != nil {
@@ -62,6 +67,10 @@ func (authd *authdetails) authenticatedClient() (*brightbox.Client, *gophercloud
 
 func (authd *authdetails) tokenURL() string {
 	return strings.TrimSuffix(authd.APIURL, "/") + "/token"
+}
+
+func (authd *authdetails) storageURL() string {
+	return strings.TrimSuffix(authd.OrbitUrl, "/") + "/" + authd.Account + "/"
 }
 
 func (authd *authdetails) getUserTokenSource(ctx context.Context) error {
@@ -118,7 +127,23 @@ func (authd *authdetails) getProviderClient(ctx context.Context) (*gophercloud.P
 		return nil, err
 	}
 	client.EndpointLocator = func(opts gophercloud.EndpointOpts) (string, error) {
-		return authd.OrbitUrl, nil
+		return authd.storageURL(), nil
 	}
+	if httpClient, ok := ctx.Value(oauth2.HTTPClient).(*http.Client); ok {
+		client.HTTPClient = *httpClient
+	}
+	client.Context = ctx
+	client.ReauthFunc = func() error {
+		return client.SetTokenAndAuthResult(authd)
+	}
+	err = client.ReauthFunc()
 	return client, err
+}
+
+func (authd *authdetails) ExtractTokenID() (string, error) {
+	token, err := authd.currentToken.Token()
+	if err != nil {
+		return "", err
+	}
+	return token.AccessToken, nil
 }

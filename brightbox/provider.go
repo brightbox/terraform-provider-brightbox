@@ -58,6 +58,12 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_API_URL", brightbox.DefaultRegionApiURL),
 				Description: "Brightbox Cloud Api URL for selected Region",
 			},
+			"orbit_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_ORBIT_URL", brightbox.DefaultOrbitAuthURL),
+				Description: "Brightbox Cloud Orbit URL for selected Region",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"brightbox_image":         dataSourceBrightboxImage(),
@@ -87,6 +93,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		password:  d.Get("password").(string),
 		Account:   d.Get("account").(string),
 		APIURL:    d.Get("apiurl").(string),
+		OrbitUrl:  d.Get("orbit_url").(string),
 	}
 
 	if config.APIClient == defaultClientID && config.APISecret == defaultClientSecret {

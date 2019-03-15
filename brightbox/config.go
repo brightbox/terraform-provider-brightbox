@@ -4,32 +4,28 @@ import (
 	"log"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/gophercloud/gophercloud"
 )
 
 type CompositeClient struct {
-	ApiClient      *brightbox.Client
-	OrbitAuthToken *string
+	ApiClient   *brightbox.Client
+	OrbitClient *gophercloud.ServiceClient
 }
 
 func (c *authdetails) Client() (*CompositeClient, error) {
-	client, err := c.authenticatedClient()
+	apiclient, orbitclient, err := c.authenticatedClient()
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("[INFO] Brightbox Client configured for URL: %s", client.BaseURL.String())
-	if client.AccountId == "" {
-		log.Printf("[INFO] Provisioning on default account")
-	} else {
-		log.Printf("[INFO] Provisioning to account %s", client.AccountId)
-	}
+	log.Printf("[INFO] Brightbox Client configured for URL: %s", apiclient.BaseURL.String())
+	log.Printf("[INFO] Provisioning to account %s", apiclient.AccountId)
+	log.Printf("[INFO] Orbit Client configured for URL: %s", orbitclient.ResourceBaseURL())
 
 	composite := &CompositeClient{
-		ApiClient:      client,
-		OrbitAuthToken: &(c.currentToken.AccessToken),
+		ApiClient:   apiclient,
+		OrbitClient: orbitclient,
 	}
-
-	log.Printf("[DEBUG] Current Access Token is %s", *composite.OrbitAuthToken)
 
 	return composite, nil
 

@@ -1,19 +1,17 @@
 package brightbox
 
 import (
-	"fmt"
 	"log"
-	"net/http"
-	"net/url"
-	"path/filepath"
+	"strings"
+	"time"
 
-	"github.com/brightbox/gobrightbox"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 const (
 	default_container_permission = "storage"
-	defaultOrbitAuthUrl          = "https://orbit.brightbox.com/v1/"
 )
 
 func resourceBrightboxContainer() *schema.Resource {
@@ -22,35 +20,76 @@ func resourceBrightboxContainer() *schema.Resource {
 		Read:   resourceBrightboxContainerRead,
 		Update: resourceBrightboxContainerUpdate,
 		Delete: resourceBrightboxContainerDelete,
+		Exists: resourceBrightboxContainerExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: mustNotBeEmptyString,
+				ForceNew:     true,
+				ValidateFunc: validation.NoZeroValues,
 			},
-			"description": {
+			"metadata": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"container_read": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
+			},
+			"container_write": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
+			},
+			"container_sync_key": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"auth_user": {
+			"container_sync_to": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"content_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"versions_location": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"history_location"},
+			},
+			"history_location": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"versions_location"},
+			},
+			"object_count": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"bytes_used": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"content_length": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"storage_policy": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"auth_key": {
-				Type:      schema.TypeString,
-				Computed:  true,
-				Sensitive: true,
-			},
-			"account_id": {
+			"created_at": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"orbit_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_ORBIT_URL", defaultOrbitAuthUrl),
-				Description: "Brightbox Cloud Orbit URL for selected Region",
 			},
 		},
 	}
@@ -60,51 +99,39 @@ func resourceBrightboxContainerCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	composite := meta.(*CompositeClient)
-	client := composite.ApiClient
+	client := meta.(*CompositeClient).OrbitClient
 
-	log.Printf("[INFO] Creating API client")
-	api_client, err := createApiClient(d, client)
-	if err != nil {
-		return fmt.Errorf("Error creating Api Client: %s", err)
-	}
-	setInitialAccountAttributes(d, api_client)
-	container_url, err := createContainerUrl(d, api_client.Name)
-	if err != nil {
-		return err
-	}
-	log.Printf("[INFO] Creating container at %s in Orbit", container_url)
-	log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
-	err = createContainer(container_url, composite.OrbitAuthToken)
+	log.Printf("[INFO] Creating Container")
+	createOpts := getCreateContainerOptions(d)
+	log.Printf("[DEBUG] Container create configuration: %#v", createOpts)
+	container_path := containerPath(d)
+	log.Printf("[DEBUG] Create path is: %s", container_path)
+	container, err := containers.Create(client, container_path, createOpts).Extract()
 	if err != nil {
 		return err
 	}
-	return setContainerAttributes(d, api_client)
+	log.Printf("[INFO] Container created with TransID %s", container.TransID)
+	d.SetId(container_path)
+	return resourceBrightboxContainerRead(d, meta)
 }
 
 func resourceBrightboxContainerDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	composite := meta.(*CompositeClient)
-	client := composite.ApiClient
+	client := meta.(*CompositeClient).OrbitClient
 
-	container_url, err := createContainerUrl(d, d.Get("name").(string))
+	log.Printf("[INFO] Deleting Container")
+	container, err := containers.Delete(client, d.Id()).Extract()
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "missing resource:") {
+			log.Printf("[WARN] Container not found, removing from state")
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
-	log.Printf("[INFO] Removing container %s in Orbit", container_url)
-	log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
-	err = destroyContainer(container_url, composite.OrbitAuthToken)
-	if err != nil {
-		return err
-	}
-	user := d.Get("auth_user").(string)
-	log.Printf("[INFO] Deleting ApiClient %s", user)
-	err = client.DestroyApiClient(user)
-	if err != nil {
-		return fmt.Errorf("Error deleting ApiClient (%s): %s", user, err)
-	}
+	log.Printf("[INFO] Container deleted with TransID %s", container.TransID)
 	return nil
 }
 
@@ -112,48 +139,16 @@ func resourceBrightboxContainerUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	composite := meta.(*CompositeClient)
-	client := composite.ApiClient
+	client := meta.(*CompositeClient).OrbitClient
 
-	if d.HasChange("name") {
-		oraw, nraw := d.GetChange("name")
-		old_name := oraw.(string)
-		new_name := nraw.(string)
-		old_url, err := createContainerUrl(d, old_name)
-		if err != nil {
-			return err
-		}
-		log.Printf("[INFO] Removing old container %s in Orbit", old_url)
-		log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
-		err = destroyContainer(old_url, composite.OrbitAuthToken)
-		if err != nil {
-			return err
-		}
-		new_url, err := createContainerUrl(d, new_name)
-		if err != nil {
-			return err
-		}
-		log.Printf("[INFO] Creating new container %s in Orbit", new_url)
-		log.Printf("[DEBUG] Using Auth Token: %s", *composite.OrbitAuthToken)
-		err = createContainer(new_url, composite.OrbitAuthToken)
-		if err != nil {
-			return err
-		}
+	log.Printf("[INFO] Updating Container")
+	updateOpts := getUpdateContainerOptions(d)
+	log.Printf("[INFO] Container update configuration: %#v", updateOpts)
+	container, err := containers.Update(client, d.Id(), updateOpts).Extract()
+	if err != nil {
+		return err
 	}
-	if d.HasChange("name") || d.HasChange("description") {
-		log.Printf("[INFO] Updating API Client")
-		api_client_opts := &brightbox.ApiClientOptions{
-			Id: d.Get("auth_user").(string),
-		}
-		addContainerUpdateableApiClientOptions(d, api_client_opts)
-		log.Printf("[DEBUG] ApiClient update configuration: %#v", api_client_opts)
-
-		api_client, err := client.UpdateApiClient(api_client_opts)
-		if err != nil {
-			return fmt.Errorf("Error updating ApiClient (%s): %s", api_client_opts.Id, err)
-		}
-		return setContainerAttributes(d, api_client)
-	}
+	log.Printf("[INFO] Container updated with TransID %s", container.TransID)
 	return resourceBrightboxContainerRead(d, meta)
 }
 
@@ -161,105 +156,147 @@ func resourceBrightboxContainerRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).OrbitClient
 
-	api_client, err := client.ApiClient(d.Get("auth_user").(string))
+	log.Printf("[DEBUG] Reading container: %s", d.Id())
+	result := containers.Get(client, d.Id(), nil)
+	getresult, err := result.Extract()
 	if err != nil {
-		return fmt.Errorf("Error retrieving ApiClient details: %s", err)
+		return err
 	}
-
-	return setContainerAttributes(d, api_client)
+	log.Printf("[INFO] Container read with TransID %s", getresult.TransID)
+	metadata, _ := result.ExtractMetadata()
+	return setContainerAttributes(d, getresult, metadata)
 }
 
-func setInitialAccountAttributes(
+func resourceBrightboxContainerExists(
 	d *schema.ResourceData,
-	api_client *brightbox.ApiClient,
-) {
-	log.Printf("[DEBUG] Setting Partial")
-	d.Partial(true)
-	setAccountAttributes(d, api_client)
-	log.Printf("[DEBUG] Setting Key details")
-	d.Set("auth_key", api_client.Secret)
-	d.SetPartial("auth_key")
+	meta interface{},
+) (bool, error) {
+	client := meta.(*CompositeClient).OrbitClient
+
+	getresult := containers.Get(client, d.Id(), nil)
+	return getresult.Err == nil, getresult.Err
 }
 
-func setAccountAttributes(
+func containerPath(
 	d *schema.ResourceData,
-	api_client *brightbox.ApiClient,
-) {
-	log.Printf("[DEBUG] Setting Account details")
-	d.SetId(api_client.Id)
-	d.Set("auth_user", api_client.Id)
-	d.SetPartial("auth_user")
-	d.Set("account_id", api_client.Account.Id)
-	d.SetPartial("account_id")
+) string {
+	return d.Get("name").(string)
 }
 
 func setContainerAttributes(
 	d *schema.ResourceData,
-	api_client *brightbox.ApiClient,
+	attr *containers.GetHeader,
+	metadata map[string]string,
 ) error {
-	setAccountAttributes(d, api_client)
 	log.Printf("[DEBUG] Setting Container details")
-	d.Set("name", api_client.Name)
-	d.SetPartial("name")
-	d.Set("description", api_client.Description)
-	d.SetPartial("description")
-	log.Printf("[DEBUG] Clearing Partial")
-	d.Partial(false)
-	return nil
-}
-
-func addContainerUpdateableApiClientOptions(
-	d *schema.ResourceData,
-	opts *brightbox.ApiClientOptions,
-) {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.Description, "description")
-}
-
-func createApiClient(
-	d *schema.ResourceData,
-	client *brightbox.Client,
-) (*brightbox.ApiClient, error) {
-	permission_group := default_container_permission
-	api_client_opts := &brightbox.ApiClientOptions{
-		PermissionsGroup: &permission_group,
-	}
-	addContainerUpdateableApiClientOptions(d, api_client_opts)
-	return client.CreateApiClient(api_client_opts)
-}
-
-func createContainerUrl(d *schema.ResourceData, name string) (string, error) {
-	base_url, err := url.Parse(d.Get("orbit_url").(string))
-	if err != nil {
-		return "", err
-	}
-	rel_url, err := url.Parse(filepath.Join(base_url.EscapedPath(), d.Get("account_id").(string), name))
-	if err != nil {
-		return "", err
-	}
-	return base_url.ResolveReference(rel_url).String(), nil
-}
-
-func manipulateContainer(url string, token *string, action string) error {
-	req, err := http.NewRequest(action, url, nil)
-	if err != nil {
-		return fmt.Errorf("Error creating Orbit request %s", err)
-	}
-	req.Header.Set("X-Auth-Token", *token)
-	resp, err := makeHttpRequest(req)
-	if err != nil {
+	if err := d.Set("name", d.Id()); err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	if err := d.Set("content_type", attr.ContentType); err != nil {
+		return err
+	}
+	if err := d.Set("container_read", attr.Read); err != nil {
+		return err
+	}
+	if err := d.Set("container_write", attr.Write); err != nil {
+		return err
+	}
+	if err := d.Set("versions_location", attr.VersionsLocation); err != nil {
+		return err
+	}
+	if err := d.Set("history_location", attr.HistoryLocation); err != nil {
+		return err
+	}
+	if err := d.Set("metadata", metadata); err != nil {
+		return err
+	}
+	//Computed
+	if err := d.Set("storage_policy", attr.StoragePolicy); err != nil {
+		return err
+	}
+	if err := d.Set("object_count", attr.ObjectCount); err != nil {
+		return err
+	}
+	if err := d.Set("created_at", attr.Date.Format(time.RFC3339)); err != nil {
+		return err
+	}
+	if err := d.Set("content_length", attr.ContentLength); err != nil {
+		return err
+	}
+	if err := d.Set("bytes_used", attr.BytesUsed); err != nil {
+		return err
+	}
 	return nil
 }
 
-func createContainer(url string, token *string) error {
-	return manipulateContainer(url, token, "PUT")
+func getUpdateContainerOptions(
+	d *schema.ResourceData,
+) *containers.UpdateOpts {
+	opts := &containers.UpdateOpts{}
+	opts.ContainerRead = strings.Join(map_from_string_set(d, "container_read"), ",")
+	opts.ContainerWrite = strings.Join(map_from_string_set(d, "container_write"), ",")
+	if attr, ok := d.GetOk("metadata"); ok {
+		opts.Metadata = attr.(map[string]string)
+	}
+	if attr, ok := d.GetOk("content_type"); ok {
+		opts.ContentType = attr.(string)
+	}
+	if attr, ok := d.GetOk("container_sync_to"); ok {
+		opts.ContainerSyncTo = attr.(string)
+	}
+	if attr, ok := d.GetOk("container_sync_key"); ok {
+		opts.ContainerSyncKey = attr.(string)
+	}
+	if attr, ok := d.GetOk("versions_location"); ok {
+		if attr == "" {
+			opts.RemoveVersionsLocation = "yup"
+		}
+		opts.VersionsLocation = attr.(string)
+	}
+	if attr, ok := d.GetOk("history_location"); ok {
+		if attr == "" {
+			opts.RemoveHistoryLocation = "yup"
+		}
+		opts.HistoryLocation = attr.(string)
+	}
+	return opts
 }
 
-func destroyContainer(url string, token *string) error {
-	return manipulateContainer(url, token, "DELETE")
+func getCreateContainerOptions(
+	d *schema.ResourceData,
+) *containers.CreateOpts {
+	opts := &containers.CreateOpts{}
+	opts.ContainerRead = strings.Join(map_from_string_set(d, "container_read"), ",")
+	opts.ContainerWrite = strings.Join(map_from_string_set(d, "container_write"), ",")
+	if attr, ok := d.GetOk("metadata"); ok {
+		source := attr.(map[string]interface{})
+		dest := make(map[string]string, len(source))
+		for i := range source {
+			dest[i] = source[i].(string)
+		}
+		opts.Metadata = dest
+	}
+	if attr, ok := d.GetOk("content_type"); ok {
+		opts.ContentType = attr.(string)
+	}
+	if attr, ok := d.GetOk("container_sync_to"); ok {
+		opts.ContainerSyncTo = attr.(string)
+	}
+	if attr, ok := d.GetOk("container_sync_key"); ok {
+		opts.ContainerSyncKey = attr.(string)
+	}
+	if attr, ok := d.GetOk("versions_location"); ok {
+		opts.VersionsLocation = attr.(string)
+	}
+	if attr, ok := d.GetOk("history_location"); ok {
+		opts.HistoryLocation = attr.(string)
+	}
+	return opts
+}
+
+func fromId(path string) (string, string) {
+	elem := strings.SplitN(path, "/", 2)
+	return elem[0], elem[1]
 }
