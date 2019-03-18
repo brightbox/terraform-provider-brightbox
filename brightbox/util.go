@@ -127,15 +127,6 @@ func stringValidateFunc(v interface{}, name string, failureTest func(string) boo
 	return
 }
 
-func mustNotBeEmptyString(v interface{}, name string) ([]string, []error) {
-	return stringValidateFunc(
-		v,
-		name,
-		func(value string) bool { return value == "" },
-		"%q cannot be empty",
-	)
-}
-
 func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
 	return stringValidateFunc(
 		v,
@@ -143,4 +134,123 @@ func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
 		func(value string) bool { return !isBase64Encoded(value) },
 		"%q must be base64-encoded",
 	)
+}
+
+func http1Keys(v interface{}, name string) (warns []string, errors []error) {
+	mapValue, ok := v.(map[string]interface{})
+	if !ok {
+		errors = append(errors, fmt.Errorf("expected type of %s to be a Map", name))
+		return
+	}
+	for k := range mapValue {
+		if !validToken(k) {
+			errors = append(errors, fmt.Errorf("Metadata key %s is an invalid token. Should be all lower case, with no underscores", k))
+
+		}
+	}
+	return
+}
+
+// Token has to be lower case
+func validToken(tok string) bool {
+	for i := 0; i < len(tok); i++ {
+		if !validHeaderFieldByte(tok[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// validHeaderFieldByte reports whether b is a valid byte in a header
+// field name. RFC 7230 says:
+//   header-field   = field-name ":" OWS field-value OWS
+//   field-name     = token
+//   tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
+//           "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+//   token = 1*tchar
+//
+// Underscore isn't valid. Needs to be a hyphen as Swift silently
+// converts otherwise.
+func validHeaderFieldByte(b byte) bool {
+	return int(b) < len(isTokenTable) && isTokenTable[b]
+}
+
+var isTokenTable = [127]bool{
+	'!':  true,
+	'#':  true,
+	'$':  true,
+	'%':  true,
+	'&':  true,
+	'\'': true,
+	'*':  true,
+	'+':  true,
+	'-':  true,
+	'.':  true,
+	'0':  true,
+	'1':  true,
+	'2':  true,
+	'3':  true,
+	'4':  true,
+	'5':  true,
+	'6':  true,
+	'7':  true,
+	'8':  true,
+	'9':  true,
+	'A':  false,
+	'B':  false,
+	'C':  false,
+	'D':  false,
+	'E':  false,
+	'F':  false,
+	'G':  false,
+	'H':  false,
+	'I':  false,
+	'J':  false,
+	'K':  false,
+	'L':  false,
+	'M':  false,
+	'N':  false,
+	'O':  false,
+	'P':  false,
+	'Q':  false,
+	'R':  false,
+	'S':  false,
+	'T':  false,
+	'U':  false,
+	'W':  false,
+	'V':  false,
+	'X':  false,
+	'Y':  false,
+	'Z':  false,
+	'^':  true,
+	'_':  false,
+	'`':  true,
+	'a':  true,
+	'b':  true,
+	'c':  true,
+	'd':  true,
+	'e':  true,
+	'f':  true,
+	'g':  true,
+	'h':  true,
+	'i':  true,
+	'j':  true,
+	'k':  true,
+	'l':  true,
+	'm':  true,
+	'n':  true,
+	'o':  true,
+	'p':  true,
+	'q':  true,
+	'r':  true,
+	's':  true,
+	't':  true,
+	'u':  true,
+	'v':  true,
+	'w':  true,
+	'x':  true,
+	'y':  true,
+	'z':  true,
+	'|':  true,
+	'~':  true,
 }

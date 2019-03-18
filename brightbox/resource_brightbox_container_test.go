@@ -127,6 +127,7 @@ resource "brightbox_container" "foobar" {
 	metadata {
 		"foo"= "bar"
 		"bar"= "baz" 
+		"uni" = "€uro"
 	}
 }
 `
@@ -138,8 +139,8 @@ resource "brightbox_container" "foobar" {
 	metadata = {
 		"foo"= "bar"
 		"bar"= "foo"
+		"uni" = "€uro"
 	}
-	container_read = [ "acc-testy", "acc-12345", "acc-98765"]
-	}
+	container_read = [ "acc-testy", "acc-12345", "acc-98765" ]
 }
 `

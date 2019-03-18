@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -35,29 +36,32 @@ func resourceBrightboxContainer() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateFunc: http1Keys,
 			},
 			"container_read": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Set: schema.HashString,
 			},
 			"container_write": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Set: schema.HashString,
 			},
 			"container_sync_key": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"container_sync_to": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"content_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -76,10 +80,6 @@ func resourceBrightboxContainer() *schema.Resource {
 				Computed: true,
 			},
 			"bytes_used": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"content_length": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
@@ -185,44 +185,73 @@ func containerPath(
 	return d.Get("name").(string)
 }
 
+func setUnescapedString(d *schema.ResourceData, elem string, inputString string) error {
+	temp, err := url.PathUnescape(inputString)
+	if err != nil {
+		return err
+	}
+	return d.Set(elem, temp)
+}
+
+func setUnescapedStringSet(d *schema.ResourceData, elem string, inputStringSet []string) error {
+	var tempSet []string
+	for _, str := range inputStringSet {
+		if str != "" {
+			temp, err := url.PathUnescape(str)
+			if err != nil {
+				return err
+			}
+			tempSet = append(tempSet, temp)
+		}
+	}
+	return d.Set(elem, tempSet)
+}
+
+func setUnescapedStringMap(d *schema.ResourceData, elem string, inputMap map[string]string) error {
+	dest := make(map[string]string)
+	source := inputMap
+	for k, v := range source {
+		temp, err := url.PathUnescape(v)
+		if err != nil {
+			return err
+		}
+		dest[strings.ToLower(k)] = temp
+	}
+	return d.Set(elem, dest)
+}
+
 func setContainerAttributes(
 	d *schema.ResourceData,
 	attr *containers.GetHeader,
 	metadata map[string]string,
 ) error {
-	log.Printf("[DEBUG] Setting Container details")
-	if err := d.Set("name", d.Id()); err != nil {
+	log.Printf("[DEBUG] Setting Container details from %#v", attr)
+	if err := setUnescapedString(d, "name", d.Id()); err != nil {
 		return err
 	}
-	if err := d.Set("content_type", attr.ContentType); err != nil {
+	if err := setUnescapedStringSet(d, "container_read", attr.Read); err != nil {
 		return err
 	}
-	if err := d.Set("container_read", attr.Read); err != nil {
+	if err := setUnescapedStringSet(d, "container_write", attr.Write); err != nil {
 		return err
 	}
-	if err := d.Set("container_write", attr.Write); err != nil {
+	if err := setUnescapedString(d, "versions_location", attr.VersionsLocation); err != nil {
 		return err
 	}
-	if err := d.Set("versions_location", attr.VersionsLocation); err != nil {
+	if err := setUnescapedString(d, "history_location", attr.HistoryLocation); err != nil {
 		return err
 	}
-	if err := d.Set("history_location", attr.HistoryLocation); err != nil {
-		return err
-	}
-	if err := d.Set("metadata", metadata); err != nil {
+	if err := setUnescapedStringMap(d, "metadata", metadata); err != nil {
 		return err
 	}
 	//Computed
-	if err := d.Set("storage_policy", attr.StoragePolicy); err != nil {
+	if err := setUnescapedString(d, "storage_policy", attr.StoragePolicy); err != nil {
 		return err
 	}
 	if err := d.Set("object_count", attr.ObjectCount); err != nil {
 		return err
 	}
 	if err := d.Set("created_at", attr.Date.Format(time.RFC3339)); err != nil {
-		return err
-	}
-	if err := d.Set("content_length", attr.ContentLength); err != nil {
 		return err
 	}
 	if err := d.Set("bytes_used", attr.BytesUsed); err != nil {
@@ -235,31 +264,30 @@ func getUpdateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.UpdateOpts {
 	opts := &containers.UpdateOpts{}
-	opts.ContainerRead = strings.Join(map_from_string_set(d, "container_read"), ",")
-	opts.ContainerWrite = strings.Join(map_from_string_set(d, "container_write"), ",")
+	opts.ContainerRead = strings.Join(headerEscapedList(map_from_string_set(d, "container_read")), ",")
+	opts.ContainerWrite = strings.Join(headerEscapedList(map_from_string_set(d, "container_write")), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
-		opts.Metadata = attr.(map[string]string)
-	}
-	if attr, ok := d.GetOk("content_type"); ok {
-		opts.ContentType = attr.(string)
+		opts.Metadata = headerEscapedMetadata(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
-		opts.ContainerSyncTo = attr.(string)
+		opts.ContainerSyncTo = headerEscaped(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_key"); ok {
-		opts.ContainerSyncKey = attr.(string)
+		opts.ContainerSyncKey = headerEscaped(attr)
 	}
 	if attr, ok := d.GetOk("versions_location"); ok {
 		if attr == "" {
 			opts.RemoveVersionsLocation = "yup"
+		} else {
+			opts.VersionsLocation = headerEscaped(attr)
 		}
-		opts.VersionsLocation = attr.(string)
 	}
 	if attr, ok := d.GetOk("history_location"); ok {
 		if attr == "" {
 			opts.RemoveHistoryLocation = "yup"
+		} else {
+			opts.HistoryLocation = headerEscaped(attr)
 		}
-		opts.HistoryLocation = attr.(string)
 	}
 	return opts
 }
@@ -268,30 +296,22 @@ func getCreateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.CreateOpts {
 	opts := &containers.CreateOpts{}
-	opts.ContainerRead = strings.Join(map_from_string_set(d, "container_read"), ",")
-	opts.ContainerWrite = strings.Join(map_from_string_set(d, "container_write"), ",")
+	opts.ContainerRead = strings.Join(headerEscapedList(map_from_string_set(d, "container_read")), ",")
+	opts.ContainerWrite = strings.Join(headerEscapedList(map_from_string_set(d, "container_write")), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
-		source := attr.(map[string]interface{})
-		dest := make(map[string]string, len(source))
-		for i := range source {
-			dest[i] = source[i].(string)
-		}
-		opts.Metadata = dest
-	}
-	if attr, ok := d.GetOk("content_type"); ok {
-		opts.ContentType = attr.(string)
+		opts.Metadata = headerEscapedMetadata(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
-		opts.ContainerSyncTo = attr.(string)
+		opts.ContainerSyncTo = headerEscaped(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_key"); ok {
-		opts.ContainerSyncKey = attr.(string)
+		opts.ContainerSyncKey = headerEscaped(attr)
 	}
 	if attr, ok := d.GetOk("versions_location"); ok {
-		opts.VersionsLocation = attr.(string)
+		opts.VersionsLocation = headerEscaped(attr)
 	}
 	if attr, ok := d.GetOk("history_location"); ok {
-		opts.HistoryLocation = attr.(string)
+		opts.HistoryLocation = headerEscaped(attr)
 	}
 	return opts
 }
@@ -299,4 +319,25 @@ func getCreateContainerOptions(
 func fromId(path string) (string, string) {
 	elem := strings.SplitN(path, "/", 2)
 	return elem[0], elem[1]
+}
+
+func headerEscaped(attr interface{}) string {
+	return url.PathEscape(attr.(string))
+}
+
+func headerEscapedList(source []string) []string {
+	dest := make([]string, len(source))
+	for i, v := range source {
+		dest[i] = headerEscaped(v)
+	}
+	return dest
+}
+
+func headerEscapedMetadata(metadata interface{}) map[string]string {
+	dest := make(map[string]string)
+	source := metadata.(map[string]interface{})
+	for k, v := range source {
+		dest[strings.ToLower(k)] = url.PathEscape(v.(string))
+	}
+	return dest
 }
