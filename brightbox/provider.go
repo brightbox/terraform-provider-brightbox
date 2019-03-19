@@ -78,7 +78,7 @@ func Provider() terraform.ResourceProvider {
 			"brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
 			"brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
 			"brightbox_database_server": resourceBrightboxDatabaseServer(),
-			"brightbox_container":       resourceBrightboxContainer(),
+			"brightbox_orbit_container": resourceBrightboxContainer(),
 			"brightbox_api_client":      resourceBrightboxApiClient(),
 		},
 		ConfigureFunc: providerConfigure,

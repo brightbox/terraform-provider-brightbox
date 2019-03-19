@@ -19,17 +19,17 @@ func TestAccBrightboxContainer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
+					testAccCheckBrightboxContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "initial"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxContainerConfig_updated,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
+					testAccCheckBrightboxContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "name", "updated"),
+						"brightbox_orbit_container.foobar", "name", "updated"),
 				),
 			},
 		},
@@ -46,25 +46,25 @@ func TestAccBrightboxContainer_metadata(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxContainerConfig_metadata,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
+					testAccCheckBrightboxContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "initial"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxContainerConfig_metadata_add,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
+					testAccCheckBrightboxContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "initial"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxContainerConfig_metadata,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxContainerExists("brightbox_container.foobar"),
+					testAccCheckBrightboxContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "initial"),
 				),
 			},
 		},
@@ -75,7 +75,7 @@ func testAccCheckBrightboxContainerDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*CompositeClient).OrbitClient
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_container" {
+		if rs.Type != "brightbox_orbit_container" {
 			continue
 		}
 
@@ -107,21 +107,21 @@ func testAccCheckBrightboxContainerExists(n string) resource.TestCheckFunc {
 
 const testAccCheckBrightboxContainerConfig_basic = `
 
-resource "brightbox_container" "foobar" {
+resource "brightbox_orbit_container" "foobar" {
 	name = "initial"
 }
 `
 
 const testAccCheckBrightboxContainerConfig_updated = `
 
-resource "brightbox_container" "foobar" {
+resource "brightbox_orbit_container" "foobar" {
 	name = "updated"
 }
 `
 
 const testAccCheckBrightboxContainerConfig_metadata = `
 
-resource "brightbox_container" "foobar" {
+resource "brightbox_orbit_container" "foobar" {
 	name = "initial"
 	container_read = [ "acc-testy", "acc-12345"]
 	metadata {
@@ -134,7 +134,7 @@ resource "brightbox_container" "foobar" {
 
 const testAccCheckBrightboxContainerConfig_metadata_add = `
 
-resource "brightbox_container" "foobar" {
+resource "brightbox_orbit_container" "foobar" {
 	name = "initial"
 	metadata = {
 		"foo"= "bar"
