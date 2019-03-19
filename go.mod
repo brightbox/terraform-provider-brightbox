@@ -20,7 +20,6 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure v1.0.0 // indirect
-	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/zclconf/go-cty v0.0.0-20190212192503-19dda139b164 // indirect
 	golang.org/x/crypto v0.0.0-20190219172222-a4c6cb3142f2 // indirect
 	golang.org/x/oauth2 v0.0.0-20190212230446-3e8b2be13635

@@ -3,7 +3,6 @@ package brightbox
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform/helper/schema"

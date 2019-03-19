@@ -5,8 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/gophercloud/gophercloud"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -253,4 +256,36 @@ var isTokenTable = [127]bool{
 	'z':  true,
 	'|':  true,
 	'~':  true,
+}
+
+func escapedString(attr interface{}) string {
+	return url.PathEscape(attr.(string))
+}
+
+func escapedStringList(source []string) []string {
+	dest := make([]string, len(source))
+	for i, v := range source {
+		dest[i] = escapedString(v)
+	}
+	return dest
+}
+
+func escapedStringMetadata(metadata interface{}) map[string]string {
+	dest := make(map[string]string)
+	source := metadata.(map[string]interface{})
+	for k, v := range source {
+		dest[strings.ToLower(k)] = url.PathEscape(v.(string))
+	}
+	return dest
+}
+
+// CheckDeleted checks the error to see if it's a 404 (Not Found) and, if so,
+// sets the resource ID to the empty string instead of throwing an error.
+func CheckDeleted(d *schema.ResourceData, err error, msg string) error {
+	if _, ok := err.(gophercloud.ErrDefault404); ok {
+		d.SetId("")
+		return nil
+	}
+
+	return fmt.Errorf("%s %s: %s", msg, d.Id(), err)
 }

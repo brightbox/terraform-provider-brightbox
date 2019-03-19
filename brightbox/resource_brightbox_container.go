@@ -21,7 +21,7 @@ func resourceBrightboxContainer() *schema.Resource {
 		Read:   resourceBrightboxContainerRead,
 		Update: resourceBrightboxContainerUpdate,
 		Delete: resourceBrightboxContainerDelete,
-		Exists: resourceBrightboxContainerExists,
+		//Exists: resourceBrightboxContainerExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -124,11 +124,6 @@ func resourceBrightboxContainerDelete(
 	log.Printf("[INFO] Deleting Container")
 	container, err := containers.Delete(client, d.Id()).Extract()
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing resource:") {
-			log.Printf("[WARN] Container not found, removing from state")
-			d.SetId("")
-			return nil
-		}
 		return err
 	}
 	log.Printf("[INFO] Container deleted with TransID %s", container.TransID)
@@ -162,22 +157,24 @@ func resourceBrightboxContainerRead(
 	result := containers.Get(client, d.Id(), nil)
 	getresult, err := result.Extract()
 	if err != nil {
-		return err
+		log.Printf("[DEBUG] Checking if container is deleted")
+		return CheckDeleted(d, result.Err, "container")
 	}
 	log.Printf("[INFO] Container read with TransID %s", getresult.TransID)
 	metadata, _ := result.ExtractMetadata()
 	return setContainerAttributes(d, getresult, metadata)
 }
 
-func resourceBrightboxContainerExists(
-	d *schema.ResourceData,
-	meta interface{},
-) (bool, error) {
-	client := meta.(*CompositeClient).OrbitClient
-
-	getresult := containers.Get(client, d.Id(), nil)
-	return getresult.Err == nil, getresult.Err
-}
+//func resourceBrightboxContainerExists(
+//	d *schema.ResourceData,
+//	meta interface{},
+//) (bool, error) {
+//	client := meta.(*CompositeClient).OrbitClient
+//
+//	log.Printf("[DEBUG] Checking if container exists: %s", d.Id())
+//	getresult := containers.Get(client, d.Id(), nil)
+//	return getresult.Err == nil, getresult.Err
+//}
 
 func containerPath(
 	d *schema.ResourceData,
@@ -264,29 +261,29 @@ func getUpdateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.UpdateOpts {
 	opts := &containers.UpdateOpts{}
-	opts.ContainerRead = strings.Join(headerEscapedList(map_from_string_set(d, "container_read")), ",")
-	opts.ContainerWrite = strings.Join(headerEscapedList(map_from_string_set(d, "container_write")), ",")
+	opts.ContainerRead = strings.Join(escapedStringList(map_from_string_set(d, "container_read")), ",")
+	opts.ContainerWrite = strings.Join(escapedStringList(map_from_string_set(d, "container_write")), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
-		opts.Metadata = headerEscapedMetadata(attr)
+		opts.Metadata = escapedStringMetadata(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
-		opts.ContainerSyncTo = headerEscaped(attr)
+		opts.ContainerSyncTo = escapedString(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_key"); ok {
-		opts.ContainerSyncKey = headerEscaped(attr)
+		opts.ContainerSyncKey = escapedString(attr)
 	}
 	if attr, ok := d.GetOk("versions_location"); ok {
 		if attr == "" {
 			opts.RemoveVersionsLocation = "yup"
 		} else {
-			opts.VersionsLocation = headerEscaped(attr)
+			opts.VersionsLocation = escapedString(attr)
 		}
 	}
 	if attr, ok := d.GetOk("history_location"); ok {
 		if attr == "" {
 			opts.RemoveHistoryLocation = "yup"
 		} else {
-			opts.HistoryLocation = headerEscaped(attr)
+			opts.HistoryLocation = escapedString(attr)
 		}
 	}
 	return opts
@@ -296,48 +293,22 @@ func getCreateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.CreateOpts {
 	opts := &containers.CreateOpts{}
-	opts.ContainerRead = strings.Join(headerEscapedList(map_from_string_set(d, "container_read")), ",")
-	opts.ContainerWrite = strings.Join(headerEscapedList(map_from_string_set(d, "container_write")), ",")
+	opts.ContainerRead = strings.Join(escapedStringList(map_from_string_set(d, "container_read")), ",")
+	opts.ContainerWrite = strings.Join(escapedStringList(map_from_string_set(d, "container_write")), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
-		opts.Metadata = headerEscapedMetadata(attr)
+		opts.Metadata = escapedStringMetadata(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
-		opts.ContainerSyncTo = headerEscaped(attr)
+		opts.ContainerSyncTo = escapedString(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_key"); ok {
-		opts.ContainerSyncKey = headerEscaped(attr)
+		opts.ContainerSyncKey = escapedString(attr)
 	}
 	if attr, ok := d.GetOk("versions_location"); ok {
-		opts.VersionsLocation = headerEscaped(attr)
+		opts.VersionsLocation = escapedString(attr)
 	}
 	if attr, ok := d.GetOk("history_location"); ok {
-		opts.HistoryLocation = headerEscaped(attr)
+		opts.HistoryLocation = escapedString(attr)
 	}
 	return opts
-}
-
-func fromId(path string) (string, string) {
-	elem := strings.SplitN(path, "/", 2)
-	return elem[0], elem[1]
-}
-
-func headerEscaped(attr interface{}) string {
-	return url.PathEscape(attr.(string))
-}
-
-func headerEscapedList(source []string) []string {
-	dest := make([]string, len(source))
-	for i, v := range source {
-		dest[i] = headerEscaped(v)
-	}
-	return dest
-}
-
-func headerEscapedMetadata(metadata interface{}) map[string]string {
-	dest := make(map[string]string)
-	source := metadata.(map[string]interface{})
-	for k, v := range source {
-		dest[strings.ToLower(k)] = url.PathEscape(v.(string))
-	}
-	return dest
 }
