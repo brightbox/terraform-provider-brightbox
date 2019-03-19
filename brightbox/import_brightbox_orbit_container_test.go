@@ -6,37 +6,38 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccBrightboxContainer_importBasic(t *testing.T) {
+func TestAccBrightboxOrbitContainer_importBasic(t *testing.T) {
 	resourceName := "brightbox_orbit_container.foobar"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxContainerDestroy,
+		CheckDestroy: testAccCheckBrightboxOrbitContainerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxContainerConfig_basic,
+				Config: testAccCheckBrightboxOrbitContainerConfig_basic,
 			},
 
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"created_at"},
 			},
 		},
 	})
 }
 
-func TestAccBrightboxContainer_importMetadata(t *testing.T) {
+func TestAccBrightboxOrbitContainer_importMetadata(t *testing.T) {
 	resourceName := "brightbox_orbit_container.foobar"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxContainerDestroy,
+		CheckDestroy: testAccCheckBrightboxOrbitContainerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxContainerConfig_metadata,
+				Config: testAccCheckBrightboxOrbitContainerConfig_metadata,
 			},
 
 			{
