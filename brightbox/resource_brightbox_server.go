@@ -192,6 +192,11 @@ func resourceBrightboxServerRead(
 	if err != nil {
 		return fmt.Errorf("Error retrieving server details: %s", err)
 	}
+	if server.Status == "deleted" {
+		log.Printf("[WARN] Server not found, removing from state: %s", d.Id())
+		d.SetId("")
+		return nil
+	}
 
 	return setServerAttributes(d, server)
 }
@@ -283,11 +288,6 @@ func setServerAttributes(
 	d *schema.ResourceData,
 	server *brightbox.Server,
 ) error {
-	// If server is deleted, clear the Id to tell Terraform to remove the record
-	if server.Status == "deleted" {
-		d.SetId("")
-		return nil
-	}
 	d.Set("image", server.Image.Id)
 	d.Set("name", server.Name)
 	d.Set("type", server.ServerType.Handle)

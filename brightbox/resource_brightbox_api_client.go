@@ -79,12 +79,12 @@ func resourceBrightboxApiClientRead(
 
 	api_client, err := client.ApiClient(d.Id())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Api Client not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
 		return fmt.Errorf("Error retrieving Api Client details: %s", err)
+	}
+	if api_client.RevokedAt != nil {
+		log.Printf("[WARN] Api Client revoked, removing from state: %s", d.Id())
+		d.SetId("")
+		return nil
 	}
 
 	log.Printf("[DEBUG] Api Client read: %#v", api_client)

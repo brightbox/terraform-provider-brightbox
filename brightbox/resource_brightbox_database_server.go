@@ -3,7 +3,6 @@ package brightbox
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/google/go-cmp/cmp"
@@ -279,12 +278,12 @@ func resourceBrightboxDatabaseServerRead(
 	log.Printf("[DEBUG] Database Server read called for %s", d.Id())
 	database_server, err := client.DatabaseServer(d.Id())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
 		return fmt.Errorf("Error retrieving Database Server details: %s", err)
+	}
+	if database_server.Status == "deleted" {
+		log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
+		d.SetId("")
+		return nil
 	}
 	setDatabaseServerAttributes(d, database_server)
 	setAllowAccessAttribute(d, database_server)

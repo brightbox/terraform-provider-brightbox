@@ -23,6 +23,8 @@ github.com/brightbox/gobrightbox v0.2.2 h1:/O0tfTzYXdzm2bXqySgHmC5jmUoj67CR7H/qW
 github.com/brightbox/gobrightbox v0.2.2/go.mod h1:tCMIbaWUVxhNXF726UbcZpBbcjzNuh1k787aFQfuEN8=
 github.com/brightbox/gobrightbox v0.2.3-0.20190314122707-075a230b38df h1:A8MtNCJUw+6/tb1s8U8c5/Go3C+VOLfUaOh9sk0h6aQ=
 github.com/brightbox/gobrightbox v0.2.3-0.20190314122707-075a230b38df/go.mod h1:DKd0xhyHUJfy3E4o0EnIZ7VaFiPg/w+4iUwKAh3b+XA=
+github.com/brightbox/gobrightbox v0.3.0 h1:IfbpOLhurybTavx4FiseRl9ySjaBont0a23Mp1S7lFM=
+github.com/brightbox/gobrightbox v0.3.0/go.mod h1:DKd0xhyHUJfy3E4o0EnIZ7VaFiPg/w+4iUwKAh3b+XA=
 github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e/go.mod h1:N+BjUcTjSxc2mtRGSCPsat1kze3CUtvJN3/jTXlp29k=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
