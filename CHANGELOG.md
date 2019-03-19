@@ -4,6 +4,8 @@
 - Add timeout support for servers
 - Add timeout support for Cloud IPs
 - Add API client resource
+- Add orbit container resource 
+- Remove old container resource
 
 ## 1.0.6 (March 04, 2019)
 - Switch to Go Modules #3
