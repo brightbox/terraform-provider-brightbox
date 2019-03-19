@@ -100,11 +100,6 @@ func resourceBrightboxApiClientDelete(
 	log.Printf("[INFO] Deleting Api Client %s", d.Id())
 	err := client.DestroyApiClient(d.Id())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Api Client not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
 		return fmt.Errorf("Error deleting Api Client (%s): %s", d.Id(), err)
 	}
 	return nil
