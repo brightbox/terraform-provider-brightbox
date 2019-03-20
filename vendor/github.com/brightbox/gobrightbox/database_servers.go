@@ -12,20 +12,21 @@ type DatabaseServer struct {
 	Description        string
 	Status             string
 	Account            Account
-	DatabaseEngine     string     `json:"database_engine"`
-	DatabaseVersion    string     `json:"database_version"`
-	AdminUsername      string     `json:"admin_username"`
-	AdminPassword      string     `json:"admin_password"`
-	CreatedAt          *time.Time `json:"created_at"`
-	UpdatedAt          *time.Time `json:"updated_at"`
-	DeletedAt          *time.Time `json:"deleted_at"`
-	AllowAccess        []string   `json:"allow_access"`
-	MaintenanceWeekday int        `json:"maintenance_weekday"`
-	MaintenanceHour    int        `json:"maintenance_hour"`
-	Locked             bool
-	CloudIPs           []CloudIP `json:"cloud_ips"`
-	Zone               Zone
+	DatabaseEngine     string             `json:"database_engine"`
+	DatabaseVersion    string             `json:"database_version"`
+	AdminUsername      string             `json:"admin_username"`
+	AdminPassword      string             `json:"admin_password"`
+	CreatedAt          *time.Time         `json:"created_at"`
+	UpdatedAt          *time.Time         `json:"updated_at"`
+	DeletedAt          *time.Time         `json:"deleted_at"`
+	AllowAccess        []string           `json:"allow_access"`
+	MaintenanceWeekday int                `json:"maintenance_weekday"`
+	MaintenanceHour    int                `json:"maintenance_hour"`
+	SnapshotsSchedule  string             `json:"snapshots_schedule"`
+	CloudIPs           []CloudIP          `json:"cloud_ips"`
 	DatabaseServerType DatabaseServerType `json:"database_server_type"`
+	Locked             bool
+	Zone               Zone
 }
 
 // DatabaseServerOptions is used in conjunction with CreateDatabaseServer and
@@ -42,6 +43,7 @@ type DatabaseServerOptions struct {
 	DatabaseType       string   `json:"database_type,omitempty"`
 	MaintenanceWeekday *int     `json:"maintenance_weekday,omitempty"`
 	MaintenanceHour    *int     `json:"maintenance_hour,omitempty"`
+	SnapshotsSchedule  *string  `json:"snapshots_schedule,omitempty"`
 }
 
 // DatabaseServers retrieves a list of all database servers
