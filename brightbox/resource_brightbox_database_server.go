@@ -81,6 +81,11 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: ValidateCronString,
 			},
+			"snapshots_schedule_next_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"zone": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -134,6 +139,8 @@ func setDatabaseServerAttributes(
 	d.SetPartial("maintenance_hour")
 	d.Set("snapshots_schedule", database_server.SnapshotsSchedule)
 	d.SetPartial("snapshots_schedule")
+	d.Set("snapshots_schedule_next_at", database_server.SnapshotsScheduleNextAt)
+	d.SetPartial("snapshots_schedule_next_at")
 	d.Set("zone", database_server.Zone.Handle)
 	d.SetPartial("zone")
 }
