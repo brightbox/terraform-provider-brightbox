@@ -46,7 +46,7 @@ github.com/bgentry/go-netrc/netrc
 github.com/bgentry/speakeasy
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
-# github.com/brightbox/gobrightbox v0.4.0
+# github.com/brightbox/gobrightbox v0.4.1
 github.com/brightbox/gobrightbox
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
