@@ -10,6 +10,13 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+var (
+	validImageStatus = map[string]bool{
+		"available":  true,
+		"deprecated": true,
+	}
+)
+
 func dataSourceBrightboxImage() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceBrightboxImageRead,
@@ -148,6 +155,8 @@ func dataSourceBrightboxImageRead(
 	image, err := findImageByFilter(images, d)
 
 	if err != nil {
+		// Remove any existing image id on error
+		d.SetId("")
 		return err
 	}
 
@@ -159,13 +168,8 @@ func dataSourceBrightboxImagesImageAttributes(
 	d *schema.ResourceData,
 	image *brightbox.Image,
 ) error {
-	log.Printf("[DEBUG] openstack_images_image details: %#v", image)
+	log.Printf("[DEBUG] Image details: %#v", image)
 
-	// Handle refresh of an image that has been deleted.
-	if image.Status == "deleted" {
-		d.SetId("")
-		return nil
-	}
 	d.SetId(image.Id)
 	d.Set("name", image.Name)
 	d.Set("username", image.Username)
@@ -232,6 +236,10 @@ func imageMatch(
 	nameRe *regexp.Regexp,
 	descRe *regexp.Regexp,
 ) bool {
+	// Only check available images
+	if !validImageStatus[image.Status] {
+		return false
+	}
 	_, ok := d.GetOk("name")
 	if ok && !nameRe.MatchString(image.Name) {
 		return false

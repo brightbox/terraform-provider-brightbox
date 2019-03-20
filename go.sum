@@ -19,6 +19,8 @@ github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdn
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/brightbox/gobrightbox v0.3.0 h1:IfbpOLhurybTavx4FiseRl9ySjaBont0a23Mp1S7lFM=
 github.com/brightbox/gobrightbox v0.3.0/go.mod h1:DKd0xhyHUJfy3E4o0EnIZ7VaFiPg/w+4iUwKAh3b+XA=
+github.com/brightbox/gobrightbox v0.3.1 h1:DoKCOXV0cGLRrqkCYMK9LVWLK661P0CTrmcRrXj7oCs=
+github.com/brightbox/gobrightbox v0.3.1/go.mod h1:DKd0xhyHUJfy3E4o0EnIZ7VaFiPg/w+4iUwKAh3b+XA=
 github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e/go.mod h1:N+BjUcTjSxc2mtRGSCPsat1kze3CUtvJN3/jTXlp29k=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
