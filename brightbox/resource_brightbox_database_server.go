@@ -76,6 +76,11 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"snapshots_schedule": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: ValidateCronString,
+			},
 			"zone": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -127,6 +132,8 @@ func setDatabaseServerAttributes(
 	d.SetPartial("maintenance_weekday")
 	d.Set("maintenance_hour", database_server.MaintenanceHour)
 	d.SetPartial("maintenance_hour")
+	d.Set("snapshots_schedule", database_server.SnapshotsSchedule)
+	d.SetPartial("snapshots_schedule")
 	d.Set("zone", database_server.Zone.Handle)
 	d.SetPartial("zone")
 }
@@ -324,6 +331,7 @@ func addUpdateableDatabaseServerOptions(
 	assign_string(d, &opts.Description, "description")
 	assign_int(d, &opts.MaintenanceWeekday, "maintenance_weekday")
 	assign_int(d, &opts.MaintenanceHour, "maintenance_hour")
+	assign_string(d, &opts.SnapshotsSchedule, "snapshots_schedule")
 	return nil
 }
 
@@ -348,6 +356,9 @@ func output_database_server_options(opts *brightbox.DatabaseServerOptions) {
 	}
 	if opts.Snapshot != "" {
 		log.Printf("[DEBUG] Database Server Snapshot %v", opts.Snapshot)
+	}
+	if opts.SnapshotsSchedule != nil {
+		log.Printf("[DEBUG] Database Server Snapshots Schedule %v", *opts.SnapshotsSchedule)
 	}
 	if opts.Zone != "" {
 		log.Printf("[DEBUG] Database Server Zone %v", opts.Zone)

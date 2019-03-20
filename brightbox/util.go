@@ -10,6 +10,7 @@ import (
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
+	"github.com/gorhill/cronexpr"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -137,6 +138,13 @@ func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
 		func(value string) bool { return !isBase64Encoded(value) },
 		"%q must be base64-encoded",
 	)
+}
+
+func ValidateCronString(v interface{}, name string) (warns []string, errors []error) {
+	if _, err := cronexpr.Parse(v.(string)); err != nil {
+		errors = append(errors, fmt.Errorf("%q: %s", name, err))
+	}
+	return
 }
 
 func http1Keys(v interface{}, name string) (warns []string, errors []error) {
