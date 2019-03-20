@@ -79,6 +79,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			"snapshots_schedule": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: ValidateCronString,
 			},
 			"snapshots_schedule_next_at": {

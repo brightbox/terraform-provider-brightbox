@@ -78,6 +78,8 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						"brightbox_database_server.default", "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "maintenance_hour", "4"),
+					resource.TestCheckResourceAttr(
+						"brightbox_database_server.default", "snapshots_schedule", "4 5 * * *"),
 					resource.TestMatchResourceAttr(
 						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
@@ -297,6 +299,7 @@ resource "brightbox_database_server" "default" {
 	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 5
 	maintenance_hour = 4
+	snapshots_schedule = "4 5 * * *"
 	allow_access = [ "${data.brightbox_server_group.default.id}" ]
 }
 
