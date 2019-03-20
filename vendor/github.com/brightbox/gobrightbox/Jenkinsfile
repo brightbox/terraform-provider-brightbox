@@ -22,7 +22,7 @@ pipeline {
     }
     stage("Test") {
       steps {
-        sh 'go test -v | go-junit-report | tee report.xml'
+        sh 'go test -v ./... | go-junit-report | tee report.xml'
       }
       post {
 	failure {

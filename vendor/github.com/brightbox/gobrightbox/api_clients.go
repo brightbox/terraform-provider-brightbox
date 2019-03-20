@@ -1,5 +1,9 @@
 package brightbox
 
+import (
+	"time"
+)
+
 // ApiClient represents an API client.
 // https://api.gb1.brightbox.com/1.0/#api_client
 type ApiClient struct {
@@ -7,7 +11,8 @@ type ApiClient struct {
 	Name             string
 	Description      string
 	Secret           string
-	PermissionsGroup string
+	PermissionsGroup string     `json:"permissions_group"`
+	RevokedAt        *time.Time `json:"revoked_at"`
 	Account          Account
 }
 

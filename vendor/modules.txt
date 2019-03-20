@@ -46,7 +46,7 @@ github.com/bgentry/go-netrc/netrc
 github.com/bgentry/speakeasy
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
-# github.com/brightbox/gobrightbox v0.2.1
+# github.com/brightbox/gobrightbox v0.3.0
 github.com/brightbox/gobrightbox
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
@@ -63,6 +63,15 @@ github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
+# github.com/gophercloud/gophercloud v0.0.0-20190314065736-6e3895ed427a
+github.com/gophercloud/gophercloud
+github.com/gophercloud/gophercloud/openstack
+github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers
+github.com/gophercloud/gophercloud/openstack/identity/v2/tokens
+github.com/gophercloud/gophercloud/openstack/identity/v3/tokens
+github.com/gophercloud/gophercloud/openstack/utils
+github.com/gophercloud/gophercloud/pagination
+github.com/gophercloud/gophercloud/openstack/identity/v2/tenants
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-cleanhttp v0.5.0
@@ -114,12 +123,14 @@ github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/logging
 github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
+github.com/hashicorp/terraform/helper/validation
 github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/plugin/discovery
 github.com/hashicorp/terraform/config/module
 github.com/hashicorp/terraform/helper/config
 github.com/hashicorp/terraform/config
 github.com/hashicorp/terraform/config/configschema
+github.com/hashicorp/terraform/helper/structure
 github.com/hashicorp/terraform/dag
 github.com/hashicorp/terraform/flatmap
 github.com/hashicorp/terraform/helper/hilmapstructure
@@ -213,7 +224,7 @@ golang.org/x/net/internal/timeseries
 golang.org/x/oauth2
 golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20190129075346-302c3dd5f1cc
+# golang.org/x/sys v0.0.0-20190209173611-3b5209105503
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.0
 golang.org/x/text/unicode/norm

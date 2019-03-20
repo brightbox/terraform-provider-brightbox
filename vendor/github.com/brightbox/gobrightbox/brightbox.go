@@ -19,9 +19,10 @@ import (
 	"regexp"
 )
 
-// ApiURL for the default region. Use with NewClient.
 const (
+	// ApiURL for the default region. Use with NewClient.
 	DefaultRegionApiURL = "https://api.gb1.brightbox.com/"
+	DefaultOrbitAuthURL = "https://orbit.brightbox.com/v1/"
 )
 
 // Client represents a connection to the Brightbox API. You should use NewClient
