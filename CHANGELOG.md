@@ -1,4 +1,4 @@
-## 1.1.0 (Unreleased)
+## 1.1.0 (March 28, 2019)
 - Add timeout support for loadbalancers
 - Add timeout support for database servers
 - Add timeout support for servers
