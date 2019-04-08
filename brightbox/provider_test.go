@@ -27,6 +27,9 @@ func TestProvider(t *testing.T) {
 }
 
 func TestProvider_badConfigs(t *testing.T) {
+	if os.Getenv("TF_ACC") != "" {
+		t.Skip("Skipping test that clears ENV as TF_ACC is set")
+	}
 	p := Provider()
 	var configTests = []struct {
 		name string
@@ -106,6 +109,7 @@ func TestProvider_badConfigs(t *testing.T) {
 		},
 	}
 
+	os.Clearenv()
 	for _, example := range configTests {
 		t.Run(
 			example.name,
