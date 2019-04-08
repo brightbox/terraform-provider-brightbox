@@ -2,11 +2,10 @@ package brightbox
 
 import (
 	"fmt"
-	"net/http"
+	"log"
+	"strings"
 
 	"github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/terraform/helper/logging"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -15,6 +14,7 @@ const (
 	// Terraform application client credentials
 	defaultClientID     = "app-dkmch"
 	defaultClientSecret = "uogoelzgt0nwawb"
+	appPrefix           = "app-"
 	passwordEnvVar      = "BRIGHTBOX_PASSWORD"
 )
 
@@ -25,13 +25,13 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT", defaultClientID),
-				Description: "Brightbox Cloud API Client",
+				Description: "Brightbox Cloud API Client/OAuth Application ID",
 			},
 			"apisecret": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT_SECRET", defaultClientSecret),
-				Description: "Brightbox Cloud API Client Secret",
+				Description: "Brightbox Cloud API Client/OAuth Application Secret",
 			},
 			"username": {
 				Type:        schema.TypeString,
@@ -96,35 +96,23 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		OrbitUrl:  d.Get("orbit_url").(string),
 	}
 
-	if config.APIClient == defaultClientID && config.APISecret == defaultClientSecret {
+	if strings.HasPrefix(config.APIClient, appPrefix) {
+		log.Printf("[DEBUG] Detected OAuth Application. Validating User details.")
+		if config.UserName == "" || config.password == "" {
+			return nil,
+				fmt.Errorf("User Credentials are missing. Please supply a Username and One Time Authentication code.")
+		}
 		if config.Account == "" {
 			return nil,
 				fmt.Errorf("Must specify Account with User Credentials")
 		}
 	} else {
+		log.Printf("[DEBUG] Detected API Client.")
 		if config.UserName != "" || config.password != "" {
 			return nil,
-				fmt.Errorf("User Credentials not used with API Client.")
+				fmt.Errorf("User Credentials should be blank with an API Client")
 		}
 	}
 
 	return config.Client()
-}
-
-func makeHttpRequest(req *http.Request) (resp *http.Response, err error) {
-	client := cleanhttp.DefaultClient()
-	client.Transport = logging.NewTransport("Brightbox", client.Transport)
-
-	resp, err = client.Do(req)
-	if err != nil {
-		if resp != nil {
-			defer resp.Body.Close()
-		}
-		return resp, fmt.Errorf("Error accessing Orbit: %s", err)
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
-		defer resp.Body.Close()
-		return resp, fmt.Errorf("HTTP error response %v", resp.Status)
-	}
-	return resp, nil
 }

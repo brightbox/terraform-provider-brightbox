@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -19,8 +20,110 @@ func init() {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
+	p := Provider()
+	if err := p.(*schema.Provider).InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestProvider_badConfigs(t *testing.T) {
+	p := Provider()
+	var configTests = []struct {
+		name string
+		raw  map[string]interface{}
+		err  string
+	}{
+		{
+			name: "Username without account",
+			raw: map[string]interface{}{
+				"username": "fred",
+				"password": "fred",
+			},
+			err: "Must specify Account with User Credentials",
+		},
+		{
+			name: "Apiclient with User Credentials",
+			raw: map[string]interface{}{
+				"apiclient": "cli-12345",
+				"apisecret": "mysecret",
+				"username":  "fred",
+				"password":  "fred",
+				"account":   "acc-12345",
+			},
+			err: "User Credentials should be blank with an API Client",
+		},
+		{
+			name: "Apiclient with User",
+			raw: map[string]interface{}{
+				"apiclient": "cli-12345",
+				"apisecret": "mysecret",
+				"username":  "fred",
+			},
+			err: "User Credentials should be blank with an API Client",
+		},
+		{
+			name: "Apiclient with password",
+			raw: map[string]interface{}{
+				"apiclient": "cli-12345",
+				"apisecret": "mysecret",
+				"password":  "fred",
+			},
+			err: "User Credentials should be blank with an API Client",
+		},
+		{
+			name: "Specific app id with missing user",
+			raw: map[string]interface{}{
+				"apiclient": "app-12345",
+				"apisecret": "mysecret",
+				"password":  "fred",
+			},
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+		},
+		{
+			name: "Default app id with missing user",
+			raw: map[string]interface{}{
+				"apiclient": "app-12345",
+				"apisecret": "mysecret",
+				"password":  "fred",
+			},
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+		},
+		{
+			name: "Specific app id with missing password",
+			raw: map[string]interface{}{
+				"apiclient": "app-12345",
+				"apisecret": "mysecret",
+				"user":      "fred",
+			},
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+		},
+		{
+			name: "Default app id with missing password",
+			raw: map[string]interface{}{
+				"user": "fred",
+			},
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+		},
+	}
+
+	for _, example := range configTests {
+		t.Run(
+			example.name,
+			func(t *testing.T) {
+				rawConfig, err := config.NewRawConfig(example.raw)
+				if err != nil {
+					t.Fatalf("err: %s", err)
+				}
+				err = p.Configure(terraform.NewResourceConfig(rawConfig))
+				if err == nil {
+					t.Errorf("Expected %q, but no error was returned", example.err)
+				} else {
+					if err.Error() != example.err {
+						t.Errorf("Got error %q, expected %q", err.Error(), example.err)
+					}
+				}
+			},
+		)
 	}
 }
 
@@ -34,5 +137,10 @@ func testAccPreCheck(t *testing.T) {
 	}
 	if v := os.Getenv("BRIGHTBOX_CLIENT_SECRET"); v == "" {
 		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
+	}
+
+	err := testAccProvider.Configure(terraform.NewResourceConfig(nil))
+	if err != nil {
+		t.Fatal(err)
 	}
 }
