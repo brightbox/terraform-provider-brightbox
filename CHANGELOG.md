@@ -1,3 +1,6 @@
+## 1.1.1 (UNRELEASED)
+- Relax overly tight auth validation
+
 ## 1.1.0 (March 28, 2019)
 - Add timeout support for loadbalancers
 - Add timeout support for database servers
