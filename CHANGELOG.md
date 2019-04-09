@@ -1,3 +1,4 @@
+## 1.1.2 (Unreleased)
 ## 1.1.1 (April 09, 2019)
 - Relax overly tight auth validation
 
