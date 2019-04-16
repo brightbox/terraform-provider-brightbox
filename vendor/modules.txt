@@ -63,7 +63,7 @@ github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/gophercloud/gophercloud v0.0.0-20190314065736-6e3895ed427a
+# github.com/gophercloud/gophercloud v0.0.0-20190410012400-2c55d17f707c
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
 github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers

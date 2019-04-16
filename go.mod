@@ -5,7 +5,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/brightbox/gobrightbox v0.4.1
 	github.com/google/go-cmp v0.2.0
-	github.com/gophercloud/gophercloud v0.0.0-20190314065736-6e3895ed427a
+	github.com/gophercloud/gophercloud v0.0.0-20190410012400-2c55d17f707c
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/hashicorp/go-cleanhttp v0.5.0
 	github.com/hashicorp/go-getter v1.1.0 // indirect
