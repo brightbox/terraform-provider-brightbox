@@ -266,6 +266,10 @@ func getUpdateContainerOptions(
 	if attr, ok := d.GetOk("metadata"); ok {
 		opts.Metadata = escapedStringMetadata(attr)
 	}
+	if d.HasChange("metadata") {
+		old, new := d.GetChange("metadata")
+		opts.RemoveMetadata = removedMetadataKeys(old, new)
+	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
 		opts.ContainerSyncTo = escapedString(attr)
 	}

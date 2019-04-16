@@ -67,6 +67,14 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 						"brightbox_orbit_container.foobar", "name", "initial"),
 				),
 			},
+			{
+				Config: testAccCheckBrightboxOrbitContainerConfig_metadata_delete,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
+					resource.TestCheckResourceAttr(
+						"brightbox_orbit_container.foobar", "name", "initial"),
+				),
+			},
 		},
 	})
 }
@@ -138,6 +146,18 @@ resource "brightbox_orbit_container" "foobar" {
 	name = "initial"
 	metadata = {
 		"foo"= "bar"
+		"bar"= "foo"
+		"uni" = "€uro"
+	}
+	container_read = [ "acc-testy", "acc-12345", "acc-98765" ]
+}
+`
+
+const testAccCheckBrightboxOrbitContainerConfig_metadata_delete = `
+
+resource "brightbox_orbit_container" "foobar" {
+	name = "initial"
+	metadata = {
 		"bar"= "foo"
 		"uni" = "€uro"
 	}

@@ -279,12 +279,24 @@ func escapedStringList(source []string) []string {
 }
 
 func escapedStringMetadata(metadata interface{}) map[string]string {
-	dest := make(map[string]string)
 	source := metadata.(map[string]interface{})
+	dest := make(map[string]string, len(source))
 	for k, v := range source {
 		dest[strings.ToLower(k)] = url.PathEscape(v.(string))
 	}
 	return dest
+}
+
+func removedMetadataKeys(old interface{}, new interface{}) []string {
+	old_map := old.(map[string]interface{})
+	new_map := new.(map[string]interface{})
+	result := make([]string, 0, len(old_map))
+	for key, _ := range old_map {
+		if new_map[key] == nil {
+			result = append(result, strings.ToLower(key))
+		}
+	}
+	return result
 }
 
 // CheckDeleted checks the error to see if it's a 404 (Not Found) and, if so,
