@@ -1,14 +1,17 @@
 package brightbox
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 const (
@@ -69,6 +72,31 @@ func resourceBrightboxCloudip() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+			},
+			"port_translator": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"incoming": {
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(minPort, maxPort),
+						},
+
+						"outgoing": {
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(minPort, maxPort),
+						},
+						"protocol": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"tcp", "udp"}, false),
+						},
+					},
+				},
+				Set: resourceBrightboxPortTranslationHash,
 			},
 		},
 	}
@@ -291,6 +319,16 @@ func setCloudipAttributes(
 	if cloudip.ServerGroup != nil {
 		d.Set("target", cloudip.ServerGroup.Id)
 	}
+	log.Printf("[DEBUG] PortTranslator details are %#v", cloudip.PortTranslators)
+	portTranslators := make([]map[string]interface{}, len(cloudip.PortTranslators))
+	for i, portTranslator := range cloudip.PortTranslators {
+		portTranslators[i] = map[string]interface{}{
+			"incoming": portTranslator.Incoming,
+			"outgoing": portTranslator.Outgoing,
+			"protocol": portTranslator.Protocol,
+		}
+	}
+	d.Set("port_translator", portTranslators)
 	d.Partial(false)
 	return nil
 }
@@ -315,5 +353,37 @@ func addUpdateableCloudipOptions(
 ) error {
 	assign_string(d, &opts.Name, "name")
 	assign_string(d, &opts.ReverseDns, "reverse_dns")
+	assign_port_translators(d, &opts.PortTranslators)
 	return nil
+}
+
+func resourceBrightboxPortTranslationHash(
+	v interface{},
+) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%d-", m["incoming"].(int)))
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["protocol"].(string))))
+	buf.WriteString(fmt.Sprintf("%d-", m["outgoing"].(int)))
+
+	return hashcode.String(buf.String())
+}
+
+func assign_port_translators(d *schema.ResourceData, target *[]brightbox.PortTranslator) {
+	if d.HasChange("port_translator") {
+		*target = expandPortTranslators(d.Get("port_translator").(*schema.Set).List())
+	}
+}
+
+func expandPortTranslators(configured []interface{}) []brightbox.PortTranslator {
+	port_translators := make([]brightbox.PortTranslator, len(configured))
+
+	for i, port_translation_source := range configured {
+		data := port_translation_source.(map[string]interface{})
+		port_translators[i].Protocol = data["protocol"].(string)
+		port_translators[i].Incoming = data["incoming"].(int)
+		port_translators[i].Outgoing = data["outgoing"].(int)
+	}
+	return port_translators
 }

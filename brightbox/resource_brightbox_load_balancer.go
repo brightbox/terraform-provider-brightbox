@@ -86,13 +86,13 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 						"in": {
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(1, 65535),
+							ValidateFunc: validation.IntBetween(minPort, maxPort),
 						},
 
 						"out": {
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(1, 65535),
+							ValidateFunc: validation.IntBetween(minPort, maxPort),
 						},
 
 						"timeout": {
@@ -118,7 +118,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 						"port": {
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(1, 65535),
+							ValidateFunc: validation.IntBetween(minPort, maxPort),
 						},
 						"request": {
 							Type:     schema.TypeString,

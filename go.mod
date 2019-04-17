@@ -3,7 +3,7 @@ module github.com/terraform-providers/terraform-provider-brightbox
 require (
 	github.com/apparentlymart/go-cidr v1.0.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/brightbox/gobrightbox v0.4.1
+	github.com/brightbox/gobrightbox v0.4.2
 	github.com/google/go-cmp v0.2.0
 	github.com/gophercloud/gophercloud v0.0.0-20190410012400-2c55d17f707c
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75

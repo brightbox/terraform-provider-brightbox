@@ -88,6 +88,16 @@ func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 						resourceName, "name", fmt.Sprintf("bar-%d", rInt)),
 				),
 			},
+			{
+				Config: testAccCheckBrightboxCloudipConfig_port_mapped(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", fmt.Sprintf("bar-%d", rInt)),
+					resource.TestCheckResourceAttr(
+						resourceName, "port_translator.#", "2"),
+				),
+			},
 		},
 	})
 }
@@ -214,6 +224,33 @@ func testAccCheckBrightboxCloudipConfig_mapped(rInt int) string {
 resource "brightbox_cloudip" "foobar" {
 	name = "bar-%d"
 	target = "${brightbox_server.boofar.interface}"
+}
+
+resource "brightbox_server" "boofar" {
+	image = "${data.brightbox_image.foobar.id}"
+	name = "bar-%d"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
+}
+%s%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default)
+}
+
+func testAccCheckBrightboxCloudipConfig_port_mapped(rInt int) string {
+	return fmt.Sprintf(`
+
+resource "brightbox_cloudip" "foobar" {
+	name = "bar-%d"
+	target = "${brightbox_server.boofar.interface}"
+	port_translator {
+		protocol = "tcp"
+		incoming = 80
+		outgoing = 8080
+	}
+	port_translator {
+		protocol = "udp"
+		incoming = 53
+		outgoing = 8053
+	}
 }
 
 resource "brightbox_server" "boofar" {

@@ -39,7 +39,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "5.6"),
+						"brightbox_database_server.default", "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "allow_access.#", "1"),
 				),
@@ -61,7 +61,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "5.6"),
+						"brightbox_database_server.default", "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "allow_access.#", "1"),
 				),
@@ -85,7 +85,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "5.6"),
+						"brightbox_database_server.default", "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "allow_access.#", "1"),
 				),
@@ -107,7 +107,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "5.6"),
+						"brightbox_database_server.default", "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "allow_access.#", "3"),
 					resource.TestCheckResourceAttr(
@@ -132,7 +132,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "5.6"),
+						"brightbox_database_server.default", "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						"brightbox_database_server.default", "allow_access.#", "3"),
 					resource.TestCheckResourceAttr(
@@ -237,7 +237,7 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightb
 		if database_server.DatabaseEngine != "mysql" {
 			return fmt.Errorf("Bad database engine: %s", database_server.DatabaseEngine)
 		}
-		if database_server.DatabaseVersion != "5.6" {
+		if database_server.DatabaseVersion != "8.0" {
 			return fmt.Errorf("Bad database version: %s", database_server.DatabaseVersion)
 		}
 		if database_server.DatabaseServerType.Id != databaseTypeRs.Primary.Attributes["id"] {
@@ -272,7 +272,7 @@ resource "brightbox_database_server" "default" {
 	name = "%s"
 	description = "%s"
 	database_engine = "mysql"
-	database_version = "5.6"
+	database_version = "8.0"
 	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 6
 	maintenance_hour = 6
@@ -295,7 +295,7 @@ resource "brightbox_database_server" "default" {
 	name = "%s"
 	description = "%s"
 	database_engine = "mysql"
-	database_version = "5.6"
+	database_version = "8.0"
 	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 5
 	maintenance_hour = 4
@@ -317,7 +317,7 @@ resource "brightbox_database_server" "default" {
 	name = "%s"
 	description = "%s"
 	database_engine = "mysql"
-	database_version = "5.6"
+	database_version = "8.0"
 	maintenance_weekday = 5
 	maintenance_hour = 4
 	allow_access = [

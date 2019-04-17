@@ -14,6 +14,11 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+const (
+	maxPort = 65535
+	minPort = 1
+)
+
 func hash_string(
 	v interface{},
 ) string {

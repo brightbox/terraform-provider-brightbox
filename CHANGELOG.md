@@ -1,5 +1,6 @@
 ## 1.1.2 (Unreleased)
-- Fix metadata delete in Orbit Containers
+- Fix metadata delete for Orbit Containers
+- Fix Port Translators for Cloud IPs
 
 ## 1.1.1 (April 09, 2019)
 - Relax overly tight auth validation
