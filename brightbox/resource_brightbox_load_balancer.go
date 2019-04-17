@@ -182,16 +182,14 @@ func setLoadBalancerAttributes(
 	}
 	d.Set("cloud_ips", cipIds)
 
-	listeners := make([]map[string]interface{}, 0, len(load_balancer.Listeners))
-	for _, listener := range load_balancer.Listeners {
-		l := map[string]interface{}{
+	listeners := make([]map[string]interface{}, len(load_balancer.Listeners))
+	for i, listener := range load_balancer.Listeners {
+		listeners[i] = map[string]interface{}{
 			"protocol": listener.Protocol,
 			"in":       listener.In,
 			"out":      listener.Out,
 			"timeout":  listener.Timeout,
 		}
-
-		listeners = append(listeners, l)
 	}
 	d.Set("listener", listeners)
 	log.Printf("[DEBUG] Healthcheck details are %#v", load_balancer.Healthcheck)
