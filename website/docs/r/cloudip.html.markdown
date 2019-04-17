@@ -16,6 +16,16 @@ Provides a Brightbox CloudIP resource.
 resource "brightbox_cloudip" "web-public" {
   target = "${brightbox_server.web.interface}"
   name = "web-1 public address"
+  port_translator {
+	  protocol = "tcp"
+	  incoming = 80
+	  outgoing = 8080
+  }
+  port_translator {
+	  protocol = "udp"
+	  incoming = 53
+	  outgoing = 8053
+  }
 }
 
 resource "brightbox_server" "web" {
@@ -42,8 +52,14 @@ The following arguments are supported:
 * `name` - (Optional) a label to assign to the CloudIP
 * `reverse_dns` - (Optional) The reverse DNS entry for the CloudIP
 * `target` - (Optional) The CloudIP mapping target. This is the interface id from a server, or the id of a load balancer, server group or cloud sql resource.
+* `port_translator` - (Optional) An array of port translator blocks. The Port Translator block is descibed below
 
 Note that the default group for each account cannot be used as the target for a cloud ip.
+
+Port Translator (`port_translator`) supports the following:
+* `incoming` - (Required) The Port number traffic is coming in on the network
+* `outgoing` - (Required) The Port number traffic is received at the mapped device
+* `protocol` - (Required) The protocol of the port translator. Either `tcp` or `udp`
 
 ## Attributes Reference
 
