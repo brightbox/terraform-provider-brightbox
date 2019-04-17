@@ -35,10 +35,10 @@ type PortTranslator struct {
 // CloudIPOptions is used in conjunction with CreateCloudIP and UpdateCloudIP to
 // create and update cloud IPs.
 type CloudIPOptions struct {
-	Id              string            `json:"-"`
-	ReverseDns      *string           `json:"reverse_dns,omitempty"`
-	Name            *string           `json:"name,omitempty"`
-	PortTranslators *[]PortTranslator `json:"port_translators,omitempty"`
+	Id              string           `json:"-"`
+	ReverseDns      *string          `json:"reverse_dns,omitempty"`
+	Name            *string          `json:"name,omitempty"`
+	PortTranslators []PortTranslator `json:"port_translators,omitempty"`
 }
 
 // CloudIPs retrieves a list of all cloud ips
