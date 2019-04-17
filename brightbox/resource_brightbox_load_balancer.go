@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceBrightboxLoadBalancer() *schema.Resource {
@@ -61,9 +62,10 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Computed: true,
 			},
 			"buffer_size": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntAtLeast(0),
 			},
 			"nodes": {
 				Type:     schema.TypeSet,
@@ -82,19 +84,22 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Required: true,
 						},
 						"in": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(1, 65535),
 						},
 
 						"out": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(1, 65535),
 						},
 
 						"timeout": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Default:  50000,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      50000,
+							ValidateFunc: validation.IntAtLeast(0),
 						},
 					},
 				},
@@ -111,8 +116,9 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Required: true,
 						},
 						"port": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(1, 65535),
 						},
 						"request": {
 							Type:     schema.TypeString,
@@ -120,24 +126,28 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Computed: true,
 						},
 						"interval": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
 						},
 						"timeout": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
 						},
 						"threshold_up": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
 						},
 						"threshold_down": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
 						},
 					},
 				},
