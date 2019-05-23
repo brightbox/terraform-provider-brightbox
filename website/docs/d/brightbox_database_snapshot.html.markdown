@@ -33,7 +33,7 @@ Snapshot list returned by Brightbox Cloud.
 
 * `database_engine` = (Optional) The engine of the database used to create the snapshot, e.g. mysql
 
-* `database_version` = (Optional) The version of the database used to create the snapshot, e.g. 5.6
+* `database_version` = (Optional) The version of the database used to create the snapshot, e.g. 8.0
 
 ~> **NOTE:** arguments form a conjunction. All arguments must match to
 select an image.
