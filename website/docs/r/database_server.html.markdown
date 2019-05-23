@@ -18,7 +18,7 @@ resource "brightbox_database_server" "default" {
 	name = "Default DB"
 	description = "Default DB used by servers"
 	database_engine = "mysql"
-	database_version = "5.6"
+	database_version = "8.0"
 	database_type = "${data.brightbox_database_type.4gb.id}"
 	maintenance_weekday = 5
 	maintenance_hour = 4
@@ -56,7 +56,7 @@ The following arguments are supported:
 * `maintenance_hour` - (Optional) Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23). Default is 6
 * `snapshots_schedule` - (Optional) A crontab pattern to determine approximately when scheduled snapshots will run (must be at least hourly)
 * `database_engine` - (Optional) Database engine to request. Default is mysql.
-* `database_version` - (Optional) Database version to request. Default is 5.5.
+* `database_version` - (Optional) Database version to request. Default is 8.0.
 * `database_type` - (Optional) ID of the Database Type required.
 * `snapshot` (Optional) - Database snapshot id to build from
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
