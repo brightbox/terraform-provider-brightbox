@@ -1,4 +1,4 @@
-## 1.2.0 (Unreleased)
+## 1.2.0 (June 26, 2019)
 - Update database versions in documentation
 - Support Terraform 0.12
 
