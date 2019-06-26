@@ -132,7 +132,7 @@ const testAccCheckBrightboxOrbitContainerConfig_metadata = `
 resource "brightbox_orbit_container" "foobar" {
 	name = "initial"
 	container_read = [ "acc-testy", "acc-12345"]
-	metadata {
+	metadata = {
 		"foo"= "bar"
 		"bar"= "baz" 
 		"uni" = "€uro"

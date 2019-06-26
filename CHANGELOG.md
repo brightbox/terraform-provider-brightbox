@@ -1,4 +1,7 @@
-## 1.1.3 (Unreleased)
+## 1.2.0 (Unreleased)
+- Update database versions in documentation
+- Support Terraform 0.12
+
 ## 1.1.2 (April 17, 2019)
 - Fix metadata delete for Orbit Containers
 - Fix Port Translators for Cloud IPs
