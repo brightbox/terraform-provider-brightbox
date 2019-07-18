@@ -15,11 +15,11 @@ modify, and delete Servers. Servers also support
 ## Example Usage
 
 ```hcl
-# Create a new 512Mb SSD Web Server in the gb1a zone
+# Create a new 512Mb SSD Web Server in the gb1-a zone
 resource "brightbox_server" "web" {
   image  = "img-testy"
   name   = "web-1"
-  zone = "gb1a"
+  zone = "gb1-a"
   type = "512mb.ssd"
   server_groups = [ "grp-testy" ]
 }

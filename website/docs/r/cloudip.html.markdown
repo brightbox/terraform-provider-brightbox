@@ -31,7 +31,7 @@ resource "brightbox_cloudip" "web-public" {
 resource "brightbox_server" "web" {
   image  = "img-testy"
   name   = "web-1"
-  zone = "gb1a"
+  zone = "gb1-a"
   type = "512mb.ssd"
   server_groups = [ "grp-testy" ]
 }
