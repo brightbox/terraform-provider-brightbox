@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -114,11 +113,7 @@ func TestProvider_badConfigs(t *testing.T) {
 		t.Run(
 			example.name,
 			func(t *testing.T) {
-				rawConfig, err := config.NewRawConfig(example.raw)
-				if err != nil {
-					t.Fatalf("err: %s", err)
-				}
-				err = p.Configure(terraform.NewResourceConfig(rawConfig))
+				err := p.Configure(terraform.NewResourceConfigRaw(example.raw))
 				if err == nil {
 					t.Errorf("Expected %q, but no error was returned", example.err)
 				} else {
@@ -143,7 +138,7 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
 	}
 
-	err := testAccProvider.Configure(terraform.NewResourceConfig(nil))
+	err := testAccProvider.Configure(terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
