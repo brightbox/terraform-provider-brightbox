@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceBrightboxFirewallRule() *schema.Resource {

@@ -11,7 +11,7 @@ import (
 	"github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gorhill/cronexpr"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 const (

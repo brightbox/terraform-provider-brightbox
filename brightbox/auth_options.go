@@ -10,7 +10,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/terraform/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )

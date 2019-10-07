@@ -6,8 +6,8 @@ import (
 
 	"github.com/brightbox/gobrightbox"
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 var blank_database_server_opts = brightbox.DatabaseServerOptions{}
