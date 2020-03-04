@@ -20,7 +20,7 @@ resource "brightbox_orbit_container" "initial" {
   metadata = {
     "description" = "Initial database snapshots"
   }
-  container_read = "acc-testy,acc-12345"
+  container_read = ["acc-testy", "acc-12345"]
 }
 ```
 
