@@ -17,7 +17,7 @@ modify, and delete Containers in Orbit.
 # Example Container
 resource "brightbox_orbit_container" "initial" {
   name = "initial"
-  metadata {
+  metadata = {
     "description" = "Initial database snapshots"
   }
   container_read = "acc-testy,acc-12345"
