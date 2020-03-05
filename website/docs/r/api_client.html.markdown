@@ -6,7 +6,7 @@ description: |-
   Provides a Brightbox API Client resource.
 ---
 
-# brightbox\_firewall\_policy
+# brightbox\_api\_client
 
 Provides a Brightbox API Client resource.
 
@@ -35,4 +35,3 @@ The following attributes are exported:
 * `id` - The ID of the API Client
 * `secret` - The initial secret key of the API Client
 * `account` - The ID of the account the API Client is linked to
-
