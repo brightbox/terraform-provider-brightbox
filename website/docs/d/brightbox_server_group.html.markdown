@@ -14,7 +14,7 @@ resources.
 ## Example Usage
 
 ```hcl
-data "brightbox_server_group" "defaul" {
+data "brightbox_server_group" "default" {
 	name = "^default$"
 }
 ```
