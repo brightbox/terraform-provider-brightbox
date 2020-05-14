@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
-	var firewall_policy brightbox.FirewallPolicy
+	var firewallPolicy brightbox.FirewallPolicy
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
-	updated_name := fmt.Sprintf("bar-%d", rInt)
+	resourceName := "brightbox_firewall_policy.foobar"
+	updatedName := fmt.Sprintf("bar-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -24,32 +25,38 @@ func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
-					testAccCheckBrightboxFirewallPolicyAttributes(&firewall_policy, name),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxFirewallPolicyAttributes(&firewallPolicy, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "name", name),
+						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "description", name),
+						resourceName, "description", name),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "name", updated_name),
+						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "description", updated_name),
+						resourceName, "description", updatedName),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
 func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
-	var firewall_policy brightbox.FirewallPolicy
+	var firewallPolicy brightbox.FirewallPolicy
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
+	resourceName := "brightbox_firewall_policy.foobar"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -59,32 +66,67 @@ func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
-					testAccCheckBrightboxFirewallPolicyAttributes(&firewall_policy, name),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxFirewallPolicyAttributes(&firewallPolicy, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "name", name),
+						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "description", name),
+						resourceName, "description", name),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "name", ""),
+						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "description", ""),
+						resourceName, "description", ""),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccBrightboxFirewallPolicy_Mapped(t *testing.T) {
+	resourceName := "brightbox_firewall_policy.foobar"
+	rInt := acctest.RandInt()
+	var firewallPolicy brightbox.FirewallPolicy
+	var serverGroup brightbox.ServerGroup
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxFirewallPolicyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &serverGroup),
+					resource.TestCheckResourceAttrPtr(
+						resourceName, "server_group", &serverGroup.Id),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
 func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
-	var firewall_policy brightbox.FirewallPolicy
-	var server_group brightbox.ServerGroup
+	var firewallPolicy brightbox.FirewallPolicy
+	var serverGroup brightbox.ServerGroup
 	rInt := acctest.RandInt()
+	resourceName := "brightbox_firewall_policy.foobar"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -94,27 +136,27 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &server_group),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &serverGroup),
 					resource.TestCheckResourceAttrPtr(
-						"brightbox_firewall_policy.foobar", "server_group", &server_group.Id),
+						resourceName, "server_group", &serverGroup.Id),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_remap(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group2", &server_group),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group2", &serverGroup),
 					resource.TestCheckResourceAttrPtr(
-						"brightbox_firewall_policy.foobar", "server_group", &server_group.Id),
+						resourceName, "server_group", &serverGroup.Id),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_unmap(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.foobar", &firewall_policy),
+					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_policy.foobar", "server_group", ""),
+						resourceName, "server_group", ""),
 				),
 			},
 		},
@@ -146,7 +188,7 @@ func testAccCheckBrightboxFirewallPolicyDestroy(s *terraform.State) error {
 			apierror := err.(brightbox.ApiError)
 			if apierror.StatusCode != 404 {
 				return fmt.Errorf(
-					"Error waiting for firewall_policy %s to be destroyed: %s",
+					"Error waiting for firewallPolicy %s to be destroyed: %s",
 					rs.Primary.ID, err)
 			}
 		}
@@ -155,7 +197,7 @@ func testAccCheckBrightboxFirewallPolicyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckBrightboxFirewallPolicyExists(n string, firewall_policy *brightbox.FirewallPolicy) resource.TestCheckFunc {
+func testAccCheckBrightboxFirewallPolicyExists(n string, firewallPolicy *brightbox.FirewallPolicy) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -179,23 +221,23 @@ func testAccCheckBrightboxFirewallPolicyExists(n string, firewall_policy *bright
 			return fmt.Errorf("FirewallPolicy not found")
 		}
 
-		*firewall_policy = *retrieveFirewallPolicy
+		*firewallPolicy = *retrieveFirewallPolicy
 
 		return nil
 	}
 }
 
-func testAccCheckBrightboxFirewallPolicyAttributes(firewall_policy *brightbox.FirewallPolicy, name string) resource.TestCheckFunc {
+func testAccCheckBrightboxFirewallPolicyAttributes(firewallPolicy *brightbox.FirewallPolicy, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if firewall_policy.Name != name {
-			return fmt.Errorf("Bad name: %s", firewall_policy.Name)
+		if firewallPolicy.Name != name {
+			return fmt.Errorf("Bad name: %s", firewallPolicy.Name)
 		}
-		if firewall_policy.Description != name {
-			return fmt.Errorf("Bad description: %s", firewall_policy.Description)
+		if firewallPolicy.Description != name {
+			return fmt.Errorf("Bad description: %s", firewallPolicy.Description)
 		}
-		if firewall_policy.Default != false {
-			return fmt.Errorf("Bad default: %v", firewall_policy.Default)
+		if firewallPolicy.Default != false {
+			return fmt.Errorf("Bad default: %v", firewallPolicy.Default)
 		}
 		return nil
 	}

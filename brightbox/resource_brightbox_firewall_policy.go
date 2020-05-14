@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -134,6 +134,6 @@ func setFirewallPolicyAttributes(
 ) error {
 	d.Set("name", firewall_policy.Name)
 	d.Set("description", firewall_policy.Description)
-	d.Set("server_group", firewall_policy.ServerGroup)
+	d.Set("server_group", firewall_policy.ServerGroup.Id)
 	return nil
 }
