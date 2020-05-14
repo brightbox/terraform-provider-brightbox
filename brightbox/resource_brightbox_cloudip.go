@@ -165,8 +165,6 @@ func resourceBrightboxCloudipUpdate(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	d.Partial(true)
-
 	if d.HasChange("target") {
 		err := unmapCloudIP(client, d.Id(), d.Timeout(schema.TimeoutDelete))
 		if err != nil {
@@ -329,7 +327,7 @@ func setCloudipAttributes(
 		}
 	}
 	d.Set("port_translator", portTranslators)
-	d.Partial(false)
+
 	return nil
 }
 

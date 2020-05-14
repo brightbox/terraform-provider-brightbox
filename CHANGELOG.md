@@ -1,4 +1,8 @@
-## 1.3.0 (Unreleased)
+## 1.2.1 (May 14, 2020)
+- Fix server group import in firewall policies
+- Lint tidy up
+- Update patch releases on dependencies
+
 ## 1.2.0 (June 26, 2019)
 - Update database versions in documentation
 - Support Terraform 0.12
