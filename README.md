@@ -76,9 +76,15 @@ In order to test the provider, you can simply run `make test`.
 $ make test
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+In order to run the full suite of Acceptance tests, set the following evironment variables
 
-*Note:* Acceptance tests create real resources, and often cost money to run.
+- BRIGHTBOX_CLIENT. The Client Id for an account
+- BRIGHTBOX_CLIENT_SECRET. The client secret for the Id.
+- BRIGHTBOX_API_URL. The Brightbox API endpoint you wish to talk to.
+- BRIGHTBOX_ORBIT_URL. The Brightbox Orbit endpoint you wish to talk to.
+
+
+Then run `make testacc`.
 
 ```sh
 $ make testacc
