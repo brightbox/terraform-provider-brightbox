@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
-	var load_balancer brightbox.LoadBalancer
+	resourceName := "brightbox_load_balancer.default"
+	var loadBalancer brightbox.LoadBalancer
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -20,82 +21,93 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
-					testAccCheckBrightboxEmptyLoadBalancerAttributes(&load_balancer),
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxEmptyLoadBalancerAttributes(&loadBalancer),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "healthcheck.0.request", "/"),
+						resourceName, "healthcheck.0.request", "/"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "healthcheck.#", "1"),
+						resourceName, "healthcheck.#", "1"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.#", "2"),
+						resourceName, "listener.#", "2"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.1595392858.timeout", "50000"),
+						resourceName, "listener.1595392858.timeout", "50000"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.1462547963.timeout", "10000"),
+						resourceName, "listener.1462547963.timeout", "10000"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "nodes.#", "1"),
+						resourceName, "nodes.#", "1"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_timeout,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.3297149260.timeout", "10000"),
+						resourceName, "listener.3297149260.timeout", "10000"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.3297149260.out", "8080"),
+						resourceName, "listener.3297149260.out", "8080"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.1462547963.timeout", "10000"),
+						resourceName, "listener.1462547963.timeout", "10000"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_healthcheck,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "healthcheck.0.type", "tcp"),
+						resourceName, "healthcheck.0.type", "tcp"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "healthcheck.0.port", "23"),
+						resourceName, "healthcheck.0.port", "23"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "healthcheck.#", "1"),
+						resourceName, "healthcheck.#", "1"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.#", "2"),
+						resourceName, "listener.#", "2"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.1595392858.timeout", "50000"),
+						resourceName, "listener.1595392858.timeout", "50000"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.1462547963.timeout", "10000"),
+						resourceName, "listener.1462547963.timeout", "10000"),
 				),
 			},
 			{
-				Config: testAccCheckBrightboxLoadBalancerConfig_add_listener,
+				Config: testAccCheckBrightboxLoadBalancerConfig_addListener,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.#", "3"),
+						resourceName, "listener.#", "3"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.2238538594.protocol", "https"),
+						resourceName, "listener.2238538594.protocol", "https"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.2238538594.in", "443"),
+						resourceName, "listener.2238538594.in", "443"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.2238538594.timeout", "50000"),
+						resourceName, "listener.2238538594.timeout", "50000"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "certificate_private_key", "63158de92c07f5a53ee8bd56c5750deaa654aabf"),
+						resourceName, "certificate_private_key", "63158de92c07f5a53ee8bd56c5750deaa654aabf"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "certificate_pem", "a5f8997fb16293ae7827f974b9cc120c8c776d02"),
+						resourceName, "certificate_pem", "a5f8997fb16293ae7827f974b9cc120c8c776d02"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "sslv3", "true"),
+						resourceName, "sslv3", "true"),
 				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"certificate_pem", "certificate_private_key"},
 			},
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_remove_listener,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists("brightbox_load_balancer.default", &load_balancer),
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "listener.#", "2"),
+						resourceName, "listener.#", "2"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "certificate_private_key", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
+						resourceName, "certificate_private_key", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
 					resource.TestCheckResourceAttr(
-						"brightbox_load_balancer.default", "certificate_pem", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
+						resourceName, "certificate_pem", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
 				),
 			},
 		},
@@ -136,7 +148,7 @@ func testAccCheckBrightboxLoadBalancerDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckBrightboxLoadBalancerExists(n string, load_balancer *brightbox.LoadBalancer) resource.TestCheckFunc {
+func testAccCheckBrightboxLoadBalancerExists(n string, loadBalancer *brightbox.LoadBalancer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -160,29 +172,29 @@ func testAccCheckBrightboxLoadBalancerExists(n string, load_balancer *brightbox.
 			return fmt.Errorf("LoadBalancer not found")
 		}
 
-		*load_balancer = *retrieveLoadBalancer
+		*loadBalancer = *retrieveLoadBalancer
 
 		return nil
 	}
 }
 
-func testAccCheckBrightboxEmptyLoadBalancerAttributes(load_balancer *brightbox.LoadBalancer) resource.TestCheckFunc {
+func testAccCheckBrightboxEmptyLoadBalancerAttributes(loadBalancer *brightbox.LoadBalancer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if load_balancer.Name != "default" {
-			return fmt.Errorf("Bad name: %s", load_balancer.Name)
+		if loadBalancer.Name != "default" {
+			return fmt.Errorf("Bad name: %s", loadBalancer.Name)
 		}
-		if load_balancer.Locked != false {
-			return fmt.Errorf("Bad locked: %v", load_balancer.Locked)
+		if loadBalancer.Locked != false {
+			return fmt.Errorf("Bad locked: %v", loadBalancer.Locked)
 		}
-		if load_balancer.Status != "active" {
-			return fmt.Errorf("Bad status: %s", load_balancer.Status)
+		if loadBalancer.Status != "active" {
+			return fmt.Errorf("Bad status: %s", loadBalancer.Status)
 		}
-		if load_balancer.Policy != "least-connections" {
-			return fmt.Errorf("Bad policy: %s", load_balancer.Policy)
+		if loadBalancer.Policy != "least-connections" {
+			return fmt.Errorf("Bad policy: %s", loadBalancer.Policy)
 		}
-		if load_balancer.BufferSize != 4096 {
-			return fmt.Errorf("Bad buffer size: %d", load_balancer.BufferSize)
+		if loadBalancer.BufferSize != 4096 {
+			return fmt.Errorf("Bad buffer size: %d", loadBalancer.BufferSize)
 		}
 		return nil
 	}
@@ -289,7 +301,7 @@ resource "brightbox_server" "foobar" {
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
 	TestAccBrightboxDataServerGroupConfig_default)
 
-var testAccCheckBrightboxLoadBalancerConfig_add_listener = fmt.Sprintf(`
+var testAccCheckBrightboxLoadBalancerConfig_addListener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "default"

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -109,21 +109,21 @@ func resourceBrightboxCloudipCreate(
 	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[INFO] Creating CloudIP")
-	cloudip_opts := &brightbox.CloudIPOptions{}
-	err := addUpdateableCloudipOptions(d, cloudip_opts)
+	cloudipOpts := &brightbox.CloudIPOptions{}
+	err := addUpdateableCloudipOptions(d, cloudipOpts)
 	if err != nil {
 		return err
 	}
 
-	cloudip, err := client.CreateCloudIP(cloudip_opts)
+	cloudip, err := client.CreateCloudIP(cloudipOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating Cloud IP: %s", err)
 	}
 
 	d.SetId(cloudip.Id)
 
-	if target_id, ok := d.GetOk("target"); ok {
-		cloudip, err = assignCloudIP(client, cloudip.Id, target_id.(string), d.Timeout(schema.TimeoutCreate))
+	if targetID, ok := d.GetOk("target"); ok {
+		cloudip, err = assignCloudIP(client, cloudip.Id, targetID.(string), d.Timeout(schema.TimeoutCreate))
 		if err != nil {
 			return err
 		}
@@ -170,27 +170,26 @@ func resourceBrightboxCloudipUpdate(
 		if err != nil {
 			return err
 		}
-		if target_id, ok := d.GetOk("target"); ok {
-			_, err := assignCloudIP(client, d.Id(), target_id.(string), d.Timeout(schema.TimeoutCreate))
+		if targetID, ok := d.GetOk("target"); ok {
+			_, err := assignCloudIP(client, d.Id(), targetID.(string), d.Timeout(schema.TimeoutCreate))
 			if err != nil {
 				return err
 			}
 		}
-		d.SetPartial("target")
 	}
 
-	cloudip_opts := &brightbox.CloudIPOptions{
+	cloudipOpts := &brightbox.CloudIPOptions{
 		Id: d.Id(),
 	}
-	err := addUpdateableCloudipOptions(d, cloudip_opts)
+	err := addUpdateableCloudipOptions(d, cloudipOpts)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Cloud IP update configuration: %#v", cloudip_opts)
+	log.Printf("[DEBUG] Cloud IP update configuration: %#v", cloudipOpts)
 
-	cloudip, err := client.UpdateCloudIP(cloudip_opts)
+	cloudip, err := client.UpdateCloudIP(cloudipOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Cloud IP (%s): %s", cloudip_opts.Id, err)
+		return fmt.Errorf("Error updating Cloud IP (%s): %s", cloudipOpts.Id, err)
 	}
 
 	return setCloudipAttributes(d, cloudip)
@@ -198,16 +197,16 @@ func resourceBrightboxCloudipUpdate(
 
 func assignCloudIP(
 	client *brightbox.Client,
-	cloudip_id string,
-	target_id string,
+	cloudipID string,
+	targetID string,
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	log.Printf("[INFO] Assigning Cloud IP %s to target %s", cloudip_id, target_id)
-	err := client.MapCloudIP(cloudip_id, target_id)
+	log.Printf("[INFO] Assigning Cloud IP %s to target %s", cloudipID, targetID)
+	err := client.MapCloudIP(cloudipID, targetID)
 	if err != nil {
-		return nil, fmt.Errorf("Error assigning Cloud IP %s to target %s: %s", cloudip_id, target_id, err)
+		return nil, fmt.Errorf("Error assigning Cloud IP %s to target %s: %s", cloudipID, targetID, err)
 	}
-	cloudip, err := waitForMappedCloudIp(client, cloudip_id, timeout)
+	cloudip, err := waitForMappedCloudIP(client, cloudipID, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -216,33 +215,33 @@ func assignCloudIP(
 
 func unmapCloudIP(
 	client *brightbox.Client,
-	cloudip_id string,
+	cloudipID string,
 	timeout time.Duration,
 ) error {
-	log.Printf("[INFO] Checking mapping of Cloud IP %s", cloudip_id)
-	cloudip, err := client.CloudIP(cloudip_id)
+	log.Printf("[INFO] Checking mapping of Cloud IP %s", cloudipID)
+	cloudip, err := client.CloudIP(cloudipID)
 	if err != nil {
-		return fmt.Errorf("Error retrieving details of Cloud IP %s: %s", cloudip_id, err)
+		return fmt.Errorf("Error retrieving details of Cloud IP %s: %s", cloudipID, err)
 	}
 	if cloudip.Status == mapped {
-		log.Printf("[INFO] Unmapping Cloud IP %s", cloudip_id)
-		err := client.UnMapCloudIP(cloudip_id)
+		log.Printf("[INFO] Unmapping Cloud IP %s", cloudipID)
+		err := client.UnMapCloudIP(cloudipID)
 		if err != nil {
-			return fmt.Errorf("Error unmapping Cloud IP %s: %s", cloudip_id, err)
+			return fmt.Errorf("Error unmapping Cloud IP %s: %s", cloudipID, err)
 		}
-		_, err = waitForUnmappedCloudIp(client, cloudip_id, timeout)
+		_, err = waitForUnmappedCloudIP(client, cloudipID, timeout)
 		if err != nil {
 			return err
 		}
 	} else {
-		log.Printf("[DEBUG] Cloud IP %s is already unmapped", cloudip_id)
+		log.Printf("[DEBUG] Cloud IP %s is already unmapped", cloudipID)
 	}
 	return nil
 }
 
 func waitForCloudip(
 	client *brightbox.Client,
-	cloudip_id string,
+	cloudipID string,
 	timeout time.Duration,
 	pending string,
 	target string,
@@ -250,38 +249,38 @@ func waitForCloudip(
 	stateConf := resource.StateChangeConf{
 		Pending:    []string{pending},
 		Target:     []string{target},
-		Refresh:    cloudipStateRefresh(client, cloudip_id),
+		Refresh:    cloudipStateRefresh(client, cloudipID),
 		Timeout:    timeout,
 		MinTimeout: minimumRefreshWait,
 	}
 
-	active_cloudip, err := stateConf.WaitForState()
+	activeCloudIP, err := stateConf.WaitForState()
 	if err != nil {
 		return nil, err
 	}
 
-	return active_cloudip.(*brightbox.CloudIP), err
+	return activeCloudIP.(*brightbox.CloudIP), err
 }
 
-func waitForMappedCloudIp(
+func waitForMappedCloudIP(
 	client *brightbox.Client,
-	cloudip_id string,
+	cloudipID string,
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(client, cloudip_id, timeout, unmapped, mapped)
+	return waitForCloudip(client, cloudipID, timeout, unmapped, mapped)
 }
 
-func waitForUnmappedCloudIp(
+func waitForUnmappedCloudIP(
 	client *brightbox.Client,
-	cloudip_id string,
+	cloudipID string,
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(client, cloudip_id, timeout, mapped, unmapped)
+	return waitForCloudip(client, cloudipID, timeout, mapped, unmapped)
 }
 
-func cloudipStateRefresh(client *brightbox.Client, cloudip_id string) resource.StateRefreshFunc {
+func cloudipStateRefresh(client *brightbox.Client, cloudipID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		cloudip, err := client.CloudIP(cloudip_id)
+		cloudip, err := client.CloudIP(cloudipID)
 		if err != nil {
 			log.Printf("Error on Cloud IP State Refresh: %s", err)
 			return nil, "", err
@@ -351,7 +350,7 @@ func addUpdateableCloudipOptions(
 ) error {
 	assign_string(d, &opts.Name, "name")
 	assign_string(d, &opts.ReverseDns, "reverse_dns")
-	assign_port_translators(d, &opts.PortTranslators)
+	assignPortTranslators(d, &opts.PortTranslators)
 	return nil
 }
 
@@ -368,20 +367,20 @@ func resourceBrightboxPortTranslationHash(
 	return hashcode.String(buf.String())
 }
 
-func assign_port_translators(d *schema.ResourceData, target *[]brightbox.PortTranslator) {
+func assignPortTranslators(d *schema.ResourceData, target *[]brightbox.PortTranslator) {
 	if d.HasChange("port_translator") {
 		*target = expandPortTranslators(d.Get("port_translator").(*schema.Set).List())
 	}
 }
 
 func expandPortTranslators(configured []interface{}) []brightbox.PortTranslator {
-	port_translators := make([]brightbox.PortTranslator, len(configured))
+	portTranslators := make([]brightbox.PortTranslator, len(configured))
 
-	for i, port_translation_source := range configured {
-		data := port_translation_source.(map[string]interface{})
-		port_translators[i].Protocol = data["protocol"].(string)
-		port_translators[i].Incoming = data["incoming"].(int)
-		port_translators[i].Outgoing = data["outgoing"].(int)
+	for i, portTranslationSource := range configured {
+		data := portTranslationSource.(map[string]interface{})
+		portTranslators[i].Protocol = data["protocol"].(string)
+		portTranslators[i].Incoming = data["incoming"].(int)
+		portTranslators[i].Outgoing = data["outgoing"].(int)
 	}
-	return port_translators
+	return portTranslators
 }

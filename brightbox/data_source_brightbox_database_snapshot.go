@@ -5,8 +5,9 @@ import (
 	"log"
 	"regexp"
 	"sort"
+	"time"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -20,35 +21,30 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 
 			"database_version": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 
 			"database_engine": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 
 			//Computed Values
@@ -113,7 +109,7 @@ func dataSourceBrightboxDatabaseSnapshotsImageAttributes(
 	d.Set("database_engine", image.DatabaseEngine)
 	d.Set("database_version", image.DatabaseVersion)
 	d.Set("size", image.Size)
-	d.Set("created_at", image.CreatedAt)
+	d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
 	d.Set("locked", image.Locked)
 
 	return nil
@@ -146,10 +142,9 @@ func findSnapshotByFilter(
 		log.Printf("[DEBUG] Multiple results found and `most_recent` is set to: %t", recent)
 		if recent {
 			return mostRecentSnapshot(results), nil
-		} else {
-			return nil, fmt.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-				"specific search criteria, or set `most_recent` attribute to true.", len(results))
 		}
+		return nil, fmt.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+			"specific search criteria, or set `most_recent` attribute to true.", len(results))
 	} else {
 		return nil, fmt.Errorf("Your query returned no results. " +
 			"Please change your search criteria and try again.")

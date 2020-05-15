@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -15,6 +15,7 @@ var imageRe = regexp.MustCompile("^img-.....$")
 var zoneRe = regexp.MustCompile("^gb1s?-[ab]$")
 
 func TestAccBrightboxServer_Basic(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
 	var server brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -26,25 +27,31 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxServerExists(resourceName, &server),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestMatchResourceAttr(
-						"brightbox_server.foobar", "image", imageRe),
+						resourceName, "image", imageRe),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "type", "1gb.ssd"),
+						resourceName, "type", "1gb.ssd"),
 					resource.TestMatchResourceAttr(
-						"brightbox_server.foobar", "zone", zoneRe),
+						resourceName, "zone", zoneRe),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
+						resourceName, "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
 func TestAccBrightboxServer_Blank(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
@@ -56,21 +63,27 @@ func TestAccBrightboxServer_Blank(t *testing.T) {
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxServerConfig_blank(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", ""),
+						resourceName, "name", ""),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
 func TestAccBrightboxServer_userDataBase64(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
 	var server brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -83,19 +96,27 @@ func TestAccBrightboxServer_userDataBase64(t *testing.T) {
 				Config: testAccCheckBrightboxServerConfig_base64_userdata(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerExists(
-						"brightbox_server.foobar", &server),
+						resourceName, &server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar",
+						resourceName,
 						"user_data_base64",
 						"aGVsbG8gd29ybGQ="),
 				),
 			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"user_data_base64"},
+			},
 		},
 	})
 }
 
-func TestAccBrightboxServer_server_group(t *testing.T) {
-	var server_group brightbox.ServerGroup
+func TestAccBrightboxServer_serverGroup(t *testing.T) {
+	serverResourceName := "brightbox_server.foobar"
+	resourceName := "brightbox_server_group.barfoo"
+	var serverGroup brightbox.ServerGroup
 	var server brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -105,20 +126,28 @@ func TestAccBrightboxServer_server_group(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxServerConfig_server_group(rInt),
+				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo", &server_group),
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
+					testAccCheckBrightboxServerExists(serverResourceName, &server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "server_groups.#", "1"),
+						serverResourceName, "server_groups.#", "1"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func TestAccBrightboxServer_multi_server_group_up(t *testing.T) {
-	var server_group, server_group2 brightbox.ServerGroup
+func TestAccBrightboxServer_multiServerGroupUp(t *testing.T) {
+	serverResourceName := "brightbox_server.foobar"
+	serverGroupResourceName := "brightbox_server_group.barfoo"
+	otherServerGroupResourceName := "brightbox_server_group.barfoo2"
+	var serverGroup, serverGroup2 brightbox.ServerGroup
 	var server brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -128,29 +157,37 @@ func TestAccBrightboxServer_multi_server_group_up(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxServerConfig_server_group(rInt),
+				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxServerExists(serverResourceName, &server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "server_groups.#", "1"),
+						serverResourceName, "server_groups.#", "1"),
 				),
 			},
 			{
-				Config: testAccCheckBrightboxServerConfig_multi_server_group(rInt),
+				Config: testAccCheckBrightboxServerConfig_multiServerGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo", &server_group),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo2", &server_group2),
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxServerGroupExists(serverGroupResourceName, &serverGroup),
+					testAccCheckBrightboxServerGroupExists(otherServerGroupResourceName, &serverGroup2),
+					testAccCheckBrightboxServerExists(serverResourceName, &server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "server_groups.#", "2"),
+						serverResourceName, "server_groups.#", "2"),
 				),
+			},
+			{
+				ResourceName:      otherServerGroupResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func TestAccBrightboxServer_multi_server_group_down(t *testing.T) {
-	var server_group, server_group2 brightbox.ServerGroup
+func TestAccBrightboxServer_multiServerGroupDown(t *testing.T) {
+	resourceName := "brightbox_server_group.barfoo"
+	otherResourceName := "brightbox_server_group.barfoo2"
+	serverResourceName := "brightbox_server.foobar"
+	var serverGroup, serverGroup2 brightbox.ServerGroup
 	var server brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -160,21 +197,26 @@ func TestAccBrightboxServer_multi_server_group_down(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxServerConfig_multi_server_group(rInt),
+				Config: testAccCheckBrightboxServerConfig_multiServerGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo", &server_group),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.barfoo2", &server_group2),
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
+					testAccCheckBrightboxServerGroupExists(otherResourceName, &serverGroup2),
+					testAccCheckBrightboxServerExists(serverResourceName, &server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "server_groups.#", "2"),
+						serverResourceName, "server_groups.#", "2"),
 				),
 			},
 			{
-				Config: testAccCheckBrightboxServerConfig_server_group(rInt),
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxServerExists(serverResourceName, &server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "server_groups.#", "1"),
+						serverResourceName, "server_groups.#", "1"),
 				),
 			},
 		},
@@ -436,7 +478,7 @@ data "brightbox_server_group" "barfoo" {
 		TestAccBrightboxDataServerGroupConfig_default)
 }
 
-func testAccCheckBrightboxServerConfig_server_group(rInt int) string {
+func testAccCheckBrightboxServerConfig_serverGroup(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "foo-%d"
@@ -452,7 +494,7 @@ resource "brightbox_server_group" "barfoo" {
 %s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
-func testAccCheckBrightboxServerConfig_multi_server_group(rInt int) string {
+func testAccCheckBrightboxServerConfig_multiServerGroup(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "foo-%d"

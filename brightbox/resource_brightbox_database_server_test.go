@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -16,6 +16,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("bar-%d", rInt)
 	updatedName := fmt.Sprintf("baz-%d", rInt)
+	resourceName := "brightbox_database_server.default"
 	var cloudip brightbox.CloudIP
 
 	resource.Test(t, resource.TestCase{
@@ -26,118 +27,124 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
 					testAccCheckBrightboxEmptyDatabaseServerAttributes(&database_server, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", name),
+						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", name),
+						resourceName, "description", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_weekday", "6"),
+						resourceName, "maintenance_weekday", "6"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_hour", "6"),
+						resourceName, "maintenance_hour", "6"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_engine", "mysql"),
+						resourceName, "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "8.0"),
+						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "1"),
+						resourceName, "allow_access.#", "1"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_clear_names,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", ""),
+						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", ""),
+						resourceName, "description", ""),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_weekday", "6"),
+						resourceName, "maintenance_weekday", "6"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_hour", "6"),
+						resourceName, "maintenance_hour", "6"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_engine", "mysql"),
+						resourceName, "database_engine", "mysql"),
 					resource.TestMatchResourceAttr(
-						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
+						resourceName, "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "8.0"),
+						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "1"),
+						resourceName, "allow_access.#", "1"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_maintenance(updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", updatedName),
+						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", updatedName),
+						resourceName, "description", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_weekday", "5"),
+						resourceName, "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_hour", "4"),
+						resourceName, "maintenance_hour", "4"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "snapshots_schedule", "4 5 * * *"),
+						resourceName, "snapshots_schedule", "4 5 * * *"),
 					resource.TestMatchResourceAttr(
-						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
+						resourceName, "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_engine", "mysql"),
+						resourceName, "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "8.0"),
+						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "1"),
+						resourceName, "allow_access.#", "1"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_access(updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", updatedName),
+						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", updatedName),
+						resourceName, "description", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_weekday", "5"),
+						resourceName, "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_hour", "4"),
+						resourceName, "maintenance_hour", "4"),
 					resource.TestMatchResourceAttr(
-						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
+						resourceName, "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_engine", "mysql"),
+						resourceName, "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "8.0"),
+						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "3"),
+						resourceName, "allow_access.#", "3"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.2131663435", "158.152.1.65/32"),
+						resourceName, "allow_access.2131663435", "158.152.1.65/32"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_map_cloudip(updatedName, rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.barfar", &cloudip),
-					testAccCheckBrightboxDatabaseServerExists("brightbox_database_server.default", &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "name", updatedName),
+						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "description", updatedName),
+						resourceName, "description", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_weekday", "5"),
+						resourceName, "maintenance_weekday", "5"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "maintenance_hour", "4"),
+						resourceName, "maintenance_hour", "4"),
 					resource.TestMatchResourceAttr(
-						"brightbox_database_server.default", "database_type", regexp.MustCompile("^dbt-.....$")),
+						resourceName, "database_type", regexp.MustCompile("^dbt-.....$")),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_engine", "mysql"),
+						resourceName, "database_engine", "mysql"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "database_version", "8.0"),
+						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.#", "3"),
+						resourceName, "allow_access.#", "3"),
 					resource.TestCheckResourceAttr(
-						"brightbox_database_server.default", "allow_access.2131663435", "158.152.1.65/32"),
+						resourceName, "allow_access.2131663435", "158.152.1.65/32"),
 				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"admin_password"},
 			},
 		},
 	})

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -19,6 +19,11 @@ func resourceBrightboxServerGroup() *schema.Resource {
 		Delete: resourceBrightboxServerGroupDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -42,20 +47,20 @@ func resourceBrightboxServerGroupCreate(
 	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[INFO] Creating Server Group")
-	server_group_opts := &brightbox.ServerGroupOptions{}
-	err := addUpdateableServerGroupOptions(d, server_group_opts)
+	serverGroupOpts := &brightbox.ServerGroupOptions{}
+	err := addUpdateableServerGroupOptions(d, serverGroupOpts)
 	if err != nil {
 		return err
 	}
 
-	server_group, err := client.CreateServerGroup(server_group_opts)
+	serverGroup, err := client.CreateServerGroup(serverGroupOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating Server Group: %s", err)
 	}
 
-	d.SetId(server_group.Id)
+	d.SetId(serverGroup.Id)
 
-	return setServerGroupAttributes(d, server_group)
+	return setServerGroupAttributes(d, serverGroup)
 }
 
 func resourceBrightboxServerGroupRead(
@@ -64,7 +69,7 @@ func resourceBrightboxServerGroupRead(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	server_group, err := client.ServerGroup(d.Id())
+	serverGroup, err := client.ServerGroup(d.Id())
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "missing_resource:") {
 			log.Printf("[WARN] Server Group not found, removing from state: %s", d.Id())
@@ -74,7 +79,7 @@ func resourceBrightboxServerGroupRead(
 		return fmt.Errorf("Error retrieving Server Group details: %s", err)
 	}
 
-	return setServerGroupAttributes(d, server_group)
+	return setServerGroupAttributes(d, serverGroup)
 }
 
 func resourceBrightboxServerGroupDelete(
@@ -83,12 +88,12 @@ func resourceBrightboxServerGroupDelete(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	server_group, err := client.ServerGroup(d.Id())
+	serverGroup, err := client.ServerGroup(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving Server Group details: %s", err)
 	}
-	if len(server_group.Servers) > 0 {
-		err := clearServerList(client, server_group)
+	if len(serverGroup.Servers) > 0 {
+		err := clearServerList(client, serverGroup, d.Timeout(schema.TimeoutDelete))
 		if err != nil {
 			return err
 		}
@@ -108,21 +113,21 @@ func resourceBrightboxServerGroupUpdate(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	server_group_opts := &brightbox.ServerGroupOptions{
+	serverGroupOpts := &brightbox.ServerGroupOptions{
 		Id: d.Id(),
 	}
-	err := addUpdateableServerGroupOptions(d, server_group_opts)
+	err := addUpdateableServerGroupOptions(d, serverGroupOpts)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Server Group update configuration: %#v", server_group_opts)
+	log.Printf("[DEBUG] Server Group update configuration: %#v", serverGroupOpts)
 
-	server_group, err := client.UpdateServerGroup(server_group_opts)
+	serverGroup, err := client.UpdateServerGroup(serverGroupOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Server Group (%s): %s", server_group_opts.Id, err)
+		return fmt.Errorf("Error updating Server Group (%s): %s", serverGroupOpts.Id, err)
 	}
 
-	return setServerGroupAttributes(d, server_group)
+	return setServerGroupAttributes(d, serverGroup)
 }
 
 func addUpdateableServerGroupOptions(
@@ -136,14 +141,14 @@ func addUpdateableServerGroupOptions(
 
 func setServerGroupAttributes(
 	d *schema.ResourceData,
-	server_group *brightbox.ServerGroup,
+	serverGroup *brightbox.ServerGroup,
 ) error {
-	d.Set("name", server_group.Name)
-	d.Set("description", server_group.Description)
+	d.Set("name", serverGroup.Name)
+	d.Set("description", serverGroup.Description)
 	return nil
 }
 
-func serverIdList(servers []brightbox.Server) []string {
+func serverIDList(servers []brightbox.Server) []string {
 	var result []string
 	for _, srv := range servers {
 		result = append(result, srv.Id)
@@ -151,10 +156,10 @@ func serverIdList(servers []brightbox.Server) []string {
 	return result
 }
 
-func clearServerList(client *brightbox.Client, initial_server_group *brightbox.ServerGroup) error {
-	serverID := initial_server_group.Id
-	server_list := initial_server_group.Servers
-	serverIds := serverIdList(server_list)
+func clearServerList(client *brightbox.Client, iniitialServerGroup *brightbox.ServerGroup, timeout time.Duration) error {
+	serverID := iniitialServerGroup.Id
+	serverList := iniitialServerGroup.Servers
+	serverIds := serverIDList(serverList)
 	log.Printf("[INFO] Removing servers %#v from server group %s", serverIds, serverID)
 	_, err := client.RemoveServersFromServerGroup(serverID, serverIds)
 	if err != nil {
@@ -162,17 +167,17 @@ func clearServerList(client *brightbox.Client, initial_server_group *brightbox.S
 	}
 	// Wait for group to empty
 	return resource.Retry(
-		1*time.Minute,
+		timeout,
 		func() *resource.RetryError {
-			server_group, err := client.ServerGroup(serverID)
+			serverGroup, err := client.ServerGroup(serverID)
 			if err != nil {
 				return resource.NonRetryableError(
 					fmt.Errorf("Error retrieving Server Group details: %s", err),
 				)
 			}
-			if len(server_group.Servers) > 0 {
+			if len(serverGroup.Servers) > 0 {
 				return resource.RetryableError(
-					fmt.Errorf("Error: servers %#v still in server group %s", serverIdList(server_group.Servers), server_group.Id),
+					fmt.Errorf("Error: servers %#v still in server group %s", serverIDList(serverGroup.Servers), serverGroup.Id),
 				)
 			}
 			return nil

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gorhill/cronexpr"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -30,13 +30,13 @@ func hash_string(
 	}
 }
 
-func userDataHashSum(user_data string) string {
-	// Check whether the user_data is not Base64 encoded.
+func userDataHashSum(userData string) string {
+	// Check whether the userData is not Base64 encoded.
 	// Always calculate hash of base64 decoded value since we
 	// check against double-encoding when setting it
-	v, base64DecodeError := base64Decode(user_data)
+	v, base64DecodeError := base64Decode(userData)
 	if base64DecodeError != nil {
-		v = user_data
+		v = userData
 	}
 	hash := sha1.Sum([]byte(v))
 	return hex.EncodeToString(hash[:])
@@ -99,11 +99,9 @@ func assign_bool(d *schema.ResourceData, target **bool, index string) {
 	}
 }
 
-func setPrimaryCloudIp(d *schema.ResourceData, cloud_ip *brightbox.CloudIP) {
-	d.Set("ipv4_address", cloud_ip.PublicIP)
-	d.SetPartial("ipv4_address")
-	d.Set("public_hostname", cloud_ip.Fqdn)
-	d.SetPartial("public_hostname")
+func setPrimaryCloudIP(d *schema.ResourceData, cloudIP *brightbox.CloudIP) {
+	d.Set("ipv4_address", cloudIP.PublicIP)
+	d.Set("public_hostname", cloudIP.Fqdn)
 }
 
 // Base64Encode encodes data if the input isn't already encoded
@@ -145,6 +143,7 @@ func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
 	)
 }
 
+// ValidateCronString checks if the string is a valid cron layout
 func ValidateCronString(v interface{}, name string) (warns []string, errors []error) {
 	if _, err := cronexpr.Parse(v.(string)); err != nil {
 		errors = append(errors, fmt.Errorf("%q: %s", name, err))

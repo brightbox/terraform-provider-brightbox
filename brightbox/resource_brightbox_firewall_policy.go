@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	brightbox "github.com/brightbox/gobrightbox"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -19,6 +21,10 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
+		Timeouts: &schema.ResourceTimeout{
+			Update: schema.DefaultTimeout(defaultTimeout),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"server_group": {
 				Type:     schema.TypeString,
@@ -27,11 +33,13 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "",
 			},
 
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "",
 			},
 		},
 	}
@@ -44,22 +52,23 @@ func resourceBrightboxFirewallPolicyCreate(
 	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[INFO] Creating Firewall Policy")
-	firewall_policy_opts := &brightbox.FirewallPolicyOptions{}
-	err := addUpdateableFirewallPolicyOptions(d, firewall_policy_opts)
+	firewallPolicyOpts := &brightbox.FirewallPolicyOptions{}
+	err := addUpdateableFirewallPolicyOptions(d, firewallPolicyOpts)
 	if err != nil {
 		return err
 	}
+	assign_string(d, &firewallPolicyOpts.ServerGroup, "server_group")
 
-	log.Printf("[INFO] Firewall Policy create configuration: %#v", firewall_policy_opts)
+	log.Printf("[INFO] Firewall Policy create configuration: %#v", firewallPolicyOpts)
 
-	firewall_policy, err := client.CreateFirewallPolicy(firewall_policy_opts)
+	firewallPolicy, err := client.CreateFirewallPolicy(firewallPolicyOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating Firewall Policy: %s", err)
 	}
 
-	d.SetId(firewall_policy.Id)
+	d.SetId(firewallPolicy.Id)
 
-	return setFirewallPolicyAttributes(d, firewall_policy)
+	return setFirewallPolicyAttributes(d, firewallPolicy)
 }
 
 func resourceBrightboxFirewallPolicyRead(
@@ -68,7 +77,7 @@ func resourceBrightboxFirewallPolicyRead(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	firewall_policy, err := client.FirewallPolicy(d.Id())
+	firewallPolicy, err := client.FirewallPolicy(d.Id())
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "missing_resource:") {
 			log.Printf("[WARN] Firewall Policy not found, removing from state: %s", d.Id())
@@ -78,7 +87,7 @@ func resourceBrightboxFirewallPolicyRead(
 		return fmt.Errorf("Error retrieving Firewall Policy details: %s", err)
 	}
 
-	return setFirewallPolicyAttributes(d, firewall_policy)
+	return setFirewallPolicyAttributes(d, firewallPolicy)
 }
 
 func resourceBrightboxFirewallPolicyDelete(
@@ -101,21 +110,53 @@ func resourceBrightboxFirewallPolicyUpdate(
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	firewall_policy_opts := &brightbox.FirewallPolicyOptions{
+	firewallPolicyOpts := &brightbox.FirewallPolicyOptions{
 		Id: d.Id(),
 	}
-	err := addUpdateableFirewallPolicyOptions(d, firewall_policy_opts)
+	err := addUpdateableFirewallPolicyOptions(d, firewallPolicyOpts)
 	if err != nil {
 		return err
 	}
-	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewall_policy_opts)
 
-	firewall_policy, err := client.UpdateFirewallPolicy(firewall_policy_opts)
-	if err != nil {
-		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewall_policy_opts.Id, err)
+	if d.HasChange("server_group") {
+		var err error
+		log.Printf("[INFO] Server Group changed, updating...")
+		o, n := d.GetChange("server_group")
+		newServerGroupID := n.(string)
+		oldServerGroupID := o.(string)
+		log.Printf("[INFO] Detaching %s from Server Group %s", firewallPolicyOpts.Id, oldServerGroupID)
+		err = retryServerGroupChange(
+			func() error {
+				_, err := client.RemoveFirewallPolicy(firewallPolicyOpts.Id, oldServerGroupID)
+				return err
+			},
+			d.Timeout(schema.TimeoutUpdate),
+		)
+		if err != nil {
+			return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+		}
+		if newServerGroupID != "" {
+			log.Printf("[INFO] Attaching %s to Server Group %s", firewallPolicyOpts.Id, newServerGroupID)
+			err = retryServerGroupChange(
+				func() error {
+					_, err := client.ApplyFirewallPolicy(firewallPolicyOpts.Id, newServerGroupID)
+					return err
+				},
+				d.Timeout(schema.TimeoutUpdate),
+			)
+			if err != nil {
+				return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+			}
+		}
+
 	}
 
-	return setFirewallPolicyAttributes(d, firewall_policy)
+	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewallPolicyOpts)
+	firewallPolicy, err := client.UpdateFirewallPolicy(firewallPolicyOpts)
+	if err != nil {
+		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+	}
+	return setFirewallPolicyAttributes(d, firewallPolicy)
 }
 
 func addUpdateableFirewallPolicyOptions(
@@ -124,16 +165,36 @@ func addUpdateableFirewallPolicyOptions(
 ) error {
 	assign_string(d, &opts.Name, "name")
 	assign_string(d, &opts.Description, "description")
-	assign_string(d, &opts.ServerGroup, "server_group")
 	return nil
 }
 
 func setFirewallPolicyAttributes(
 	d *schema.ResourceData,
-	firewall_policy *brightbox.FirewallPolicy,
+	firewallPolicy *brightbox.FirewallPolicy,
 ) error {
-	d.Set("name", firewall_policy.Name)
-	d.Set("description", firewall_policy.Description)
-	d.Set("server_group", firewall_policy.ServerGroup.Id)
+	d.Set("name", firewallPolicy.Name)
+	d.Set("description", firewallPolicy.Description)
+	if firewallPolicy.ServerGroup == nil {
+		d.Set("server_group", "")
+	} else {
+		d.Set("server_group", firewallPolicy.ServerGroup.Id)
+	}
 	return nil
+}
+
+func retryServerGroupChange(changeFunc func() error, timeout time.Duration) error {
+	// Wait for group to change
+	return resource.Retry(
+		timeout,
+		func() *resource.RetryError {
+			if err := changeFunc(); err != nil {
+				apierror := err.(brightbox.ApiError)
+				if apierror.StatusCode == 409 {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			return nil
+		},
+	)
 }

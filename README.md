@@ -86,6 +86,13 @@ In order to run the full suite of Acceptance tests, set the following evironment
 
 Then run `make testacc`.
 
-```sh
+```
 $ make testacc
+````
+
+
+To run individual sets of tests add a `TESTARGS` argument
+
+```
+$ make testacc TESTARGS="-run TestAccBrightboxFirewallPolicy"
 ```

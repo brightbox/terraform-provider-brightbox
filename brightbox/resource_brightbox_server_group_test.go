@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccBrightboxServerGroup_Basic(t *testing.T) {
-	var server_group brightbox.ServerGroup
+	resourceName := "brightbox_server_group.foobar"
+	var serverGroup brightbox.ServerGroup
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
-	updated_name := fmt.Sprintf("bar-%d", rInt)
+	updatedName := fmt.Sprintf("bar-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -24,22 +25,27 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
-					testAccCheckBrightboxServerGroupAttributes(&server_group, name),
+					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
+					testAccCheckBrightboxServerGroupAttributes(&serverGroup, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "name", name),
+						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "description", name),
+						resourceName, "description", name),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
+					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "name", updated_name),
+						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "description", updated_name),
+						resourceName, "description", updatedName),
 				),
 			},
 		},
@@ -47,6 +53,7 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 }
 
 func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
+	resourceName := "brightbox_server_group.foobar"
 	var server_group brightbox.ServerGroup
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
@@ -59,23 +66,28 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
+					testAccCheckBrightboxServerGroupExists(resourceName, &server_group),
 					testAccCheckBrightboxServerGroupAttributes(&server_group, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "name", name),
+						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "description", name),
+						resourceName, "description", name),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.foobar", &server_group),
+					testAccCheckBrightboxServerGroupExists(resourceName, &server_group),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "name", ""),
+						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
-						"brightbox_server_group.foobar", "description", ""),
+						resourceName, "description", ""),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -107,7 +119,7 @@ func testAccCheckBrightboxServerGroupDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckBrightboxServerGroupExists(n string, server_group *brightbox.ServerGroup) resource.TestCheckFunc {
+func testAccCheckBrightboxServerGroupExists(n string, serverGroup *brightbox.ServerGroup) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -131,23 +143,23 @@ func testAccCheckBrightboxServerGroupExists(n string, server_group *brightbox.Se
 			return fmt.Errorf("ServerGroup not found")
 		}
 
-		*server_group = *retrieveServerGroup
+		*serverGroup = *retrieveServerGroup
 
 		return nil
 	}
 }
 
-func testAccCheckBrightboxServerGroupAttributes(server_group *brightbox.ServerGroup, name string) resource.TestCheckFunc {
+func testAccCheckBrightboxServerGroupAttributes(serverGroup *brightbox.ServerGroup, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if server_group.Name != name {
-			return fmt.Errorf("Bad name: %s", server_group.Name)
+		if serverGroup.Name != name {
+			return fmt.Errorf("Bad name: %s", serverGroup.Name)
 		}
-		if server_group.Description != name {
-			return fmt.Errorf("Bad description: %s", server_group.Description)
+		if serverGroup.Description != name {
+			return fmt.Errorf("Bad description: %s", serverGroup.Description)
 		}
-		if server_group.Default != false {
-			return fmt.Errorf("Bad default: %v", server_group.Default)
+		if serverGroup.Default != false {
+			return fmt.Errorf("Bad default: %v", serverGroup.Default)
 		}
 		return nil
 	}

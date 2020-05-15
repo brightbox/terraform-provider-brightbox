@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
-	var firewall_rule brightbox.FirewallRule
-	var firewall_policy brightbox.FirewallPolicy
+	var firewallRule brightbox.FirewallRule
+	var firewallPolicy brightbox.FirewallPolicy
+
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
-	updated_name := fmt.Sprintf("bar-%d", rInt)
+	updatedName := fmt.Sprintf("bar-%d", rInt)
+	resourceName := "brightbox_firewall_rule.rule1"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -25,22 +27,27 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.terraform", &firewall_policy),
-					testAccCheckBrightboxEmptyFirewallRuleAttributes(&firewall_rule, name),
+					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
+					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.terraform", &firewallPolicy),
+					testAccCheckBrightboxEmptyFirewallRuleAttributes(&firewallRule, name),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", name),
+						resourceName, "description", name),
 					resource.TestCheckResourceAttrPtr(
-						"brightbox_firewall_rule.rule1", "firewall_policy", &firewall_policy.Id),
+						resourceName, "firewall_policy", &firewallPolicy.Id),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
+					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", updated_name),
+						resourceName, "description", updatedName),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -50,6 +57,7 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 	var firewall_rule brightbox.FirewallRule
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
+	resourceName := "brightbox_firewall_rule.rule1"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -59,18 +67,23 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
+					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewall_rule),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", name),
+						resourceName, "description", name),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists("brightbox_firewall_rule.rule1", &firewall_rule),
+					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewall_rule),
 					resource.TestCheckResourceAttr(
-						"brightbox_firewall_rule.rule1", "description", ""),
+						resourceName, "description", ""),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

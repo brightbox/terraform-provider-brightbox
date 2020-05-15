@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 const (
-	userdata_size_limit = 16384
+	userdataSizeLimit = 16384
 )
 
 func resourceBrightboxServer() *schema.Resource {
@@ -271,11 +271,11 @@ func addUpdateableServerOptions(
 		}
 		if encoded_userdata == "" {
 			// Nothing found, nothing to do
-		} else if len(encoded_userdata) > userdata_size_limit {
+		} else if len(encoded_userdata) > userdataSizeLimit {
 			return fmt.Errorf(
 				"The supplied user_data contains %d bytes after encoding, this exeeds the limit of %d bytes",
 				len(encoded_userdata),
-				userdata_size_limit,
+				userdataSizeLimit,
 			)
 		} else {
 			opts.UserData = &encoded_userdata
@@ -298,16 +298,16 @@ func setServerAttributes(
 	d.Set("username", server.Image.Username)
 
 	if len(server.Interfaces) > 0 {
-		server_interface := server.Interfaces[0]
-		d.Set("interface", server_interface.Id)
-		d.Set("ipv4_address_private", server_interface.IPv4Address)
+		serverInterface := server.Interfaces[0]
+		d.Set("interface", serverInterface.Id)
+		d.Set("ipv4_address_private", serverInterface.IPv4Address)
 		d.Set("fqdn", server.Fqdn)
-		d.Set("ipv6_address", server_interface.IPv6Address)
+		d.Set("ipv6_address", serverInterface.IPv6Address)
 		d.Set("ipv6_hostname", "ipv6."+server.Fqdn)
 	}
 
 	if len(server.CloudIPs) > 0 {
-		setPrimaryCloudIp(d, &server.CloudIPs[0])
+		setPrimaryCloudIP(d, &server.CloudIPs[0])
 	}
 
 	d.Set("server_groups", schema.NewSet(schema.HashString, flattenServerGroups(server.ServerGroups)))
@@ -326,18 +326,18 @@ func flattenServerGroups(list []brightbox.ServerGroup) []interface{} {
 	return srvGrpIds
 }
 
-func setUserDataDetails(d *schema.ResourceData, base64_userdata string) {
-	if len(base64_userdata) <= 0 {
+func setUserDataDetails(d *schema.ResourceData, base64Userdata string) {
+	if len(base64Userdata) <= 0 {
 		log.Printf("[DEBUG] No user data found, skipping set")
 		return
 	}
 	_, b64 := d.GetOk("user_data_base64")
 	if b64 {
 		log.Printf("[DEBUG] encoded user_data requested, setting user_data_base64")
-		d.Set("user_data_base64", base64_userdata)
+		d.Set("user_data_base64", base64Userdata)
 	} else {
 		log.Printf("[DEBUG] decrypted user_data requested, setting user_data")
-		d.Set("user_data", userDataHashSum(base64_userdata))
+		d.Set("user_data", userDataHashSum(base64Userdata))
 	}
 }
 
@@ -352,14 +352,14 @@ func setConnectionDetails(d *schema.ResourceData) {
 	}
 
 	if preferredSSHAddress != "" {
-		connection_details := map[string]string{
+		connectionDetails := map[string]string{
 			"type": "ssh",
 			"host": preferredSSHAddress,
 		}
 		if attr, ok := d.GetOk("username"); ok {
-			connection_details["user"] = attr.(string)
+			connectionDetails["user"] = attr.(string)
 		}
-		d.SetConnInfo(connection_details)
+		d.SetConnInfo(connectionDetails)
 	}
 }
 

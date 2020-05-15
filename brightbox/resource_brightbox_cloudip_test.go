@@ -10,12 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-const (
-	resourceName = "brightbox_cloudip.foobar"
-)
-
 func TestAccBrightboxCloudip_Basic(t *testing.T) {
-	resourceName := resourceName
+	resourceName := "brightbox_cloudip.foobar"
 	var cloudip brightbox.CloudIP
 	rInt := acctest.RandInt()
 
@@ -45,6 +41,7 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 
 func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 	var cloudip brightbox.CloudIP
+	resourceName := "brightbox_cloudip.foobar"
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
@@ -167,6 +164,7 @@ func TestAccBrightboxCloudip_RemappedSingle(t *testing.T) {
 }
 
 func TestAccBrightboxCloudip_Remapped(t *testing.T) {
+	resourceName := "brightbox_cloudip.foobar"
 	var cloudip brightbox.CloudIP
 	rInt := acctest.RandInt()
 
@@ -341,7 +339,7 @@ resource "brightbox_cloudip" "groupmap" {
 	target = "${brightbox_server_group.barfoo.id}"
 }
 
-%s`, rInt, testAccCheckBrightboxServerConfig_server_group(rInt))
+%s`, rInt, testAccCheckBrightboxServerConfig_serverGroup(rInt))
 }
 
 func testAccCheckBrightboxCloudipConfig_mappedLb(rInt int) string {

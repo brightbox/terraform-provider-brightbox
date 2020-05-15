@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
+	resourceName := "brightbox_orbit_container.foobar"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -19,17 +20,23 @@ func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxOrbitContainerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
+					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "initial"),
+						resourceName, "name", "initial"),
 				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"created_at"},
 			},
 			{
 				Config: testAccCheckBrightboxOrbitContainerConfig_updated,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
+					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "updated"),
+						resourceName, "name", "updated"),
 				),
 			},
 		},
@@ -37,6 +44,7 @@ func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 }
 
 func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
+	resourceName := "brightbox_orbit_container.foobar"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -46,10 +54,16 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxOrbitContainerConfig_metadata,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
+					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "initial"),
+						resourceName, "name", "initial"),
 				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"created_at"},
 			},
 			{
 				Config: testAccCheckBrightboxOrbitContainerConfig_metadata_add,

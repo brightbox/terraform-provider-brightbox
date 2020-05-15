@@ -187,6 +187,7 @@ func setUnescapedString(d *schema.ResourceData, elem string, inputString string)
 	if err != nil {
 		return err
 	}
+	//lintignore:R001
 	return d.Set(elem, temp)
 }
 
@@ -201,6 +202,7 @@ func setUnescapedStringSet(d *schema.ResourceData, elem string, inputStringSet [
 			tempSet = append(tempSet, temp)
 		}
 	}
+	//lintignore:R001
 	return d.Set(elem, tempSet)
 }
 
@@ -214,6 +216,7 @@ func setUnescapedStringMap(d *schema.ResourceData, elem string, inputMap map[str
 		}
 		dest[strings.ToLower(k)] = temp
 	}
+	//lintignore:R001
 	return d.Set(elem, dest)
 }
 
