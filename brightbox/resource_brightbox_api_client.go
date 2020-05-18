@@ -28,28 +28,33 @@ func resourceBrightboxAPIClient() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Human Readable Name",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Verbose Description of this client",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"secret": {
-				Type:      schema.TypeString,
-				Computed:  true,
-				Sensitive: true,
+				Description: "A shared secret the client must present when authenticating",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
 			},
 			"permissions_group": {
+				Description:  "Summary of the permissions granted to the client (full, storage)",
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      validPermissionsGroups[0],
 				ValidateFunc: validation.StringInSlice(validPermissionsGroups, false),
 			},
 			"account": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The account the API client relates to",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

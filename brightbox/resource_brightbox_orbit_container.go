@@ -33,68 +33,80 @@ func resourceBrightboxContainer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
+				Description:  "Name of the Container",
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.NoZeroValues,
 			},
 			"metadata": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Description: "Set of key/value metadata associated with the container",
+				Type:        schema.TypeMap,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 				ValidateFunc: http1Keys,
 			},
 			"container_read": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Description: "Who can read the container",
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 				Set: schema.HashString,
 			},
 			"container_write": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Description: "Who can write to the container",
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 				Set: schema.HashString,
 			},
 			"container_sync_key": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Container sync key",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"container_sync_to": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Container to sync to",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"versions_location": {
+				Description:   "Versions Location",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"history_location"},
 			},
 			"history_location": {
+				Description:   "History location",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"versions_location"},
 			},
 			"object_count": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "Number of objects in the container",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 			"bytes_used": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "Number of bytes used by the container",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 			"storage_policy": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Any storage policy in place",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The time the container was created",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

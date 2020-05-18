@@ -39,57 +39,69 @@ func resourceBrightboxCloudip() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Name assigned to the Cloud IP",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 
 			"target": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "The object this Cloud IP maps to",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Current state of the Cloud IP",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"locked": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "No lock on Cloud IPs",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Deprecated:  "No lock on Cloud IPs",
 			},
 
 			"public_ip": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Old alias of the IPv4 address",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"fqdn": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Full Domain name entry for the Cloud IP",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"reverse_dns": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Reverse DNS entry for the Cloud IP",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 			"port_translator": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Description: "Array of Port Translators",
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"incoming": {
+							Description:  "Incoming Port",
 							Type:         schema.TypeInt,
 							Required:     true,
 							ValidateFunc: validation.IntBetween(minPort, maxPort),
 						},
 
 						"outgoing": {
+							Description:  "Outgoing Port",
 							Type:         schema.TypeInt,
 							Required:     true,
 							ValidateFunc: validation.IntBetween(minPort, maxPort),
 						},
 						"protocol": {
+							Description:  "Transport protocol to port translate (tcp/udp)",
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{"tcp", "udp"}, false),

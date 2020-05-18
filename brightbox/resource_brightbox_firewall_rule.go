@@ -26,36 +26,44 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"firewall_policy": {
-				Type:     schema.TypeString,
-				Required: true,
+				Description: "The firewall policy this rule is linked to",
+				Type:        schema.TypeString,
+				Required:    true,
 			},
 			"protocol": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Protocol Number, or one of tcp, udp, icmp",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"source": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Subnet, ServerGroup or ServerID",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"source_port": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"destination": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Subnet, ServerGroup or ServerID",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"destination_port": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"icmp_type_name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "ICMP type name. 'echo-request', 'echo-reply'",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "User editable label",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 		},
 	}

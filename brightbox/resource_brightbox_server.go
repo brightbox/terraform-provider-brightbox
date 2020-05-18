@@ -30,104 +30,113 @@ func resourceBrightboxServer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"image": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Description: "Image used to create the server",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
-
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
-
 			"type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Description: "Server type of the server",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
 			},
-
 			"zone": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Description: "Zone where server is located",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
 			},
-
 			"user_data": {
+				Description:   "Data made available to Cloud Init",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data_base64"},
 				StateFunc:     hash_string,
 			},
-
 			"user_data_base64": {
+				Description:   "Base64 encoded data made availalbe to Cloud Init",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data"},
 				ValidateFunc:  mustBeBase64Encoded,
 			},
-
 			"server_groups": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Description: "Array of server groups to add server to",
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
 			},
-
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Current state of server",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
-
 			"locked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Description: "Is true if resource has been set as locked and cannot be deleted",
+				Type:        schema.TypeBool,
+				Computed:    true,
 			},
-
 			"interface": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Network Interface connected to this server",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"ipv6_address": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Public IPv6 address of the interface",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"ipv4_address": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Public IPv4 address of the interface",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"ipv4_address_private": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Private IPv4 address of the interface",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"hostname": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Short hostname",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"fqdn": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Fully qualified domain name",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"public_hostname": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Public IPv4 FQDN",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"ipv6_hostname": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Public IPv6 FQDN",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 			"username": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Username to use when logging into a server",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

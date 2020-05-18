@@ -28,13 +28,15 @@ func resourceBrightboxServerGroup() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "USer editable label",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Description: "USer editable label",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 		},
 	}
