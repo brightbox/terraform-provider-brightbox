@@ -325,7 +325,9 @@ func setCloudipAttributes(
 			"protocol": portTranslator.Protocol,
 		}
 	}
-	d.Set("port_translator", portTranslators)
+	if err := d.Set("port_translator", portTranslators); err != nil {
+		return fmt.Errorf("error setting port_translator: %s", err)
+	}
 
 	return nil
 }

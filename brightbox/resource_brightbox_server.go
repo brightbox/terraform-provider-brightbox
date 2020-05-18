@@ -140,23 +140,23 @@ func resourceBrightboxServerCreate(
 	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[DEBUG] Server create called")
-	server_opts := &brightbox.ServerOptions{
+	serverOpts := &brightbox.ServerOptions{
 		Image: d.Get("image").(string),
 	}
 
-	err := addUpdateableServerOptions(d, server_opts)
+	err := addUpdateableServerOptions(d, serverOpts)
 	if err != nil {
 		return err
 	}
 
-	server_type := &server_opts.ServerType
-	assign_string(d, &server_type, "type")
-	zone := &server_opts.Zone
+	serverType := &serverOpts.ServerType
+	assign_string(d, &serverType, "type")
+	zone := &serverOpts.Zone
 	assign_string(d, &zone, "zone")
 
-	log.Printf("[DEBUG] Server create configuration: %#v", server_opts)
+	log.Printf("[DEBUG] Server create configuration: %#v", serverOpts)
 
-	server, err := client.CreateServer(server_opts)
+	server, err := client.CreateServer(serverOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating server: %s", err)
 	}
@@ -173,12 +173,12 @@ func resourceBrightboxServerCreate(
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	active_server, err := stateConf.WaitForState()
+	activeServer, err := stateConf.WaitForState()
 	if err != nil {
 		return err
 	}
 
-	return setServerAttributes(d, active_server.(*brightbox.Server))
+	return setServerAttributes(d, activeServer.(*brightbox.Server))
 }
 
 func resourceBrightboxServerRead(
@@ -235,18 +235,18 @@ func resourceBrightboxServerUpdate(
 	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[DEBUG] Server update called for %s", d.Id())
-	server_opts := &brightbox.ServerOptions{
+	serverOpts := &brightbox.ServerOptions{
 		Id: d.Id(),
 	}
 
-	err := addUpdateableServerOptions(d, server_opts)
+	err := addUpdateableServerOptions(d, serverOpts)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[DEBUG] Server update configuration: %#v", server_opts)
+	log.Printf("[DEBUG] Server update configuration: %#v", serverOpts)
 
-	server, err := client.UpdateServer(server_opts)
+	server, err := client.UpdateServer(serverOpts)
 	if err != nil {
 		return fmt.Errorf("Error updating server: %s", err)
 	}
@@ -261,24 +261,24 @@ func addUpdateableServerOptions(
 	assign_string(d, &opts.Name, "name")
 	assign_string_set(d, &opts.ServerGroups, "server_groups")
 	if d.HasChange("user_data") {
-		encoded_userdata := ""
-		if user_data, ok := d.GetOk("user_data"); ok {
-			log.Printf("[DEBUG] UserData to encode: %s", user_data.(string))
-			encoded_userdata = base64Encode(user_data.(string))
-		} else if user_data, ok := d.GetOk("user_data_base64"); ok {
+		encodedUserData := ""
+		if userData, ok := d.GetOk("user_data"); ok {
+			log.Printf("[DEBUG] UserData to encode: %s", userData.(string))
+			encodedUserData = base64Encode(userData.(string))
+		} else if userData, ok := d.GetOk("user_data_base64"); ok {
 			log.Printf("[DEBUG] Encoded Userdata found, passing through")
-			encoded_userdata = user_data.(string)
+			encodedUserData = userData.(string)
 		}
-		if encoded_userdata == "" {
+		if encodedUserData == "" {
 			// Nothing found, nothing to do
-		} else if len(encoded_userdata) > userdataSizeLimit {
+		} else if len(encodedUserData) > userdataSizeLimit {
 			return fmt.Errorf(
 				"The supplied user_data contains %d bytes after encoding, this exeeds the limit of %d bytes",
-				len(encoded_userdata),
+				len(encodedUserData),
 				userdataSizeLimit,
 			)
 		} else {
-			opts.UserData = &encoded_userdata
+			opts.UserData = &encodedUserData
 		}
 	}
 	return nil
@@ -310,7 +310,9 @@ func setServerAttributes(
 		setPrimaryCloudIP(d, &server.CloudIPs[0])
 	}
 
-	d.Set("server_groups", schema.NewSet(schema.HashString, flattenServerGroups(server.ServerGroups)))
+	if err := d.Set("server_groups", schema.NewSet(schema.HashString, flattenServerGroups(server.ServerGroups))); err != nil {
+		return fmt.Errorf("error setting server_groups: %s", err)
+	}
 
 	setUserDataDetails(d, server.UserData)
 	setConnectionDetails(d)

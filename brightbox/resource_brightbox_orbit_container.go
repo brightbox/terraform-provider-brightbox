@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	default_container_permission = "storage"
+	defaultContainerPermission = "storage"
 )
 
 func resourceBrightboxContainer() *schema.Resource {
@@ -24,6 +24,11 @@ func resourceBrightboxContainer() *schema.Resource {
 		//Exists: resourceBrightboxContainerExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -104,14 +109,14 @@ func resourceBrightboxContainerCreate(
 	log.Printf("[INFO] Creating Container")
 	createOpts := getCreateContainerOptions(d)
 	log.Printf("[DEBUG] Container create configuration: %#v", createOpts)
-	container_path := containerPath(d)
-	log.Printf("[DEBUG] Create path is: %s", container_path)
-	container, err := containers.Create(client, container_path, createOpts).Extract()
+	currentContainerPath := containerPath(d)
+	log.Printf("[DEBUG] Create path is: %s", currentContainerPath)
+	container, err := containers.Create(client, currentContainerPath, createOpts).Extract()
 	if err != nil {
 		return err
 	}
 	log.Printf("[INFO] Container created with TransID %s", container.TransID)
-	d.SetId(container_path)
+	d.SetId(currentContainerPath)
 	return resourceBrightboxContainerRead(d, meta)
 }
 

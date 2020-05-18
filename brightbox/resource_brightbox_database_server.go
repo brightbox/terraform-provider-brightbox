@@ -137,8 +137,11 @@ func setDatabaseServerAttributes(
 func setAllowAccessAttribute(
 	d *schema.ResourceData,
 	databaseServer *brightbox.DatabaseServer,
-) {
-	d.Set("allow_access", schema.NewSet(schema.HashString, flatten_string_slice(databaseServer.AllowAccess)))
+) error {
+	if err := d.Set("allow_access", schema.NewSet(schema.HashString, flatten_string_slice(databaseServer.AllowAccess))); err != nil {
+		return fmt.Errorf("error setting allow_access: %s", err)
+	}
+	return nil
 }
 
 func databaseServerStateRefresh(client *brightbox.Client, databaseServerID string) resource.StateRefreshFunc {
@@ -264,9 +267,7 @@ func updateDatabaseServerAttributes(
 		return err
 	}
 	setDatabaseServerAttributes(d, databaseServer)
-	setAllowAccessAttribute(d, databaseServer)
-
-	return nil
+	return setAllowAccessAttribute(d, databaseServer)
 }
 
 func resourceBrightboxDatabaseServerRead(
@@ -285,8 +286,7 @@ func resourceBrightboxDatabaseServerRead(
 		return nil
 	}
 	setDatabaseServerAttributes(d, databaseServer)
-	setAllowAccessAttribute(d, databaseServer)
-	return nil
+	return setAllowAccessAttribute(d, databaseServer)
 }
 
 func resourceBrightboxDatabaseServerDelete(
