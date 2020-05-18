@@ -11,31 +11,35 @@ import (
 
 func dataSourceBrightboxDatabaseType() *schema.Resource {
 	return &schema.Resource{
-		Description: "Brightbox Cloud SQL Database",
+		Description: "Brightbox Cloud SQL Database Type",
 		Read:        dataSourceBrightboxDatabaseTypeRead,
 
 		Schema: map[string]*schema.Schema{
 
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Name of this database type",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Description of this database type",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"disk_size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "Disk size in megabytes",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 
 			"ram": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "RAM size in megabytes",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 		},
 	}

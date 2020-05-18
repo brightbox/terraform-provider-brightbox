@@ -19,55 +19,64 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"most_recent": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Description: "Snapshot with the latest 'created_at' time",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
 			},
 
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"database_version": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "The version of the database engine used to create this snapshot",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"database_engine": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "The engine of the database used to create this snapshot",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			//Computed Values
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Snapshot state",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "Size of database partition in megabytes",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 
 			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "Time of resource creation (UTC)",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			//Locked is computed only because there is no 'null' search option
 			"locked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Description: "True if snapshot is locked and cannot be deleted",
+				Type:        schema.TypeBool,
+				Computed:    true,
 			},
 		},
 	}

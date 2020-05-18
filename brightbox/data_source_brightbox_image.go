@@ -26,103 +26,120 @@ func dataSourceBrightboxImage() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"most_recent": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Description: "Select the most recent image",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
 			},
 
 			"source_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Source type for this image (upload or snapshot)",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"owner": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Account ID this image belongs to",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"status": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "State of the image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"arch": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "OS Architecture",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "User Label for this image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "A Description of the image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"public": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Description: "Is this image available to other customers?",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"official": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Description: "Is this image an official Brightbox provided one?",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"compatibility_mode": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
+				Description: "Does this image require a non-virtio VM shell",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"username": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Username to use when logging into a server booted with this image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"ancestor_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "Image this image was derived from",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"licence_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Description: "The licence name for this image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 			},
 
 			//Computed Values
 			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The time this image was created/registered (UTC)",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			//Locked is computed only because there is no 'null' search option
 			"locked": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Description: "Is true if the image is set as locked and cannot be deleted",
+				Type:        schema.TypeBool,
+				Computed:    true,
 			},
 
 			"virtual_size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "The virtual size of the disk image container in Megabytes",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 
 			"disk_size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "The actual size of the data within this image in Megabytes",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 		},
 	}
