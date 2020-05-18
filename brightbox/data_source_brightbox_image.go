@@ -20,7 +20,8 @@ var (
 
 func dataSourceBrightboxImage() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceBrightboxImageRead,
+		Description: "Brightbox Image",
+		Read:        dataSourceBrightboxImageRead,
 
 		Schema: map[string]*schema.Schema{
 

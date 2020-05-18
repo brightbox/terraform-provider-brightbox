@@ -5,13 +5,14 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func dataSourceBrightboxServerGroup() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceBrightboxServerGroupRead,
+		Description: "Brightbox Server Group",
+		Read:        dataSourceBrightboxServerGroupRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
