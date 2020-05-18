@@ -1,7 +1,10 @@
 ## 1.2.1 (May 14, 2020)
 - Fix server group import in firewall policies
-- Lint tidy up
+- Provider Lint clean
 - Update patch releases on dependencies
+- Update to SDK 1.12.0
+- Switch to binary test runner
+- Deprecate missing lock attribute in Cloud IP
 
 ## 1.2.0 (June 26, 2019)
 - Update database versions in documentation
