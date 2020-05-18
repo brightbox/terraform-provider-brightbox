@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -79,7 +79,7 @@ func Provider() terraform.ResourceProvider {
 			"brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
 			"brightbox_database_server": resourceBrightboxDatabaseServer(),
 			"brightbox_orbit_container": resourceBrightboxContainer(),
-			"brightbox_api_client":      resourceBrightboxApiClient(),
+			"brightbox_api_client":      resourceBrightboxAPIClient(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

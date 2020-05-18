@@ -4,19 +4,27 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-var valid_permissions_groups = []string{"full", "storage"}
+var validPermissionsGroups = []string{"full", "storage"}
 
-func resourceBrightboxApiClient() *schema.Resource {
+func resourceBrightboxAPIClient() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxApiClientCreate,
-		Read:   resourceBrightboxApiClientRead,
-		Update: resourceBrightboxApiClientUpdate,
-		Delete: resourceBrightboxApiClientDelete,
+		Create: resourceBrightboxAPIClientCreate,
+		Read:   resourceBrightboxAPIClientRead,
+		Update: resourceBrightboxAPIClientUpdate,
+		Delete: resourceBrightboxAPIClientDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(defaultTimeout),
+			Delete: schema.DefaultTimeout(defaultTimeout),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -36,8 +44,8 @@ func resourceBrightboxApiClient() *schema.Resource {
 			"permissions_group": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      valid_permissions_groups[0],
-				ValidateFunc: validation.StringInSlice(valid_permissions_groups, false),
+				Default:      validPermissionsGroups[0],
+				ValidateFunc: validation.StringInSlice(validPermissionsGroups, false),
 			},
 			"account": {
 				Type:     schema.TypeString,
@@ -47,50 +55,50 @@ func resourceBrightboxApiClient() *schema.Resource {
 	}
 }
 
-func resourceBrightboxApiClientCreate(
+func resourceBrightboxAPIClientCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
 	log.Printf("[INFO] Creating Api Client")
-	api_client_opts := &brightbox.ApiClientOptions{}
-	err := addUpdateableApiClientOptions(d, api_client_opts)
+	apiClientOpts := &brightbox.ApiClientOptions{}
+	err := addUpdateableAPIClientOptions(d, apiClientOpts)
 	if err != nil {
 		return err
 	}
-	log.Printf("[INFO] Api Client create configuration: %#v", api_client_opts)
-	api_client, err := client.CreateApiClient(api_client_opts)
+	log.Printf("[INFO] Api Client create configuration: %#v", apiClientOpts)
+	apiClient, err := client.CreateApiClient(apiClientOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating Api Client: %s", err)
 	}
 
-	d.SetId(api_client.Id)
+	d.SetId(apiClient.Id)
 
-	return setApiClientAttributes(d, api_client)
+	return setAPIClientAttributes(d, apiClient)
 }
 
-func resourceBrightboxApiClientRead(
+func resourceBrightboxAPIClientRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	api_client, err := client.ApiClient(d.Id())
+	apiClient, err := client.ApiClient(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving Api Client details: %s", err)
 	}
-	if api_client.RevokedAt != nil {
+	if apiClient.RevokedAt != nil {
 		log.Printf("[WARN] Api Client revoked, removing from state: %s", d.Id())
 		d.SetId("")
 		return nil
 	}
 
-	log.Printf("[DEBUG] Api Client read: %#v", api_client)
-	return setApiClientAttributes(d, api_client)
+	log.Printf("[DEBUG] Api Client read: %#v", apiClient)
+	return setAPIClientAttributes(d, apiClient)
 }
 
-func resourceBrightboxApiClientDelete(
+func resourceBrightboxAPIClientDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
@@ -104,30 +112,30 @@ func resourceBrightboxApiClientDelete(
 	return nil
 }
 
-func resourceBrightboxApiClientUpdate(
+func resourceBrightboxAPIClientUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
 	client := meta.(*CompositeClient).ApiClient
 
-	api_client_opts := &brightbox.ApiClientOptions{
+	apiClientOpts := &brightbox.ApiClientOptions{
 		Id: d.Id(),
 	}
-	err := addUpdateableApiClientOptions(d, api_client_opts)
+	err := addUpdateableAPIClientOptions(d, apiClientOpts)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Api Client update configuration: %#v", api_client_opts)
+	log.Printf("[DEBUG] Api Client update configuration: %#v", apiClientOpts)
 
-	api_client, err := client.UpdateApiClient(api_client_opts)
+	apiClient, err := client.UpdateApiClient(apiClientOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Api Client (%s): %s", api_client_opts.Id, err)
+		return fmt.Errorf("Error updating Api Client (%s): %s", apiClientOpts.Id, err)
 	}
 
-	return setApiClientAttributes(d, api_client)
+	return setAPIClientAttributes(d, apiClient)
 }
 
-func addUpdateableApiClientOptions(
+func addUpdateableAPIClientOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ApiClientOptions,
 ) error {
@@ -137,18 +145,18 @@ func addUpdateableApiClientOptions(
 	return nil
 }
 
-func setApiClientAttributes(
+func setAPIClientAttributes(
 	d *schema.ResourceData,
-	api_client *brightbox.ApiClient,
+	apiClient *brightbox.ApiClient,
 ) error {
-	d.Set("name", api_client.Name)
-	d.Set("description", api_client.Description)
-	d.Set("permissions_group", api_client.PermissionsGroup)
-	d.Set("account", api_client.Account.Id)
+	d.Set("name", apiClient.Name)
+	d.Set("description", apiClient.Description)
+	d.Set("permissions_group", apiClient.PermissionsGroup)
+	d.Set("account", apiClient.Account.Id)
 
 	// Only update the secret if it is set
-	if api_client.Secret != "" {
-		d.Set("secret", api_client.Secret)
+	if apiClient.Secret != "" {
+		d.Set("secret", apiClient.Secret)
 	}
 	return nil
 }
