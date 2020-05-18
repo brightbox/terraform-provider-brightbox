@@ -13,7 +13,8 @@ import (
 
 func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceBrightboxDatabaseSnapshotRead,
+		Description: "Brightbox Database Snapshot",
+		Read:        dataSourceBrightboxDatabaseSnapshotRead,
 
 		Schema: map[string]*schema.Schema{
 

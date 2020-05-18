@@ -11,7 +11,8 @@ import (
 
 func dataSourceBrightboxDatabaseType() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceBrightboxDatabaseTypeRead,
+		Description: "Brightbox Cloud SQL Database",
+		Read:        dataSourceBrightboxDatabaseTypeRead,
 
 		Schema: map[string]*schema.Schema{
 
