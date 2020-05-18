@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
-	var database_server brightbox.DatabaseServer
+	var databaseServer brightbox.DatabaseServer
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("bar-%d", rInt)
 	updatedName := fmt.Sprintf("baz-%d", rInt)
@@ -20,15 +20,16 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	var cloudip brightbox.CloudIP
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxDatabaseServerAndOthersDestroy,
+		DisableBinaryDriver: true,
+		PreCheck:            func() { testAccPreCheck(t) },
+		Providers:           testAccProviders,
+		CheckDestroy:        testAccCheckBrightboxDatabaseServerAndOthersDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
-					testAccCheckBrightboxEmptyDatabaseServerAttributes(&database_server, name),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxEmptyDatabaseServerAttributes(&databaseServer, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
@@ -48,7 +49,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_clear_names,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -70,7 +71,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_maintenance(updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -94,7 +95,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_access(updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -119,7 +120,7 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 				Config: testAccCheckBrightboxDatabaseServerConfig_map_cloudip(updatedName, rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxCloudipExists("brightbox_cloudip.barfar", &cloudip),
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &database_server),
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -192,7 +193,7 @@ func testAccCheckBrightboxDatabaseServerDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckBrightboxDatabaseServerExists(n string, database_server *brightbox.DatabaseServer) resource.TestCheckFunc {
+func testAccCheckBrightboxDatabaseServerExists(n string, databaseServer *brightbox.DatabaseServer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -216,57 +217,57 @@ func testAccCheckBrightboxDatabaseServerExists(n string, database_server *bright
 			return fmt.Errorf("DatabaseServer not found")
 		}
 
-		*database_server = *retrieveDatabaseServer
+		*databaseServer = *retrieveDatabaseServer
 
 		return nil
 	}
 }
 
-func testAccCheckBrightboxEmptyDatabaseServerAttributes(database_server *brightbox.DatabaseServer, name string) resource.TestCheckFunc {
+func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbox.DatabaseServer, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		databaseTypeRs, ok := s.RootModule().Resources["data.brightbox_database_type.foobar"]
 		if !ok {
 			return fmt.Errorf("can't find database type foobar in state")
 		}
-		if database_server.Name != name {
-			return fmt.Errorf("Bad name: %s", database_server.Name)
+		if databaseServer.Name != name {
+			return fmt.Errorf("Bad name: %s", databaseServer.Name)
 		}
-		if database_server.Description != name {
-			return fmt.Errorf("Bad name: %s", database_server.Description)
+		if databaseServer.Description != name {
+			return fmt.Errorf("Bad name: %s", databaseServer.Description)
 		}
-		if database_server.Locked != false {
-			return fmt.Errorf("Bad locked: %v", database_server.Locked)
+		if databaseServer.Locked != false {
+			return fmt.Errorf("Bad locked: %v", databaseServer.Locked)
 		}
-		if database_server.Status != "active" {
-			return fmt.Errorf("Bad status: %s", database_server.Status)
+		if databaseServer.Status != "active" {
+			return fmt.Errorf("Bad status: %s", databaseServer.Status)
 		}
-		if database_server.DatabaseEngine != "mysql" {
-			return fmt.Errorf("Bad database engine: %s", database_server.DatabaseEngine)
+		if databaseServer.DatabaseEngine != "mysql" {
+			return fmt.Errorf("Bad database engine: %s", databaseServer.DatabaseEngine)
 		}
-		if database_server.DatabaseVersion != "8.0" {
-			return fmt.Errorf("Bad database version: %s", database_server.DatabaseVersion)
+		if databaseServer.DatabaseVersion != "8.0" {
+			return fmt.Errorf("Bad database version: %s", databaseServer.DatabaseVersion)
 		}
-		if database_server.DatabaseServerType.Id != databaseTypeRs.Primary.Attributes["id"] {
-			return fmt.Errorf("Bad database server type: %v", database_server.DatabaseServerType)
+		if databaseServer.DatabaseServerType.Id != databaseTypeRs.Primary.Attributes["id"] {
+			return fmt.Errorf("Bad database server type: %v", databaseServer.DatabaseServerType)
 		}
-		if database_server.MaintenanceWeekday != 6 {
-			return fmt.Errorf("Bad MaintenanceWeekday: %d", database_server.MaintenanceWeekday)
+		if databaseServer.MaintenanceWeekday != 6 {
+			return fmt.Errorf("Bad MaintenanceWeekday: %d", databaseServer.MaintenanceWeekday)
 		}
-		if database_server.MaintenanceHour != 6 {
-			return fmt.Errorf("Bad MaintenanceHour: %d", database_server.MaintenanceHour)
+		if databaseServer.MaintenanceHour != 6 {
+			return fmt.Errorf("Bad MaintenanceHour: %d", databaseServer.MaintenanceHour)
 		}
-		if database_server.Zone.Handle == "" {
-			return fmt.Errorf("Bad Zone: %s", database_server.Zone.Handle)
+		if databaseServer.Zone.Handle == "" {
+			return fmt.Errorf("Bad Zone: %s", databaseServer.Zone.Handle)
 		}
-		if database_server.AdminUsername == "" {
-			return fmt.Errorf("Bad AdminUsername: %s", database_server.AdminUsername)
+		if databaseServer.AdminUsername == "" {
+			return fmt.Errorf("Bad AdminUsername: %s", databaseServer.AdminUsername)
 		}
-		if database_server.AdminPassword != "" {
-			return fmt.Errorf("Exposed API AdminPassword: %s", database_server.AdminPassword)
+		if databaseServer.AdminPassword != "" {
+			return fmt.Errorf("Exposed API AdminPassword: %s", databaseServer.AdminPassword)
 		}
-		if len(database_server.AllowAccess) != 1 {
-			return fmt.Errorf("Bad AllowAccess list: %#v", database_server.AllowAccess)
+		if len(databaseServer.AllowAccess) != 1 {
+			return fmt.Errorf("Bad AllowAccess list: %#v", databaseServer.AllowAccess)
 		}
 		return nil
 	}

@@ -274,26 +274,25 @@ resource "brightbox_firewall_policy" "foobar" {
 func testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt int) string {
 	return fmt.Sprintf(`
 
+resource "brightbox_server_group" "group1" {
+	name = "foo-%d"
+}
+
+resource "brightbox_server_group" "group2" {
+	name = "bar-%d"
+}
+
 resource "brightbox_firewall_policy" "foobar" {
 	name = "foo-%d"
 	description = "foo-%d"
 	server_group = "${brightbox_server_group.group1.id}"
 }
 
-resource "brightbox_server_group" "group1" {
-	name = "foo-%d"
-}
-`, rInt, rInt, rInt)
+`, rInt, rInt, rInt, rInt)
 }
 
 func testAccCheckBrightboxFirewallPolicyConfig_remap(rInt int) string {
 	return fmt.Sprintf(`
-
-resource "brightbox_firewall_policy" "foobar" {
-	name = "bar-%d"
-	description = "bar-%d"
-	server_group = "${brightbox_server_group.group2.id}"
-}
 
 resource "brightbox_server_group" "group1" {
 	name = "foo-%d"
@@ -302,6 +301,13 @@ resource "brightbox_server_group" "group1" {
 resource "brightbox_server_group" "group2" {
 	name = "bar-%d"
 }
+
+resource "brightbox_firewall_policy" "foobar" {
+	name = "bar-%d"
+	description = "bar-%d"
+	server_group = "${brightbox_server_group.group2.id}"
+}
+
 `, rInt, rInt, rInt, rInt)
 }
 
@@ -311,7 +317,6 @@ func testAccCheckBrightboxFirewallPolicyConfig_unmap(rInt int) string {
 resource "brightbox_firewall_policy" "foobar" {
 	name = "baz-%d"
 	description = "baz-%d"
-	server_group = ""
 }
 `, rInt, rInt)
 }

@@ -119,22 +119,30 @@ func resourceBrightboxFirewallPolicyUpdate(
 		return err
 	}
 
+	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewallPolicyOpts)
+	firewallPolicy, err := client.UpdateFirewallPolicy(firewallPolicyOpts)
+	if err != nil {
+		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+	}
+
 	if d.HasChange("server_group") {
 		var err error
 		log.Printf("[INFO] Server Group changed, updating...")
 		o, n := d.GetChange("server_group")
 		newServerGroupID := n.(string)
 		oldServerGroupID := o.(string)
-		log.Printf("[INFO] Detaching %s from Server Group %s", firewallPolicyOpts.Id, oldServerGroupID)
-		err = retryServerGroupChange(
-			func() error {
-				_, err := client.RemoveFirewallPolicy(firewallPolicyOpts.Id, oldServerGroupID)
-				return err
-			},
-			d.Timeout(schema.TimeoutUpdate),
-		)
-		if err != nil {
-			return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+		if firewallPolicy.ServerGroup != nil {
+			log.Printf("[INFO] Detaching %s from Server Group %s", firewallPolicyOpts.Id, oldServerGroupID)
+			err = retryServerGroupChange(
+				func() error {
+					_, err := client.RemoveFirewallPolicy(firewallPolicyOpts.Id, oldServerGroupID)
+					return err
+				},
+				d.Timeout(schema.TimeoutUpdate),
+			)
+			if err != nil {
+				return fmt.Errorf("Error removing group from Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+			}
 		}
 		if newServerGroupID != "" {
 			log.Printf("[INFO] Attaching %s to Server Group %s", firewallPolicyOpts.Id, newServerGroupID)
@@ -146,18 +154,13 @@ func resourceBrightboxFirewallPolicyUpdate(
 				d.Timeout(schema.TimeoutUpdate),
 			)
 			if err != nil {
-				return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+				return fmt.Errorf("Error adding group to Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
 			}
 		}
 
 	}
 
-	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewallPolicyOpts)
-	firewallPolicy, err := client.UpdateFirewallPolicy(firewallPolicyOpts)
-	if err != nil {
-		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
-	}
-	return setFirewallPolicyAttributes(d, firewallPolicy)
+	return resourceBrightboxFirewallPolicyRead(d, meta)
 }
 
 func addUpdateableFirewallPolicyOptions(

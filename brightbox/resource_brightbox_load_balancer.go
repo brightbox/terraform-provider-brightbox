@@ -210,14 +210,6 @@ func setLoadBalancerAttributes(
 		return fmt.Errorf("error setting nodes: %s", err)
 	}
 
-	cipIds := make([]string, 0, len(loadBalancer.CloudIPs))
-	for _, cip := range loadBalancer.CloudIPs {
-		cipIds = append(cipIds, cip.Id)
-	}
-	if err := d.Set("cloud_ips", cipIds); err != nil {
-		return fmt.Errorf("error setting cloud_ips: %s", err)
-	}
-
 	listeners := make([]map[string]interface{}, len(loadBalancer.Listeners))
 	for i, listener := range loadBalancer.Listeners {
 		listeners[i] = map[string]interface{}{
