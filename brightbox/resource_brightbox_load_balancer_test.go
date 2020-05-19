@@ -204,7 +204,7 @@ func testAccCheckBrightboxEmptyLoadBalancerAttributes(loadBalancer *brightbox.Lo
 var testAccCheckBrightboxLoadBalancerConfig_basic = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
-	name = "default"
+	name = "foo-20200513"
 	listener {
 		protocol = "http"
 		in = 80
@@ -238,7 +238,7 @@ resource "brightbox_server" "foobar" {
 var testAccCheckBrightboxLoadBalancerConfig_new_timeout = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
-	name = "default"
+	name = "foo-20200513"
 	listener {
 		protocol = "http"
 		in = 80
@@ -272,7 +272,7 @@ resource "brightbox_server" "foobar" {
 var testAccCheckBrightboxLoadBalancerConfig_new_healthcheck = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
-	name = "default"
+	name = "foo-20200513"
 	listener {
 		protocol = "http"
 		in = 80
@@ -305,7 +305,7 @@ resource "brightbox_server" "foobar" {
 var testAccCheckBrightboxLoadBalancerConfig_addListener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
-	name = "default"
+	name = "foo-20200513"
 	listener {
 		protocol = "https"
 		in = 443
@@ -386,7 +386,7 @@ EOF
 
 resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "load_balancer_test"
+	name = "foo-20200513"
 	type = "1gb.ssd"
 	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
@@ -397,7 +397,7 @@ resource "brightbox_server" "foobar" {
 var testAccCheckBrightboxLoadBalancerConfig_remove_listener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
-	name = "default"
+	name = "foo-20201513"
 	listener {
 		protocol = "http"
 		in = 80
@@ -423,7 +423,7 @@ resource "brightbox_load_balancer" "default" {
 
 resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "load_balancer_test"
+	name = "foo-20200513"
 	type = "1gb.ssd"
 	server_groups = ["${data.brightbox_server_group.default.id}"]
 }

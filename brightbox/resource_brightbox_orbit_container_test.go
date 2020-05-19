@@ -130,21 +130,21 @@ func testAccCheckBrightboxOrbitContainerExists(n string) resource.TestCheckFunc 
 const testAccCheckBrightboxOrbitContainerConfig_basic = `
 
 resource "brightbox_orbit_container" "foobar" {
-	name = "initial"
+	name = "test-acc-initial"
 }
 `
 
 const testAccCheckBrightboxOrbitContainerConfig_updated = `
 
 resource "brightbox_orbit_container" "foobar" {
-	name = "updated"
+	name = "test-acc-updated"
 }
 `
 
 const testAccCheckBrightboxOrbitContainerConfig_metadata = `
 
 resource "brightbox_orbit_container" "foobar" {
-	name = "initial"
+	name = "test-acc-initial"
 	container_read = [ "acc-testy", "acc-12345"]
 	metadata = {
 		"foo"= "bar"
@@ -157,7 +157,7 @@ resource "brightbox_orbit_container" "foobar" {
 const testAccCheckBrightboxOrbitContainerConfig_metadata_add = `
 
 resource "brightbox_orbit_container" "foobar" {
-	name = "initial"
+	name = "test-acc-initial"
 	metadata = {
 		"foo"= "bar"
 		"bar"= "foo"
@@ -170,7 +170,7 @@ resource "brightbox_orbit_container" "foobar" {
 const testAccCheckBrightboxOrbitContainerConfig_metadata_delete = `
 
 resource "brightbox_orbit_container" "foobar" {
-	name = "initial"
+	name = "test-acc-initial"
 	metadata = {
 		"bar"= "foo"
 		"uni" = "€uro"

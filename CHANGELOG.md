@@ -1,10 +1,17 @@
-## 1.2.1 (May 14, 2020)
-- Fix server group import in firewall policies
-- Provider Lint clean
+## 1.2.1 (Unreleased)
+
+BUG FIXES:
+
+- resource/firewall-polices: Fix server group import
+
+NOTES:
+
+- Make provider lint clean
 - Update patch releases on dependencies
-- Update to SDK 1.12.0
+- Update to Terraform SDK 1.12.0
 - Switch to binary test runner
-- Deprecate missing lock attribute in Cloud IP
+- resource/cloud-ip: Deprecate eroneous lock attribute
+
 
 ## 1.2.0 (June 26, 2019)
 - Update database versions in documentation

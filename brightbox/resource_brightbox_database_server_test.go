@@ -334,13 +334,13 @@ resource "brightbox_database_server" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	name = "database test"
+	name = "bar-20200513"
 	image = "${data.brightbox_image.foobar.id}"
 	server_groups = [ "${data.brightbox_server_group.default.id}" ]
 }
 
 resource "brightbox_server_group" "barfoo" {
-	name = "database test"
+	name = "bar-20200513"
 }
 
 %s%s`, name, name, TestAccBrightboxImageDataSourceConfig_blank_disk,
