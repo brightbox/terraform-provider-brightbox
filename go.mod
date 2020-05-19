@@ -22,4 +22,4 @@ require (
 	google.golang.org/appengine v1.6.6 // indirect
 )
 
-go 1.13
+go 1.12
