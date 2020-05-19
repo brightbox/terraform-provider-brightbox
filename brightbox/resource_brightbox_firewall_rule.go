@@ -73,7 +73,7 @@ func resourceBrightboxFirewallRuleCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Creating Firewall Rule")
 	firewall_rule_opts := &brightbox.FirewallRuleOptions{
@@ -100,7 +100,7 @@ func resourceBrightboxFirewallRuleRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	firewall_rule, err := client.FirewallRule(d.Id())
 	if err != nil {
@@ -119,7 +119,7 @@ func resourceBrightboxFirewallRuleDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Deleting Firewall Rule %s", d.Id())
 	err := client.DestroyFirewallRule(d.Id())
@@ -133,7 +133,7 @@ func resourceBrightboxFirewallRuleUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	firewall_rule_opts := &brightbox.FirewallRuleOptions{
 		Id: d.Id(),

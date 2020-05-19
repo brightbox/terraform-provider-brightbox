@@ -64,7 +64,7 @@ func resourceBrightboxAPIClientCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Creating Api Client")
 	apiClientOpts := &brightbox.ApiClientOptions{}
@@ -87,7 +87,7 @@ func resourceBrightboxAPIClientRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	apiClient, err := client.ApiClient(d.Id())
 	if err != nil {
@@ -107,7 +107,7 @@ func resourceBrightboxAPIClientDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Deleting Api Client %s", d.Id())
 	err := client.DestroyApiClient(d.Id())
@@ -121,7 +121,7 @@ func resourceBrightboxAPIClientUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	apiClientOpts := &brightbox.ApiClientOptions{
 		Id: d.Id(),

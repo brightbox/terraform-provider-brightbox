@@ -263,7 +263,7 @@ func resourceBrightboxLoadBalancerCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Load Balancer create called")
 	loadBalancerOpts := &brightbox.LoadBalancerOptions{}
@@ -305,7 +305,7 @@ func resourceBrightboxLoadBalancerRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Load Balancer read called for %s", d.Id())
 	loadBalancer, err := client.LoadBalancer(d.Id())
@@ -325,7 +325,7 @@ func resourceBrightboxLoadBalancerUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Load Balancer update called for %s", d.Id())
 	loadBalancerOpts := &brightbox.LoadBalancerOptions{
@@ -352,7 +352,7 @@ func resourceBrightboxLoadBalancerDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Load Balancer delete called for %s", d.Id())
 	err := client.DestroyLoadBalancer(d.Id())

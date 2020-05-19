@@ -49,7 +49,7 @@ func dataSourceBrightboxDatabaseTypeRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] DatabaseType data read called. Retrieving database type list")
 

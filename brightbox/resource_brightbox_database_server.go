@@ -174,7 +174,7 @@ func resourceBrightboxDatabaseServerCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 	err := createDatabaseServer(d, client)
 	if err != nil {
 		return err
@@ -235,7 +235,7 @@ func resourceBrightboxDatabaseServerUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	// Create/Update Database
 	databaseServerOpts := getBlankDatabaseServerOpts()
@@ -289,7 +289,7 @@ func resourceBrightboxDatabaseServerRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 	log.Printf("[DEBUG] Database Server read called for %s", d.Id())
 	databaseServer, err := client.DatabaseServer(d.Id())
 	if err != nil {
@@ -308,7 +308,7 @@ func resourceBrightboxDatabaseServerDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Database Server delete called for %s", d.Id())
 	err := client.DestroyDatabaseServer(d.Id())

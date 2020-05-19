@@ -90,7 +90,7 @@ func TestAccBrightboxAPIClient_clear_names(t *testing.T) {
 }
 
 func testAccCheckBrightboxAPIClientDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).ApiClient
+	client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_api_client" {
@@ -126,7 +126,7 @@ func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.ApiClie
 			return fmt.Errorf("No ApiClient ID is set")
 		}
 
-		client := testAccProvider.Meta().(*CompositeClient).ApiClient
+		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 		// Try to find the ApiClient
 		retrieveAPIClient, err := client.ApiClient(rs.Primary.ID)

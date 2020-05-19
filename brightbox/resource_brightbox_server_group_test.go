@@ -94,7 +94,7 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 }
 
 func testAccCheckBrightboxServerGroupDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).ApiClient
+	client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_server_group" {
@@ -130,7 +130,7 @@ func testAccCheckBrightboxServerGroupExists(n string, serverGroup *brightbox.Ser
 			return fmt.Errorf("No ServerGroup ID is set")
 		}
 
-		client := testAccProvider.Meta().(*CompositeClient).ApiClient
+		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 		// Try to find the ServerGroup
 		retrieveServerGroup, err := client.ServerGroup(rs.Primary.ID)

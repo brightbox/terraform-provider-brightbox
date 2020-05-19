@@ -46,7 +46,7 @@ func resourceBrightboxServerGroupCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Creating Server Group")
 	serverGroupOpts := &brightbox.ServerGroupOptions{}
@@ -69,7 +69,7 @@ func resourceBrightboxServerGroupRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	serverGroup, err := client.ServerGroup(d.Id())
 	if err != nil {
@@ -88,7 +88,7 @@ func resourceBrightboxServerGroupDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	serverGroup, err := client.ServerGroup(d.Id())
 	if err != nil {
@@ -113,7 +113,7 @@ func resourceBrightboxServerGroupUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	serverGroupOpts := &brightbox.ServerGroupOptions{
 		Id: d.Id(),

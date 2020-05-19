@@ -118,7 +118,7 @@ func resourceBrightboxCloudipCreate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Creating CloudIP")
 	cloudipOpts := &brightbox.CloudIPOptions{}
@@ -148,7 +148,7 @@ func resourceBrightboxCloudipRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	cloudip, err := client.CloudIP(d.Id())
 	if err != nil {
@@ -167,7 +167,7 @@ func resourceBrightboxCloudipDelete(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 	return removeCloudIP(client, d.Id(), d.Timeout(schema.TimeoutDelete))
 }
 
@@ -175,7 +175,7 @@ func resourceBrightboxCloudipUpdate(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	if d.HasChange("target") {
 		err := unmapCloudIP(client, d.Id(), d.Timeout(schema.TimeoutDelete))

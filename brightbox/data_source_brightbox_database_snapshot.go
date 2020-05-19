@@ -86,7 +86,7 @@ func dataSourceBrightboxDatabaseSnapshotRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Snapshot data read called. Retrieving snapshot list")
 	images, err := client.DatabaseSnapshots()

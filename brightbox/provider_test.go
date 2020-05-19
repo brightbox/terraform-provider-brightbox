@@ -43,7 +43,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"username": "fred",
 				"password": "fred",
 			},
-			err: "Must specify Account with User Credentials",
+			err: "must specify Account with User Credentials",
 		},
 		{
 			name: "Apiclient with User Credentials",
@@ -54,7 +54,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"password":  "fred",
 				"account":   "acc-12345",
 			},
-			err: "User Credentials should be blank with an API Client",
+			err: "user Credentials should be blank with an API Client",
 		},
 		{
 			name: "Apiclient with User",
@@ -63,7 +63,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"username":  "fred",
 			},
-			err: "User Credentials should be blank with an API Client",
+			err: "user Credentials should be blank with an API Client",
 		},
 		{
 			name: "Apiclient with password",
@@ -72,7 +72,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"password":  "fred",
 			},
-			err: "User Credentials should be blank with an API Client",
+			err: "user Credentials should be blank with an API Client",
 		},
 		{
 			name: "Specific app id with missing user",
@@ -81,7 +81,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"password":  "fred",
 			},
-			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 		{
 			name: "Default app id with missing user",
@@ -90,7 +90,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"password":  "fred",
 			},
-			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 		{
 			name: "Specific app id with missing password",
@@ -99,14 +99,14 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"user":      "fred",
 			},
-			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 		{
 			name: "Default app id with missing password",
 			raw: map[string]interface{}{
 				"user": "fred",
 			},
-			err: "User Credentials are missing. Please supply a Username and One Time Authentication code.",
+			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 	}
 

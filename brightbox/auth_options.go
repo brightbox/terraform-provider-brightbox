@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/hashicorp/go-cleanhttp"
@@ -24,7 +24,7 @@ type authdetails struct {
 	password     string
 	Account      string
 	APIURL       string
-	OrbitUrl     string
+	OrbitURL     string
 	currentToken oauth2.TokenSource
 }
 
@@ -49,11 +49,11 @@ func (authd *authdetails) authenticatedClient() (*brightbox.Client, *gophercloud
 	}
 	if apiclient.AccountId == "" {
 		log.Printf("[INFO] Obtaining default account")
-		api_client, err := apiclient.ApiClient(authd.APIClient)
+		authedAPIClient, err := apiclient.ApiClient(authd.APIClient)
 		if err != nil {
 			return nil, nil, err
 		}
-		apiclient.AccountId = api_client.Account.Id
+		apiclient.AccountId = authedAPIClient.Account.Id
 		authd.Account = apiclient.AccountId
 	}
 
@@ -70,7 +70,7 @@ func (authd *authdetails) tokenURL() string {
 }
 
 func (authd *authdetails) storageURL() string {
-	return strings.TrimSuffix(authd.OrbitUrl, "/") + "/" + authd.Account + "/"
+	return strings.TrimSuffix(authd.OrbitURL, "/") + "/" + authd.Account + "/"
 }
 
 func (authd *authdetails) getUserTokenSource(ctx context.Context) error {
@@ -122,7 +122,7 @@ func (authd *authdetails) getServiceClient(ctx context.Context) (*gophercloud.Se
 
 func (authd *authdetails) getProviderClient(ctx context.Context) (*gophercloud.ProviderClient, error) {
 	log.Printf("[DEBUG] Obtaining Provider Client")
-	client, err := openstack.NewClient(authd.OrbitUrl)
+	client, err := openstack.NewClient(authd.OrbitURL)
 	if err != nil {
 		return nil, err
 	}

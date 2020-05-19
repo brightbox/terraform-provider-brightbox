@@ -232,7 +232,7 @@ func testAccCheckBrightboxServerAndGroupDestroy(s *terraform.State) error {
 }
 
 func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).ApiClient
+	client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_server" {
@@ -271,7 +271,7 @@ func testAccCheckBrightboxServerExists(n string, server *brightbox.Server) resou
 			return fmt.Errorf("No Server ID is set")
 		}
 
-		client := testAccProvider.Meta().(*CompositeClient).ApiClient
+		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 		// Try to find the Server
 		retrieveServer, err := client.Server(rs.Primary.ID)

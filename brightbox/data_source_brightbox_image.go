@@ -149,7 +149,7 @@ func dataSourceBrightboxImageRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Image data read called. Retrieving image list")
 

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox"
@@ -292,11 +293,11 @@ func escapedStringMetadata(metadata interface{}) map[string]string {
 }
 
 func removedMetadataKeys(old interface{}, new interface{}) []string {
-	old_map := old.(map[string]interface{})
-	new_map := new.(map[string]interface{})
-	result := make([]string, 0, len(old_map))
-	for key, _ := range old_map {
-		if new_map[key] == nil {
+	oldMap := old.(map[string]interface{})
+	newMap := new.(map[string]interface{})
+	result := make([]string, 0, len(oldMap))
+	for key := range oldMap {
+		if newMap[key] == nil {
 			result = append(result, strings.ToLower(key))
 		}
 	}
@@ -312,4 +313,14 @@ func CheckDeleted(d *schema.ResourceData, err error, msg string) error {
 	}
 
 	return fmt.Errorf("%s %s: %s", msg, d.Id(), err)
+}
+
+// getEnvVarWithDefault retrieves the value of the environment variable
+// named by the key. If the variable is not present, return the default
+//value instead.
+func getenvWithDefault(key string, defaultValue string) string {
+	if val, exists := os.LookupEnv(key); exists {
+		return val
+	}
+	return defaultValue
 }

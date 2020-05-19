@@ -36,7 +36,7 @@ func dataSourceBrightboxServerGroupRead(
 	d *schema.ResourceData,
 	meta interface{},
 ) error {
-	client := meta.(*CompositeClient).ApiClient
+	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Server Group data read called. Retrieving server group list")
 

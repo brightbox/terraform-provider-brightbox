@@ -1,42 +1,31 @@
 package brightbox
 
 import (
-	"fmt"
-	"log"
-	"strings"
-
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-const (
-	// Terraform application client credentials
-	defaultClientID     = "app-dkmch"
-	defaultClientSecret = "uogoelzgt0nwawb"
-	appPrefix           = "app-"
-	passwordEnvVar      = "BRIGHTBOX_PASSWORD"
-)
-
+// Provider is the Brightbox Terraform driver root
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"apiclient": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT", defaultClientID),
+				DefaultFunc: schema.EnvDefaultFunc(clientEnvVar, defaultClientID),
 				Description: "Brightbox Cloud API Client/OAuth Application ID",
 			},
 			"apisecret": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_CLIENT_SECRET", defaultClientSecret),
+				DefaultFunc: schema.EnvDefaultFunc(clientSecretEnvVar, defaultClientSecret),
 				Description: "Brightbox Cloud API Client/OAuth Application Secret",
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_USER_NAME", nil),
+				DefaultFunc: schema.EnvDefaultFunc(usernameEnvVar, nil),
 				Description: "Brightbox Cloud User Name",
 			},
 			"password": {
@@ -49,19 +38,19 @@ func Provider() terraform.ResourceProvider {
 			"account": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_ACCOUNT", nil),
+				DefaultFunc: schema.EnvDefaultFunc(accountEnvVar, nil),
 				Description: "Brightbox Cloud Account to operate on",
 			},
 			"apiurl": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_API_URL", brightbox.DefaultRegionApiURL),
+				DefaultFunc: schema.EnvDefaultFunc(apiURLEnvVar, brightbox.DefaultRegionApiURL),
 				Description: "Brightbox Cloud Api URL for selected Region",
 			},
 			"orbit_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BRIGHTBOX_ORBIT_URL", brightbox.DefaultOrbitAuthURL),
+				DefaultFunc: schema.EnvDefaultFunc(orbitURLEnvVar, brightbox.DefaultOrbitAuthURL),
 				Description: "Brightbox Cloud Orbit URL for selected Region",
 			},
 		},
@@ -86,33 +75,13 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	config := &authdetails{
+	return (&authdetails{
 		APIClient: d.Get("apiclient").(string),
 		APISecret: d.Get("apisecret").(string),
 		UserName:  d.Get("username").(string),
 		password:  d.Get("password").(string),
 		Account:   d.Get("account").(string),
 		APIURL:    d.Get("apiurl").(string),
-		OrbitUrl:  d.Get("orbit_url").(string),
-	}
-
-	if strings.HasPrefix(config.APIClient, appPrefix) {
-		log.Printf("[DEBUG] Detected OAuth Application. Validating User details.")
-		if config.UserName == "" || config.password == "" {
-			return nil,
-				fmt.Errorf("User Credentials are missing. Please supply a Username and One Time Authentication code.")
-		}
-		if config.Account == "" {
-			return nil,
-				fmt.Errorf("Must specify Account with User Credentials")
-		}
-	} else {
-		log.Printf("[DEBUG] Detected API Client.")
-		if config.UserName != "" || config.password != "" {
-			return nil,
-				fmt.Errorf("User Credentials should be blank with an API Client")
-		}
-	}
-
-	return config.Client()
+		OrbitURL:  d.Get("orbit_url").(string),
+	}).Client()
 }
