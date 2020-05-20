@@ -5,6 +5,7 @@ import (
 	"log"
 
 	brightbox "github.com/brightbox/gobrightbox"
+	"github.com/brightbox/gobrightbox/status"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -383,4 +384,34 @@ func serverStateRefresh(client *brightbox.Client, serverID string) resource.Stat
 		}
 		return server, server.Status, nil
 	}
+}
+
+// Sweeper
+
+func init() {
+	resource.AddTestSweepers("server", &resource.Sweeper{
+		Name: "server",
+		F: func(_ string) error {
+			client, err := obtainCloudClient()
+			if err != nil {
+				return err
+			}
+			objects, err := client.APIClient.Servers()
+			if err != nil {
+				return err
+			}
+			for _, object := range objects {
+				if object.Status != status.Active {
+					continue
+				}
+				if isTestName(object.Name) {
+					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
+					if err := client.APIClient.DestroyServer(object.Id); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					}
+				}
+			}
+			return nil
+		},
+	})
 }

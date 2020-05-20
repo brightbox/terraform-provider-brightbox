@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox"
@@ -319,4 +320,34 @@ resource "brightbox_firewall_policy" "foobar" {
 	description = "baz-%d"
 }
 `, rInt, rInt)
+}
+
+// Sweeper
+
+func init() {
+	resource.AddTestSweepers("firewall_policy", &resource.Sweeper{
+		Name: "firewall_policy",
+		F: func(_ string) error {
+			client, err := obtainCloudClient()
+			if err != nil {
+				return err
+			}
+			objects, err := client.APIClient.FirewallPolicies()
+			if err != nil {
+				return err
+			}
+			for _, object := range objects {
+				if object.Default {
+					continue
+				}
+				if isTestName(object.Name) {
+					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
+					if err := client.APIClient.DestroyFirewallPolicy(object.Id); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					}
+				}
+			}
+			return nil
+		},
+	})
 }

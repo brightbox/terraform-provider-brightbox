@@ -214,7 +214,7 @@ func init() {
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := client.APIClient.DestroyCloudIP(object.Id); err != nil {
+					if err := client.APIClient.DestroyServerGroup(object.Id); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.Id, err)
 					}
 				}

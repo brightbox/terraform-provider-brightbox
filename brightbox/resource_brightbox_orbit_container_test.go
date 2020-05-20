@@ -2,12 +2,16 @@ package brightbox
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
+	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
+
+const containerName = "test-acc-initial"
 
 func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 	resourceName := "brightbox_orbit_container.foobar"
@@ -22,7 +26,7 @@ func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						resourceName, "name", "test-acc-initial"),
+						resourceName, "name", containerName),
 				),
 			},
 			{
@@ -56,7 +60,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						resourceName, "name", "test-acc-initial"),
+						resourceName, "name", containerName),
 				),
 			},
 			{
@@ -70,7 +74,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "test-acc-initial"),
+						"brightbox_orbit_container.foobar", "name", containerName),
 				),
 			},
 			{
@@ -78,7 +82,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "test-acc-initial"),
+						"brightbox_orbit_container.foobar", "name", containerName),
 				),
 			},
 			{
@@ -86,7 +90,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "test-acc-initial"),
+						"brightbox_orbit_container.foobar", "name", containerName),
 				),
 			},
 		},
@@ -178,3 +182,24 @@ resource "brightbox_orbit_container" "foobar" {
 	container_read = [ "acc-testy", "acc-12345", "acc-98765" ]
 }
 `
+
+func init() {
+	resource.AddTestSweepers("orbit_containers", &resource.Sweeper{
+		Name: "orbit_containers",
+		F: func(_ string) error {
+			client, err := obtainCloudClient()
+			if err != nil {
+				return err
+			}
+			result, err := containers.Delete(client.OrbitClient, containerName).Extract()
+			if err != nil {
+				if _, ok := err.(gophercloud.ErrDefault404); !ok {
+					return err
+				}
+				return nil
+			}
+			log.Printf("[INFO] Container deleted with TransID %s", result.TransID)
+			return nil
+		},
+	})
+}
