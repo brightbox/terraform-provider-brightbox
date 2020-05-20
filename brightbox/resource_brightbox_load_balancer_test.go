@@ -182,7 +182,7 @@ func testAccCheckBrightboxLoadBalancerExists(n string, loadBalancer *brightbox.L
 func testAccCheckBrightboxEmptyLoadBalancerAttributes(loadBalancer *brightbox.LoadBalancer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if loadBalancer.Name != "default" {
+		if loadBalancer.Name != "foo-20200513" {
 			return fmt.Errorf("Bad name: %s", loadBalancer.Name)
 		}
 		if loadBalancer.Locked != false {
