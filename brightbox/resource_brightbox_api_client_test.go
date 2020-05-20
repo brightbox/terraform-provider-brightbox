@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox"
@@ -187,3 +188,33 @@ resource "brightbox_api_client" "foobar" {
 	description = ""
 }
 `
+
+// Sweeper
+
+func init() {
+	resource.AddTestSweepers("api_client", &resource.Sweeper{
+		Name: "api_client",
+		F: func(_ string) error {
+			client, err := obtainCloudClient()
+			if err != nil {
+				return err
+			}
+			apiClients, err := client.APIClient.ApiClients()
+			if err != nil {
+				return err
+			}
+			for _, apiClient := range apiClients {
+				if apiClient.RevokedAt != nil {
+					continue
+				}
+				if isTestName(apiClient.Name) {
+					log.Printf("[INFO] removing %s named %s", apiClient.Id, apiClient.Name)
+					if err := client.APIClient.DestroyApiClient(apiClient.Id); err != nil {
+						log.Printf("error destroying %s during sweep: %s", apiClient.Id, err)
+					}
+				}
+			}
+			return nil
+		},
+	})
+}

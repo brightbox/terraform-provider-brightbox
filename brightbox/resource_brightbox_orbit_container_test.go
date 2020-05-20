@@ -22,7 +22,7 @@ func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						resourceName, "name", "initial"),
+						resourceName, "name", "test-acc-initial"),
 				),
 			},
 			{
@@ -36,7 +36,7 @@ func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						resourceName, "name", "updated"),
+						resourceName, "name", "test-acc-updated"),
 				),
 			},
 		},
@@ -70,7 +70,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "test-acc-initial"),
 				),
 			},
 			{
@@ -78,7 +78,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "test-acc-initial"),
 				),
 			},
 			{
@@ -86,7 +86,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists("brightbox_orbit_container.foobar"),
 					resource.TestCheckResourceAttr(
-						"brightbox_orbit_container.foobar", "name", "initial"),
+						"brightbox_orbit_container.foobar", "name", "test-acc-initial"),
 				),
 			},
 		},

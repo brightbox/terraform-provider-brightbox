@@ -44,6 +44,7 @@ func obtainCloudClient() (*CompositeClient, error) {
 		password: os.Getenv(passwordEnvVar),
 		Account:  os.Getenv(accountEnvVar),
 		APIURL:   os.Getenv(apiURLEnvVar),
+		OrbitURL: os.Getenv(orbitURLEnvVar),
 	}).Client()
 }
 

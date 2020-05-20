@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -80,9 +81,8 @@ func testStringMapValidation(testCase StringMapValidationTestCase, validationFun
 	if testCase.ExpectError {
 		if len(es) > 0 {
 			return nil
-		} else {
-			return []error{fmt.Errorf("Didn't see expected error in case \"%s\" with string \"%s\"", testCase.TestName, testCase.Value)}
 		}
+		return []error{fmt.Errorf("Didn't see expected error in case \"%s\" with string \"%s\"", testCase.TestName, testCase.Value)}
 	}
 
 	return es
@@ -93,10 +93,15 @@ func testStringValidation(testCase StringValidationTestCase, validationFunc sche
 	if testCase.ExpectError {
 		if len(es) > 0 {
 			return nil
-		} else {
-			return []error{fmt.Errorf("Didn't see expected error in case \"%s\" with string \"%s\"", testCase.TestName, testCase.Value)}
 		}
+		return []error{fmt.Errorf("Didn't see expected error in case \"%s\" with string \"%s\"", testCase.TestName, testCase.Value)}
 	}
 
 	return es
+}
+
+var testNameRe = regexp.MustCompile(`^foo-\d+|^bar-\d+|^baz-\d+`)
+
+func isTestName(name string) bool {
+	return testNameRe.MatchString(name)
 }
