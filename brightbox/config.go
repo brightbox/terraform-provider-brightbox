@@ -43,8 +43,10 @@ func obtainCloudClient() (*CompositeClient, error) {
 		UserName: os.Getenv(usernameEnvVar),
 		password: os.Getenv(passwordEnvVar),
 		Account:  os.Getenv(accountEnvVar),
-		APIURL:   os.Getenv(apiURLEnvVar),
-		OrbitURL: os.Getenv(orbitURLEnvVar),
+		APIURL: getenvWithDefault(apiURLEnvVar,
+			brightbox.DefaultRegionApiURL),
+		OrbitURL: getenvWithDefault(orbitURLEnvVar,
+			brightbox.DefaultOrbitAuthURL),
 	}).Client()
 }
 
