@@ -356,6 +356,7 @@ resource "brightbox_cloudip" "lbmap" {
 }
 
 func testAccCheckBrightboxCloudipConfig_mappedDb(rInt int) string {
+	dbName := fmt.Sprintf(`foo-%d`, rInt)
 	return fmt.Sprintf(`
 
 resource "brightbox_cloudip" "dbmap" {
@@ -363,7 +364,7 @@ resource "brightbox_cloudip" "dbmap" {
 	target = "${brightbox_database_server.default.id}"
 }
 
-%s`, rInt, testAccCheckBrightboxDatabaseServerConfig_basic("dbmap"))
+%s`, rInt, testAccCheckBrightboxDatabaseServerConfig_basic(dbName))
 }
 
 func testAccCheckBrightboxCloudipConfig_basic(rInt int) string {
