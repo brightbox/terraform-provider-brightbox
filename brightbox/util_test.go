@@ -100,7 +100,7 @@ func testStringValidation(testCase StringValidationTestCase, validationFunc sche
 	return es
 }
 
-var testNameRe = regexp.MustCompile(`^foo-\d+|^bar-\d+|^baz-\d+`)
+var testNameRe = regexp.MustCompile(`^foo-\d+|^bar-\d+|^baz-\d+|^initial$`)
 
 func isTestName(name string) bool {
 	return testNameRe.MatchString(name)
