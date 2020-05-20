@@ -228,7 +228,7 @@ resource "brightbox_load_balancer" "default" {
 
 resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "load_balancer_test"
+	name = "foo-20200426"
 	type = "1gb.ssd"
 	server_groups = ["${data.brightbox_server_group.default.id}"]
 
@@ -263,7 +263,7 @@ resource "brightbox_load_balancer" "default" {
 
 resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "load_balancer_test"
+	name = "foo-20200426"
 	type = "1gb.ssd"
 	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
@@ -296,7 +296,7 @@ resource "brightbox_load_balancer" "default" {
 
 resource "brightbox_server" "foobar" {
 	image = "${data.brightbox_image.foobar.id}"
-	name = "load_balancer_test"
+	name = "foo-20200426"
 	type = "1gb.ssd"
 	server_groups = ["${data.brightbox_server_group.default.id}"]
 }
