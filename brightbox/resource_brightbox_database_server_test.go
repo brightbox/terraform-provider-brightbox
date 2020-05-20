@@ -28,10 +28,11 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 		CheckDestroy:        testAccCheckBrightboxDatabaseServerAndOthersDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
+				Config: testAccCheckBrightboxDatabaseServerConfig_locked(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
-					testAccCheckBrightboxEmptyDatabaseServerAttributes(&databaseServer, name),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "true"),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
@@ -49,9 +50,28 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxEmptyDatabaseServerAttributes(&databaseServer, name),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxDatabaseServerConfig_locked(name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "true"),
+				),
+			},
+			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_clear_names,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -298,6 +318,28 @@ data "brightbox_database_type" "foobar" {
 
 var testAccCheckBrightboxDatabaseServerConfig_clear_names = testAccCheckBrightboxDatabaseServerConfig_basic("")
 
+func testAccCheckBrightboxDatabaseServerConfig_locked(name string) string {
+	return fmt.Sprintf(`
+
+resource "brightbox_database_server" "default" {
+	name = "%s"
+	description = "%s"
+	database_engine = "mysql"
+	database_version = "8.0"
+	database_type = "${data.brightbox_database_type.foobar.id}"
+	maintenance_weekday = 6
+	maintenance_hour = 6
+	allow_access = [ "${data.brightbox_server_group.default.id}" ]
+	locked = true
+}
+
+data "brightbox_database_type" "foobar" {
+	name = "^SSD 4GB$"
+}
+%s
+`, name, name, TestAccBrightboxDataServerGroupConfig_default)
+}
+
 func testAccCheckBrightboxDatabaseServerConfig_update_maintenance(name string) string {
 	return fmt.Sprintf(`
 
@@ -380,6 +422,9 @@ func init() {
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
+					if err := setLockState(client.APIClient, false, brightbox.DatabaseServer{Id: object.Id}); err != nil {
+						log.Printf("error unlocking %s during sweep: %s", object.Id, err)
+					}
 					if err := client.APIClient.DestroyDatabaseServer(object.Id); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.Id, err)
 					}

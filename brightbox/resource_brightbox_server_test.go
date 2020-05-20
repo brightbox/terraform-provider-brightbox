@@ -27,12 +27,12 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Config: testAccCheckBrightboxServerConfig_locked(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerExists(resourceName, &server),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
-						resourceName, "locked", "false"),
+						resourceName, "locked", "true"),
 					resource.TestMatchResourceAttr(
 						resourceName, "image", imageRe),
 					resource.TestCheckResourceAttr(
@@ -43,6 +43,27 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 						resourceName, "zone", zoneRe),
 					resource.TestCheckResourceAttr(
 						resourceName, "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_locked(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "true"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
 				),
 			},
 			{
@@ -585,6 +606,9 @@ func init() {
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
+					if err := setLockState(client.APIClient, false, brightbox.Server{Id: object.Id}); err != nil {
+						log.Printf("error unlocking %s during sweep: %s", object.Id, err)
+					}
 					if err := client.APIClient.DestroyServer(object.Id); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.Id, err)
 					}

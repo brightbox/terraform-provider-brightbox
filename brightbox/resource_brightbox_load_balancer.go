@@ -66,7 +66,8 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			"locked": {
 				Description: "Is true if resource has been set as locked and can not be deleted",
 				Type:        schema.TypeBool,
-				Computed:    true,
+				Optional:    true,
+				Default:     false,
 			},
 			"buffer_size": {
 				Description:  "Buffer size in bytes",
@@ -283,6 +284,12 @@ func resourceBrightboxLoadBalancerCreate(
 
 	d.SetId(loadBalancer.Id)
 
+	locked := d.Get("locked").(bool)
+	log.Printf("[INFO] Setting lock state to %v", locked)
+	if err := setLockState(client, locked, loadBalancer); err != nil {
+		return err
+	}
+
 	log.Printf("[INFO] Waiting for Load Balancer (%s) to become available", d.Id())
 
 	stateConf := resource.StateChangeConf{
@@ -345,6 +352,14 @@ func resourceBrightboxLoadBalancerUpdate(
 		return fmt.Errorf("Error updating loadBalancer: %s", err)
 	}
 
+	if d.HasChange("locked") {
+		locked := d.Get("locked").(bool)
+		log.Printf("[INFO] Setting lock state to %v", locked)
+		if err := setLockState(client, locked, loadBalancer); err != nil {
+			return err
+		}
+		return resourceBrightboxLoadBalancerRead(d, meta)
+	}
 	return setLoadBalancerAttributes(d, loadBalancer)
 }
 

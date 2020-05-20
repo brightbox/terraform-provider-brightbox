@@ -124,7 +124,8 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			"locked": {
 				Description: "Initial password required to login, only available at creation or following a password reset request",
 				Type:        schema.TypeBool,
-				Computed:    true,
+				Optional:    true,
+				Default:     false,
 			},
 		},
 	}
@@ -181,7 +182,7 @@ func resourceBrightboxDatabaseServerCreate(
 	}
 	databaseServerOpts := getBlankDatabaseServerOpts()
 	databaseServerOpts.AllowAccess = map_from_string_set(d, "allow_access")
-	return updateDatabaseServerAttributes(d, client, databaseServerOpts)
+	return updateDatabaseServerAttributes(d, meta, client, databaseServerOpts)
 }
 
 func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) error {
@@ -209,11 +210,19 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 	}
 
 	d.SetId(databaseServer.Id)
+
 	if databaseServer.AdminPassword == "" {
 		log.Printf("[WARN] No password returned for Cloud SQL server %s", databaseServer.Id)
 	} else {
 		d.Set("admin_password", databaseServer.AdminPassword)
 	}
+
+	locked := d.Get("locked").(bool)
+	log.Printf("[INFO] Setting lock state to %v", locked)
+	if err := setLockState(client, locked, databaseServer); err != nil {
+		return err
+	}
+
 	log.Printf("[INFO] Waiting for Database Server (%s) to become available", d.Id())
 	stateConf := resource.StateChangeConf{
 		Pending:    []string{"creating"},
@@ -246,7 +255,7 @@ func resourceBrightboxDatabaseServerUpdate(
 	assign_string_set(d, &databaseServerOpts.AllowAccess, "allow_access")
 	log.Printf("[DEBUG] Database Server update configuration %#v", databaseServerOpts)
 	outputDatabaseServerOptions(databaseServerOpts)
-	return updateDatabaseServerAttributes(d, client, databaseServerOpts)
+	return updateDatabaseServerAttributes(d, meta, client, databaseServerOpts)
 }
 
 func updateDatabaseServer(
@@ -269,11 +278,11 @@ func getBlankDatabaseServerOpts() *brightbox.DatabaseServerOptions {
 
 func updateDatabaseServerAttributes(
 	d *schema.ResourceData,
+	meta interface{},
 	client *brightbox.Client,
 	databaseServerOpts *brightbox.DatabaseServerOptions,
 ) error {
-	if cmp.Equal(*databaseServerOpts, blankDatabaseServerOpts) {
-		// Shouldn't ever get here
+	if cmp.Equal(*databaseServerOpts, blankDatabaseServerOpts) && !d.HasChange("locked") {
 		return fmt.Errorf("[ERROR] No database update changes detected for %s", d.Id())
 	}
 	databaseServerOpts.Id = d.Id()
@@ -281,6 +290,16 @@ func updateDatabaseServerAttributes(
 	if err != nil {
 		return err
 	}
+
+	if d.HasChange("locked") {
+		locked := d.Get("locked").(bool)
+		log.Printf("[INFO] Setting lock state to %v", locked)
+		if err := setLockState(client, locked, databaseServer); err != nil {
+			return err
+		}
+		return resourceBrightboxDatabaseServerRead(d, meta)
+	}
+
 	setDatabaseServerAttributes(d, databaseServer)
 	return setAllowAccessAttribute(d, databaseServer)
 }

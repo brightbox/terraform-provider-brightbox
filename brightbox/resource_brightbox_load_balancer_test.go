@@ -22,10 +22,11 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 		CheckDestroy:        testAccCheckBrightboxLoadBalancerAndServerDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
+				Config: testAccCheckBrightboxLoadBalancerConfig_locked,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
-					testAccCheckBrightboxEmptyLoadBalancerAttributes(&loadBalancer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "true"),
 					resource.TestCheckResourceAttr(
 						resourceName, "healthcheck.0.request", "/"),
 					resource.TestCheckResourceAttr(
@@ -41,6 +42,31 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxEmptyLoadBalancerAttributes(&loadBalancer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxLoadBalancerConfig_locked,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "true"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxEmptyLoadBalancerAttributes(&loadBalancer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+				),
+			},
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -49,6 +75,8 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_timeout,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
 					resource.TestCheckResourceAttr(
 						resourceName, "listener.3297149260.timeout", "10000"),
 					resource.TestCheckResourceAttr(
@@ -207,6 +235,41 @@ var testAccCheckBrightboxLoadBalancerConfig_basic = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "foo-20200513"
+	listener {
+		protocol = "http"
+		in = 80
+		out = 8080
+	}
+	listener {
+		protocol = "http+ws"
+		in = 81
+		out = 81
+		timeout = 10000
+	}
+	
+	healthcheck {
+		type = "http"
+		port = 8080
+	}
+	nodes = ["${brightbox_server.foobar.id}"]
+}
+
+resource "brightbox_server" "foobar" {
+	image = "${data.brightbox_image.foobar.id}"
+	name = "foo-20200426"
+	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
+
+}
+
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
+
+var testAccCheckBrightboxLoadBalancerConfig_locked = fmt.Sprintf(`
+
+resource "brightbox_load_balancer" "default" {
+	name = "foo-20200513"
+	locked = true
 	listener {
 		protocol = "http"
 		in = 80
@@ -453,6 +516,9 @@ func init() {
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
+					if err := setLockState(client.APIClient, false, brightbox.LoadBalancer{Id: object.Id}); err != nil {
+						log.Printf("error unlocking %s during sweep: %s", object.Id, err)
+					}
 					if err := client.APIClient.DestroyLoadBalancer(object.Id); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.Id, err)
 					}
