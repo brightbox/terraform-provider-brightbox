@@ -58,6 +58,7 @@ github.com/bgentry/go-netrc/netrc
 github.com/bgentry/speakeasy
 # github.com/brightbox/gobrightbox v0.4.4
 github.com/brightbox/gobrightbox
+github.com/brightbox/gobrightbox/status
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/fatih/color v1.7.0
