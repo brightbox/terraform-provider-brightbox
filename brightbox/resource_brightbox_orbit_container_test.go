@@ -56,7 +56,7 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxOrbitContainerExists(resourceName),
 					resource.TestCheckResourceAttr(
-						resourceName, "name", "initial"),
+						resourceName, "name", "test-acc-initial"),
 				),
 			},
 			{
