@@ -324,3 +324,11 @@ func getenvWithDefault(key string, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+// set the lock state of a resource based upon a boolean
+func setLockState(client *brightbox.Client, isLocked bool, resource interface{}) error {
+	if isLocked {
+		return client.LockResource(resource)
+	}
+	return client.UnLockResource(resource)
+}

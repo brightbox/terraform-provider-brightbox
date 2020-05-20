@@ -2,10 +2,12 @@ package brightbox
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox"
+	"github.com/brightbox/gobrightbox/status"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -29,6 +31,8 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxServerExists(resourceName, &server),
 					testAccCheckBrightboxServerAttributes(&server),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
 					resource.TestMatchResourceAttr(
 						resourceName, "image", imageRe),
 					resource.TestCheckResourceAttr(
@@ -45,6 +49,33 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_locked(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists(resourceName, &server),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "true"),
+					resource.TestMatchResourceAttr(
+						resourceName, "image", imageRe),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
+					resource.TestCheckResourceAttr(
+						resourceName, "type", "1gb.ssd"),
+					resource.TestMatchResourceAttr(
+						resourceName, "zone", zoneRe),
+					resource.TestCheckResourceAttr(
+						resourceName, "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxServerAttributes(&server),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+				),
 			},
 		},
 	})
@@ -406,6 +437,25 @@ data "brightbox_server_group" "barfoo" {
 		TestAccBrightboxDataServerGroupConfig_default)
 }
 
+func testAccCheckBrightboxServerConfig_locked(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = "${data.brightbox_image.foobar.id}"
+	name = "foo-%d"
+	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
+	user_data = "foo:-with-character's"
+	locked = true
+}
+
+data "brightbox_server_group" "barfoo" {
+	name = "^default$"
+}
+
+%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default)
+}
+
 func testAccCheckBrightboxServerConfig_base64_userdata(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
@@ -513,4 +563,34 @@ resource "brightbox_server_group" "barfoo2" {
 }
 
 %s`, rInt, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
+
+// Sweeper
+
+func init() {
+	resource.AddTestSweepers("server", &resource.Sweeper{
+		Name: "server",
+		F: func(_ string) error {
+			client, err := obtainCloudClient()
+			if err != nil {
+				return err
+			}
+			objects, err := client.APIClient.Servers()
+			if err != nil {
+				return err
+			}
+			for _, object := range objects {
+				if object.Status != status.Active {
+					continue
+				}
+				if isTestName(object.Name) {
+					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
+					if err := client.APIClient.DestroyServer(object.Id); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					}
+				}
+			}
+			return nil
+		},
+	})
 }

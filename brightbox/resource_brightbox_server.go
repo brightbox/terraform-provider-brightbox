@@ -5,7 +5,6 @@ import (
 	"log"
 
 	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/brightbox/gobrightbox/status"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -77,14 +76,16 @@ func resourceBrightboxServer() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
 			},
-			"status": {
-				Description: "Current state of server",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
 			"locked": {
 				Description: "Is true if resource has been set as locked and cannot be deleted",
 				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
+
+			"status": {
+				Description: "Current state of server",
+				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"interface": {
@@ -173,6 +174,12 @@ func resourceBrightboxServerCreate(
 
 	d.SetId(server.Id)
 
+	locked := d.Get("locked").(bool)
+	log.Printf("[INFO] Setting lock state to %v", locked)
+	if err := setLockState(client, locked, server); err != nil {
+		return err
+	}
+
 	log.Printf("[INFO] Waiting for Server (%s) to become available", d.Id())
 
 	stateConf := resource.StateChangeConf{
@@ -260,7 +267,14 @@ func resourceBrightboxServerUpdate(
 	if err != nil {
 		return fmt.Errorf("Error updating server: %s", err)
 	}
-
+	if d.HasChange("locked") {
+		locked := d.Get("locked").(bool)
+		log.Printf("[INFO] Setting lock state to %v", locked)
+		if err := setLockState(client, locked, server); err != nil {
+			return err
+		}
+		return resourceBrightboxServerRead(d, meta)
+	}
 	return setServerAttributes(d, server)
 }
 
@@ -384,34 +398,4 @@ func serverStateRefresh(client *brightbox.Client, serverID string) resource.Stat
 		}
 		return server, server.Status, nil
 	}
-}
-
-// Sweeper
-
-func init() {
-	resource.AddTestSweepers("server", &resource.Sweeper{
-		Name: "server",
-		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
-			}
-			objects, err := client.APIClient.Servers()
-			if err != nil {
-				return err
-			}
-			for _, object := range objects {
-				if object.Status != status.Active {
-					continue
-				}
-				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := client.APIClient.DestroyServer(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
-					}
-				}
-			}
-			return nil
-		},
-	})
 }
