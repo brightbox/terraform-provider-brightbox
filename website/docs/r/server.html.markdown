@@ -35,6 +35,7 @@ should be added to. At least one server group must be specified.
 * `name` - (Optional) The Server name
 * `type` - (Optional) The handle of the server type required (`1gb.ssd`, etc)
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
+* `locked` - (Optional) Set to true to stop the server from being deleted
 * `user_data` (Optional) - A string of the desired User Data for the Server.
 * `user_data_base64` (Optional) - Already encrypted User Data - for use
 with the template provider.
@@ -54,7 +55,6 @@ The following attributes are exported:
 * `ipv6_hostname` - the FQDN of the IPv6 address
 * `public_hostname` - the FQDN of the public IPv4 address. Appears if a cloud ip is mapped
 * `ipv4_address` - the public IPV4 address of the server. Appears if a cloud ip is mapped
-* `locked` - True if server has been set to locked and cannot be deleted
 * `status` - Current state of the server, usually `active`, `inactive`
 or `deleted`
 * `username` - The username used to log onto the server

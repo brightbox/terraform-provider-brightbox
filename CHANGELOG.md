@@ -1,4 +1,8 @@
-## 1.2.1 (Unreleased)
+## 1.3.0 (Unreleased)
+
+IMPROVEMENTS:
+
+- Allow locking of database server, load balancer and server resources
 
 BUG FIXES:
 
@@ -7,10 +11,11 @@ BUG FIXES:
 NOTES:
 
 - Make provider lint clean
-- Update patch releases on dependencies
+- Update dependency releases
 - Update to Terraform SDK 1.12.0
 - Switch to binary test runner
-- resource/cloud-ip: Deprecate eroneous lock attribute
+- Test with Go 1.14.2
+- resource/cloud-ip: Deprecate erroneous lock attribute
 
 
 ## 1.2.0 (June 26, 2019)

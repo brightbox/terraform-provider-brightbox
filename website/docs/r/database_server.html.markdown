@@ -55,11 +55,12 @@ The following arguments are supported:
 * `maintenance_weekday` - (Optional) Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed. Default is 0 (Sunday). 
 * `maintenance_hour` - (Optional) Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23). Default is 6
 * `snapshots_schedule` - (Optional) A crontab pattern to determine approximately when scheduled snapshots will run (must be at least hourly)
-* `database_engine` - (Optional) Database engine to request. Default is mysql.
-* `database_version` - (Optional) Database version to request. Default is 8.0.
-* `database_type` - (Optional) ID of the Database Type required.
+* `database_engine` - (Optional) Database engine to request. Default is mysql
+* `database_version` - (Optional) Database version to request. Default is 8.0
+* `database_type` - (Optional) ID of the Database Type required
 * `snapshot` (Optional) - Database snapshot id to build from
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
+* `locked` - (Optional) Set to true to stop the database server from being deleted
 
 ## Attributes Reference
 
@@ -69,7 +70,6 @@ The following attributes are exported:
 * `admin_username` - The username used to log onto the database
 * `admin_password` - The password used to log onto the database
 * `status` - Current state of the database server, usually `active` or `deleted`
-* `locked` - True if database server has been set to locked and cannot be deleted
 * `snapshots_schedule_next_at` - The approximate UTC time when the next snapshot is scheduled
 
 ## Import
