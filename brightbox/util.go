@@ -43,6 +43,16 @@ func userDataHashSum(userData string) string {
 	return hex.EncodeToString(hash[:])
 }
 
+func assign_map(d *schema.ResourceData, target *map[string]interface{}, index string) {
+	if d.HasChange(index) {
+		if attr, ok := d.GetOk(index); ok {
+			*target = attr.(map[string]interface{})
+		} else {
+			*target = map[string]interface{}{}
+		}
+	}
+}
+
 func assign_string(d *schema.ResourceData, target **string, index string) {
 	if d.HasChange(index) {
 		if *target == nil {
