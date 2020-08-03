@@ -1,4 +1,9 @@
-## 1.4.0 (Unreleased)
+## 1.3.2 (Aug 3, 2020)
+
+BUG FIXES:
+
+- resource/firewall-rules: Fix firewall policy update
+
 ## 1.3.0 (May 21, 2020)
 
 IMPROVEMENTS:
