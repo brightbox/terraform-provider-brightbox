@@ -1,3 +1,10 @@
+## 1.3.3 (unrelased)
+
+BUG FIXES:
+
+- add missing IPV4 and IPv6 entries to cloudip
+- document missing cloudip entries
+
 ## 1.3.2 (Aug 3, 2020)
 
 BUG FIXES:

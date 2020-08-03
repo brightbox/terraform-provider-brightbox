@@ -68,6 +68,8 @@ The following attributes are exported:
 * `id` - The ID of the CloudIP
 * `fqdn` - Fully Qualified Domain Name of the CloudIP
 * `public_ip` - the public IPV4 address of the CloudIP
+* `public_ipv4` - the public IPV4 address of the CloudIP
+* `public_ipv6` - the public IPV6 address of the CloudIP
 * `status` - Current state of the CloudIP: `mapped` or `unmapped`
 * `username` - The username used to log onto the server
 
