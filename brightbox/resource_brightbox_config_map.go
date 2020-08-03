@@ -33,8 +33,8 @@ func resourceBrightboxConfigMap() *schema.Resource {
 
 			"data": {
 				Description: "keys/values making up the ConfigMap",
+				Required:    true,
 				Type:        schema.TypeMap,
-				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},

@@ -69,6 +69,7 @@ func Provider() terraform.ResourceProvider {
 			"brightbox_database_server": resourceBrightboxDatabaseServer(),
 			"brightbox_orbit_container": resourceBrightboxContainer(),
 			"brightbox_api_client":      resourceBrightboxAPIClient(),
+			"brightbox_config_map":      resourceBrightboxConfigMap(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

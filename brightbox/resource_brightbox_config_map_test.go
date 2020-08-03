@@ -31,7 +31,7 @@ func TestAccBrightboxConfigMap_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						resourceName, "data", name),
+						resourceName, "data.%", "1"),
 				),
 			},
 			{
@@ -46,23 +46,24 @@ func TestAccBrightboxConfigMap_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
-						resourceName, "data", updatedName),
+						resourceName, "data.%", "2"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccBrightboxConfigMap_clear_names(t *testing.T) {
+func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 	resourceName := "brightbox_config_map.foobar"
 	var config_map brightbox.ConfigMap
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxConfigMapDestroy,
+		DisableBinaryDriver: true,
+		PreCheck:            func() { testAccPreCheck(t) },
+		Providers:           testAccProviders,
+		CheckDestroy:        testAccCheckBrightboxConfigMapDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
@@ -72,7 +73,17 @@ func TestAccBrightboxConfigMap_clear_names(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
-						resourceName, "data", name),
+						resourceName, "data.%", "1"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxConfigMapConfig_empty_data(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", name),
+					resource.TestCheckResourceAttr(
+						resourceName, "data.%", "0"),
 				),
 			},
 			{
@@ -82,8 +93,29 @@ func TestAccBrightboxConfigMap_clear_names(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
-						resourceName, "data", ""),
+						resourceName, "data.%", "0"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccBrightboxConfigMap_blank(t *testing.T) {
+	resourceName := "brightbox_config_map.foobar"
+
+	resource.Test(t, resource.TestCase{
+		DisableBinaryDriver: true,
+		PreCheck:            func() { testAccPreCheck(t) },
+		Providers:           testAccProviders,
+		CheckDestroy:        testAccCheckBrightboxConfigMapDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxConfigMapConfig_blank,
 			},
 			{
 				ResourceName:      resourceName,
@@ -170,20 +202,36 @@ resource "brightbox_config_map" "foobar" {
 `, rInt, rInt)
 }
 
+func testAccCheckBrightboxConfigMapConfig_empty_data(rInt int) string {
+	return fmt.Sprintf(`
+
+resource "brightbox_config_map" "foobar" {
+	name = "foo-%d"
+	data = { }
+}
+`, rInt)
+}
+
 func testAccCheckBrightboxConfigMapConfig_updated(rInt int) string {
 	return fmt.Sprintf(`
 
 resource "brightbox_config_map" "foobar" {
 	name = "bar-%d"
-	data = { "test": "bar-%d" }
+	data = { "test": "bar-%d", "test2": "foo-%d" }
 }
-`, rInt, rInt)
+`, rInt, rInt, rInt)
 }
 
 const testAccCheckBrightboxConfigMapConfig_empty = `
 
 resource "brightbox_config_map" "foobar" {
 	name = ""
+	data = {}
+}
+`
+const testAccCheckBrightboxConfigMapConfig_blank = `
+
+resource "brightbox_config_map" "foobar" {
 	data = {}
 }
 `
