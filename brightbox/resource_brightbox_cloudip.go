@@ -69,6 +69,18 @@ func resourceBrightboxCloudip() *schema.Resource {
 				Computed:    true,
 			},
 
+			"public_ipv4": {
+				Description: "IPv4 address",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"public_ipv6": {
+				Description: "IPv6 address",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
 			"fqdn": {
 				Description: "Full Domain name entry for the Cloud IP",
 				Type:        schema.TypeString,
@@ -307,6 +319,8 @@ func setCloudipAttributes(
 ) error {
 	d.Set("name", cloudip.Name)
 	d.Set("public_ip", cloudip.PublicIP)
+	d.Set("public_ipv4", cloudip.PublicIPv4)
+	d.Set("public_ipv6", cloudip.PublicIPv6)
 	d.Set("status", cloudip.Status)
 	d.Set("locked", cloudip.Locked)
 	d.Set("reverse_dns", cloudip.ReverseDns)
