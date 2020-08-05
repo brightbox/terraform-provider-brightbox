@@ -2,7 +2,11 @@
 
 BUG FIXES:
 
-- add missing IPV4 and IPv6 entries to cloudip
+- resource/cloud_ip: add missing IPV4 and IPv6 entries
+- resource/database_server: handle disabled snapshot schedule
+
+NOTES:
+
 - document missing cloudip entries
 
 ## 1.3.2 (Aug 3, 2020)
