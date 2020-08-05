@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -43,12 +44,14 @@ func userDataHashSum(userData string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func assign_map(d *schema.ResourceData, target *map[string]interface{}, index string) {
+func assign_map(d *schema.ResourceData, target **map[string]interface{}, index string) {
 	if d.HasChange(index) {
 		if attr, ok := d.GetOk(index); ok {
-			*target = attr.(map[string]interface{})
+			temp := attr.(map[string]interface{})
+			*target = &temp
 		} else {
-			*target = map[string]interface{}{}
+			temp := make(map[string]interface{})
+			*target = &temp
 		}
 	}
 }
@@ -346,4 +349,40 @@ func setLockState(client *brightbox.Client, isLocked bool, resource interface{})
 		return client.LockResource(resource)
 	}
 	return client.UnLockResource(resource)
+}
+
+// strSliceContains checks if a given string is contained in a slice
+// When anybody asks why Go needs generics, here you go.
+func strSliceContains(haystack []string, needle string) bool {
+	for _, s := range haystack {
+		if s == needle {
+			return true
+		}
+	}
+	return false
+}
+
+// Check a JSON object is correct
+func validateJSONObject(v interface{}, k string) ([]string, []error) {
+	if v == nil || v.(string) == "" {
+		return nil, []error{fmt.Errorf("%q value must not be empty", k)}
+	}
+
+	var j map[string]interface{}
+	s := v.(string)
+
+	err := json.Unmarshal([]byte(s), &j)
+	if err != nil {
+		return nil, []error{fmt.Errorf("%q must be a JSON object: %s", k, err)}
+	}
+
+	return nil, nil
+}
+
+func diffSuppressJSONObject(k, old, new string, d *schema.ResourceData) bool {
+	if strSliceContains([]string{"{}", ""}, old) &&
+		strSliceContains([]string{"{}", ""}, new) {
+		return true
+	}
+	return false
 }

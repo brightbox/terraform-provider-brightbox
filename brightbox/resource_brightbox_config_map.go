@@ -7,6 +7,7 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/structure"
 )
 
 func resourceBrightboxConfigMap() *schema.Resource {
@@ -35,7 +36,16 @@ func resourceBrightboxConfigMap() *schema.Resource {
 				Description: "keys/values making up the ConfigMap",
 				Required:    true,
 				Type:        schema.TypeMap,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					Required:         true,
+					ValidateFunc:     validateJSONObject,
+					DiffSuppressFunc: diffSuppressJSONObject,
+					StateFunc: func(v interface{}) string {
+						json, _ := structure.NormalizeJsonString(v)
+						return json
+					},
+				},
 			},
 		},
 	}
@@ -54,6 +64,7 @@ func resourceBrightboxConfigMapCreate(
 		return err
 	}
 
+	log.Printf("[DEBUG] Config Map create configuration %#v", configMapOpts)
 	configMap, err := client.CreateConfigMap(configMapOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating Config Map: %s", err)

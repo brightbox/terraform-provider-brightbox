@@ -77,6 +77,27 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckBrightboxConfigMapConfig_empty_name(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", ""),
+					resource.TestCheckResourceAttr(
+						resourceName, "data.%", "1"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
+					testAccCheckBrightboxConfigMapAttributes(&config_map, name),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", name),
+					resource.TestCheckResourceAttr(
+						resourceName, "data.%", "1"),
+				),
+			},
+			{
 				Config: testAccCheckBrightboxConfigMapConfig_empty_data(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
@@ -202,6 +223,16 @@ resource "brightbox_config_map" "foobar" {
 `, rInt, rInt)
 }
 
+func testAccCheckBrightboxConfigMapConfig_empty_name(rInt int) string {
+	return fmt.Sprintf(`
+
+resource "brightbox_config_map" "foobar" {
+	name = ""
+	data = {"test": "thing-%d"}
+}
+`, rInt)
+}
+
 func testAccCheckBrightboxConfigMapConfig_empty_data(rInt int) string {
 	return fmt.Sprintf(`
 
@@ -232,8 +263,8 @@ resource "brightbox_config_map" "foobar" {
 const testAccCheckBrightboxConfigMapConfig_blank = `
 
 resource "brightbox_config_map" "foobar" {
-	data = {}
-}
+	data = { "thing": "{ \"name\" : \"Admin\" }" }
+	}
 `
 
 // Sweeper
