@@ -291,6 +291,12 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if len(databaseServer.AllowAccess) != 1 {
 			return fmt.Errorf("Bad AllowAccess list: %#v", databaseServer.AllowAccess)
 		}
+		if databaseServer.SnapshotsScheduleNextAt != nil {
+			return fmt.Errorf("Bad Snapshot Schedule Time: %#v", databaseServer.SnapshotsScheduleNextAt)
+		}
+		if databaseServer.SnapshotsSchedule != "" {
+			return fmt.Errorf("Bad Snapshot Schedule: %q", databaseServer.SnapshotsSchedule)
+		}
 		return nil
 	}
 }
@@ -306,6 +312,7 @@ resource "brightbox_database_server" "default" {
 	database_type = "${data.brightbox_database_type.foobar.id}"
 	maintenance_weekday = 6
 	maintenance_hour = 6
+	snapshots_schedule = ""
 	allow_access = [ "${data.brightbox_server_group.default.id}" ]
 }
 

@@ -145,9 +145,14 @@ func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
 }
 
 // ValidateCronString checks if the string is a valid cron layout
+// An empty string is acceptable.
 func ValidateCronString(v interface{}, name string) (warns []string, errors []error) {
-	if _, err := cronexpr.Parse(v.(string)); err != nil {
-		errors = append(errors, fmt.Errorf("%q: %s", name, err))
+	cronstr := v.(string)
+	if cronstr == "" {
+		return
+	}
+	if _, err := cronexpr.Parse(cronstr); err != nil {
+		errors = append(errors, fmt.Errorf("%q not a valid Cron: %s", name, err))
 	}
 	return
 }

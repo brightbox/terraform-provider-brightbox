@@ -90,7 +90,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
 				Type:         schema.TypeString,
 				Optional:     true,
-				Computed:     true,
+				Default:      "0 7 * * *",
 				ValidateFunc: ValidateCronString,
 			},
 			"snapshots_schedule_next_at": {
@@ -145,8 +145,10 @@ func setDatabaseServerAttributes(
 	d.Set("admin_username", databaseServer.AdminUsername)
 	d.Set("maintenance_weekday", databaseServer.MaintenanceWeekday)
 	d.Set("maintenance_hour", databaseServer.MaintenanceHour)
-	d.Set("snapshots_schedule", databaseServer.SnapshotsSchedule)
-	d.Set("snapshots_schedule_next_at", databaseServer.SnapshotsScheduleNextAt.Format(time.RFC3339))
+	if databaseServer.SnapshotsSchedule != "" {
+		d.Set("snapshots_schedule", databaseServer.SnapshotsSchedule)
+		d.Set("snapshots_schedule_next_at", databaseServer.SnapshotsScheduleNextAt.Format(time.RFC3339))
+	}
 	d.Set("zone", databaseServer.Zone.Handle)
 }
 
@@ -381,10 +383,10 @@ func outputDatabaseServerOptions(opts *brightbox.DatabaseServerOptions) {
 		log.Printf("[DEBUG] Database Server AllowAccess %#v", opts.AllowAccess)
 	}
 	if opts.Snapshot != "" {
-		log.Printf("[DEBUG] Database Server Snapshot %v", opts.Snapshot)
+		log.Printf("[DEBUG] Database Server Snapshot %q", opts.Snapshot)
 	}
 	if opts.SnapshotsSchedule != nil {
-		log.Printf("[DEBUG] Database Server Snapshots Schedule %v", *opts.SnapshotsSchedule)
+		log.Printf("[DEBUG] Database Server Snapshots Schedule %q", *opts.SnapshotsSchedule)
 	}
 	if opts.Zone != "" {
 		log.Printf("[DEBUG] Database Server Zone %v", opts.Zone)
