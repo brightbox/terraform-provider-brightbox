@@ -15,11 +15,11 @@ modify, and delete Config Maps.
 
 ```hcl
 # Default Config Map
-# the instances over SSH and HTTP
 resource "brightbox_config_map" "default" {
   name = "Terraform config map"
   data = {"hostname":"tester", "ram": "1024"}
 }
+```
 
 ## Argument Reference
 
