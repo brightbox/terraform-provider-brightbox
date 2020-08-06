@@ -267,28 +267,6 @@ func testAccCheckBrightboxCloudipExists(n string, cloudip *brightbox.CloudIP) re
 	}
 }
 
-func TestAccBrightboxCloudip_MappedDb(t *testing.T) {
-	resourceName := "brightbox_cloudip.dbmap"
-	rInt := acctest.RandInt()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckBrightboxCloudipConfig_mappedDb(rInt),
-			},
-
-			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
 func TestAccBrightboxCloudip_MappedGroup(t *testing.T) {
 	resourceName := "brightbox_cloudip.groupmap"
 	rInt := acctest.RandInt()
@@ -353,18 +331,6 @@ resource "brightbox_cloudip" "lbmap" {
 }
 
 %s`, rInt, testAccCheckBrightboxLoadBalancerConfig_basic)
-}
-
-func testAccCheckBrightboxCloudipConfig_mappedDb(rInt int) string {
-	dbName := fmt.Sprintf(`foo-%d`, rInt)
-	return fmt.Sprintf(`
-
-resource "brightbox_cloudip" "dbmap" {
-	name = "bar-%d"
-	target = "${brightbox_database_server.default.id}"
-}
-
-%s`, rInt, testAccCheckBrightboxDatabaseServerConfig_basic(dbName))
 }
 
 func testAccCheckBrightboxCloudipConfig_basic(rInt int) string {
