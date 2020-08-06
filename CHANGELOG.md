@@ -1,4 +1,8 @@
-## 1.3.3 (unrelased)
+## 1.4.0 (Aug 6, 2020)
+
+IMPROVEMENTS:
+
+- resource/config_map: added
 
 BUG FIXES:
 
@@ -8,6 +12,7 @@ BUG FIXES:
 NOTES:
 
 - document missing cloudip entries
+- document new config map resource
 
 ## 1.3.2 (Aug 3, 2020)
 

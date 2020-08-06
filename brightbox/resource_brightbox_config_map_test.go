@@ -60,10 +60,9 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 	name := fmt.Sprintf("foo-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		DisableBinaryDriver: true,
-		PreCheck:            func() { testAccPreCheck(t) },
-		Providers:           testAccProviders,
-		CheckDestroy:        testAccCheckBrightboxConfigMapDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxConfigMapDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
@@ -130,10 +129,9 @@ func TestAccBrightboxConfigMap_blank(t *testing.T) {
 	resourceName := "brightbox_config_map.foobar"
 
 	resource.Test(t, resource.TestCase{
-		DisableBinaryDriver: true,
-		PreCheck:            func() { testAccPreCheck(t) },
-		Providers:           testAccProviders,
-		CheckDestroy:        testAccCheckBrightboxConfigMapDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxConfigMapDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_blank,
