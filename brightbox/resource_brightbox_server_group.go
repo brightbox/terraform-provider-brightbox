@@ -38,6 +38,16 @@ func resourceBrightboxServerGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"default": {
+				Description: "Is this the default group for the account?",
+				Type:        schema.TypeBool,
+				Computed:    true,
+			},
+			"fqdn": {
+				Description: "Fully Qualified Domain Name",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -147,6 +157,8 @@ func setServerGroupAttributes(
 ) error {
 	d.Set("name", serverGroup.Name)
 	d.Set("description", serverGroup.Description)
+	d.Set("default", serverGroup.Default)
+	d.Set("fqdn", serverGroup.Fqdn)
 	return nil
 }
 

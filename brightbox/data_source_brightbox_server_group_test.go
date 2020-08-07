@@ -19,6 +19,8 @@ func TestAccBrightboxDataServerGroup_basic(t *testing.T) {
 					testAccCheckDataServerGroupDataSourceID("data.brightbox_server_group.default"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_server_group.default", "name", "default"),
+					resource.TestCheckResourceAttr(
+						"data.brightbox_server_group.default", "default", "true"),
 				),
 			},
 		},

@@ -32,6 +32,8 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
 						resourceName, "description", name),
+					resource.TestCheckResourceAttr(
+						resourceName, "default", "false"),
 				),
 			},
 			{
@@ -47,6 +49,8 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
 						resourceName, "description", updatedName),
+					resource.TestCheckResourceAttr(
+						resourceName, "default", "false"),
 				),
 			},
 		},

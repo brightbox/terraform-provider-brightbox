@@ -15,7 +15,6 @@ modify, and delete Server Groups.
 
 ```hcl
 # Default Server Group
-# the instances over SSH and HTTP
 resource "brightbox_server_group" "default" {
   name = "Terraform controlled servers"
 }
@@ -37,11 +36,14 @@ The following arguments are supported:
 * `name` - (Optional) A label assigned to the Server Group
 * `description` - (Optional) A further description of the Server Group
 
+
 ## Attributes Reference
 
 The following attributes are exported:
 
 * `id` - The ID of the Server
+* `default` - Is this the default server group?
+* `fqdn` - The Fully Qualified Domain Name of the server group
 
 ## Import
 

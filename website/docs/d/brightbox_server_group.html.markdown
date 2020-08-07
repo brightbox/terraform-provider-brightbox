@@ -40,3 +40,5 @@ recent one.
 The following attributes are exported:
 
 * `id` - The ID of the Server
+* `default` - Is this the default server group?
+* `fqdn` - The Fully Qualified Domain Name of the server group

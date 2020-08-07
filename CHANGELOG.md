@@ -1,3 +1,14 @@
+## 1.4.2 (Aug 7, 2020)
+
+BUG FIXES:
+
+- resource/server_group: add missing default and FQDN attributes
+- data/server_group: add missing default and FQDN attributes
+
+NOTES:
+
+- document missing attributes
+
 ## 1.4.1 (Aug 6, 2020)
 
 IMPROVEMENTS:
