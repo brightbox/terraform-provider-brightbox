@@ -62,7 +62,7 @@ func resourceBrightboxServer() *schema.Resource {
 				StateFunc:     hash_string,
 			},
 			"user_data_base64": {
-				Description:   "Base64 encoded data made availalbe to Cloud Init",
+				Description:   "Base64 encoded data made available to Cloud Init",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data"},
@@ -284,26 +284,28 @@ func addUpdateableServerOptions(
 ) error {
 	assign_string(d, &opts.Name, "name")
 	assign_string_set(d, &opts.ServerGroups, "server_groups")
+	encodedUserData := ""
 	if d.HasChange("user_data") {
-		encodedUserData := ""
 		if userData, ok := d.GetOk("user_data"); ok {
 			log.Printf("[DEBUG] UserData to encode: %s", userData.(string))
 			encodedUserData = base64Encode(userData.(string))
-		} else if userData, ok := d.GetOk("user_data_base64"); ok {
+		}
+	}
+	if d.HasChange("user_data_base64") {
+		if userData, ok := d.GetOk("user_data_base64"); ok {
 			log.Printf("[DEBUG] Encoded Userdata found, passing through")
 			encodedUserData = userData.(string)
 		}
-		if encodedUserData == "" {
-			// Nothing found, nothing to do
-		} else if len(encodedUserData) > userdataSizeLimit {
-			return fmt.Errorf(
-				"The supplied user_data contains %d bytes after encoding, this exeeds the limit of %d bytes",
-				len(encodedUserData),
-				userdataSizeLimit,
-			)
-		} else {
-			opts.UserData = &encodedUserData
-		}
+	}
+	if len(encodedUserData) > userdataSizeLimit {
+		return fmt.Errorf(
+			"The supplied user_data contains %d bytes after encoding, this exeeds the limit of %d bytes",
+			len(encodedUserData),
+			userdataSizeLimit,
+		)
+	}
+	if encodedUserData != "" {
+		opts.UserData = &encodedUserData
 	}
 	return nil
 }

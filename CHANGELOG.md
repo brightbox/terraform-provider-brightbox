@@ -1,3 +1,9 @@
+## 1.4.3 (Aug 19, 2020)
+
+BUG FIXES:
+
+- resource/server: ensure base64 encoded userdata is passed to API
+
 ## 1.4.2 (Aug 7, 2020)
 
 BUG FIXES:

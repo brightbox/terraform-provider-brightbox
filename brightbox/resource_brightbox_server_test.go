@@ -125,11 +125,6 @@ func TestAccBrightboxServer_Blank(t *testing.T) {
 						resourceName, "name", ""),
 				),
 			},
-			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
 		},
 	})
 }
@@ -154,12 +149,6 @@ func TestAccBrightboxServer_userDataBase64(t *testing.T) {
 						"user_data_base64",
 						"aGVsbG8gd29ybGQ="),
 				),
-			},
-			{
-				ResourceName:            resourceName,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"user_data_base64"},
 			},
 		},
 	})
@@ -226,11 +215,6 @@ func TestAccBrightboxServer_multiServerGroupUp(t *testing.T) {
 						serverResourceName, "server_groups.#", "2"),
 				),
 			},
-			{
-				ResourceName:      otherServerGroupResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
 		},
 	})
 }
@@ -257,11 +241,6 @@ func TestAccBrightboxServer_multiServerGroupDown(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						serverResourceName, "server_groups.#", "2"),
 				),
-			},
-			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
 			},
 			{
 				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),

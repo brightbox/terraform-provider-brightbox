@@ -182,7 +182,6 @@ func dataSourceBrightboxImagesImageAttributes(
 	d.Set("status", image.Status)
 	d.Set("locked", image.Locked)
 	d.Set("description", image.Description)
-	d.Set("source", image.Source)
 	d.Set("arch", image.Arch)
 	d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
 	d.Set("official", image.Official)

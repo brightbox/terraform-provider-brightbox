@@ -4,8 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -146,7 +144,7 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
-func TestMain(m *testing.M) {
-	acctest.UseBinaryDriver("brightbox", Provider)
-	resource.TestMain(m)
-}
+//func TestMain(m *testing.M) {
+//	acctest.UseBinaryDriver("brightbox", Provider)
+//	resource.TestMain(m)
+//}
