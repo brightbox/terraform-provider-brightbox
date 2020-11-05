@@ -209,7 +209,7 @@ func resourceBrightboxServerRead(
 	if err != nil {
 		return fmt.Errorf("Error retrieving server details: %s", err)
 	}
-	if server.Status == "deleted" {
+	if unreadable[server.Status] {
 		log.Printf("[WARN] Server not found, removing from state: %s", d.Id())
 		d.SetId("")
 		return nil

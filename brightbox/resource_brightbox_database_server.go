@@ -316,7 +316,7 @@ func resourceBrightboxDatabaseServerRead(
 	if err != nil {
 		return fmt.Errorf("Error retrieving Database Server details: %s", err)
 	}
-	if databaseServer.Status == "deleted" {
+	if unreadable[databaseServer.Status] {
 		log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
 		d.SetId("")
 		return nil

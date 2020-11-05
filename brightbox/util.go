@@ -21,6 +21,11 @@ const (
 	minPort = 1
 )
 
+var unreadable = map[string]bool{
+	"deleted": true,
+	"failed":  true,
+}
+
 func hash_string(
 	v interface{},
 ) string {

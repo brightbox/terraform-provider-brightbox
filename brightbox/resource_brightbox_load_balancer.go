@@ -319,7 +319,7 @@ func resourceBrightboxLoadBalancerRead(
 	if err != nil {
 		return fmt.Errorf("Error retrieving Load Balancer details: %s", err)
 	}
-	if loadBalancer.Status == "deleted" {
+	if unreadable[loadBalancer.Status] {
 		log.Printf("[WARN] Load Balancer not found, removing from state: %s", d.Id())
 		d.SetId("")
 		return nil
