@@ -76,6 +76,13 @@ func resourceBrightboxServer() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
 			},
+			"disk_encrypted": {
+				Description: "Is true if the server has been built with an encrpyted disk",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+			},
 			"locked": {
 				Description: "Is true if resource has been set as locked and cannot be deleted",
 				Type:        schema.TypeBool,
@@ -88,6 +95,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+
 			"interface": {
 				Description: "Network Interface connected to this server",
 				Type:        schema.TypeString,
@@ -164,6 +172,8 @@ func resourceBrightboxServerCreate(
 	assign_string(d, &serverType, "type")
 	zone := &serverOpts.Zone
 	assign_string(d, &zone, "zone")
+	encrypted := &serverOpts.DiskEncrypted
+	assign_bool(d, encrypted, "disk_encrypted")
 
 	log.Printf("[DEBUG] Server create configuration: %#v", serverOpts)
 
@@ -320,6 +330,7 @@ func setServerAttributes(
 	d.Set("zone", server.Zone.Handle)
 	d.Set("status", server.Status)
 	d.Set("locked", server.Locked)
+	d.Set("disk_encrypted", server.DiskEncrypted)
 	d.Set("hostname", server.Hostname)
 	d.Set("username", server.Image.Username)
 

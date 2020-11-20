@@ -33,6 +33,8 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "true"),
 					resource.TestMatchResourceAttr(
 						resourceName, "image", imageRe),
 					resource.TestCheckResourceAttr(
@@ -50,6 +52,8 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "true"),
 				),
 			},
 			{
@@ -57,6 +61,8 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "true"),
 				),
 			},
 			{
@@ -64,6 +70,8 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "true"),
 				),
 			},
 			{
@@ -77,6 +85,8 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					testAccCheckBrightboxServerExists(resourceName, &server),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "true"),
 					resource.TestMatchResourceAttr(
 						resourceName, "image", imageRe),
 					resource.TestCheckResourceAttr(
@@ -445,6 +455,7 @@ resource "brightbox_server" "foobar" {
 	type = "1gb.ssd"
 	server_groups = ["${data.brightbox_server_group.default.id}"]
 	user_data = "foo:-with-character's"
+	disk_encrypted = true
 	locked = true
 }
 
