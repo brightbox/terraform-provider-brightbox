@@ -36,6 +36,8 @@ should be added to. At least one server group must be specified.
 * `type` - (Optional) The handle of the server type required (`1gb.ssd`, etc)
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
 * `locked` - (Optional) Set to true to stop the server from being deleted
+* `disk_encrypted` - (Optional) Create a server where the data on disk is
+'encrypted as rest' by the cloud.
 * `user_data` (Optional) - A string of the desired User Data for the Server.
 * `user_data_base64` (Optional) - Already encrypted User Data - for use
 with the template provider.

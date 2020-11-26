@@ -1,3 +1,13 @@
+## 1.5.0 (Nov 26, 2020)
+
+IMPROVEMENTS:
+
+- resource/server: add 'encryption at rest' support
+
+NOTES:
+
+- document new attribute
+
 ## 1.4.3 (Aug 19, 2020)
 
 BUG FIXES:
