@@ -119,8 +119,6 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "certificate_private_key", "63158de92c07f5a53ee8bd56c5750deaa654aabf"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_pem", "a5f8997fb16293ae7827f974b9cc120c8c776d02"),
-					resource.TestCheckResourceAttr(
-						resourceName, "sslv3", "true"),
 				),
 			},
 			{
@@ -393,7 +391,6 @@ resource "brightbox_load_balancer" "default" {
 		port = 23
 	}
 	nodes = ["${brightbox_server.foobar.id}"]
-	sslv3 = true
 
 	certificate_pem = <<EOF
 -----BEGIN CERTIFICATE-----

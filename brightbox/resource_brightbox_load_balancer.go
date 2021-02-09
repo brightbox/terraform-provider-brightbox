@@ -57,6 +57,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
+				Deprecated:  "No longer supported. Will always return false",
 			},
 			"status": {
 				Description: "Current state of the load balancer",
@@ -202,6 +203,7 @@ func setLoadBalancerAttributes(
 	d.Set("locked", loadBalancer.Locked)
 	d.Set("policy", loadBalancer.Policy)
 	d.Set("buffer_size", loadBalancer.BufferSize)
+	d.Set("sslv3", false)
 
 	nodeIds := make([]string, 0, len(loadBalancer.Nodes))
 	for _, node := range loadBalancer.Nodes {
@@ -241,11 +243,6 @@ func setLoadBalancerAttributes(
 	}
 
 	log.Printf("[DEBUG] Certificate details are %#v", loadBalancer.Certificate)
-	if loadBalancer.Certificate == nil {
-		d.Set("sslv3", false)
-	} else {
-		d.Set("sslv3", loadBalancer.Certificate.SslV3)
-	}
 	return nil
 }
 
@@ -398,7 +395,6 @@ func addUpdateableLoadBalancerOptions(
 	assign_string(d, &opts.CertificatePem, "certificate_pem")
 	assign_string(d, &opts.CertificatePrivateKey, "certificate_private_key")
 	assign_int(d, &opts.BufferSize, "buffer_size")
-	assign_bool(d, &opts.SslV3, "sslv3")
 	assignListeners(d, &opts.Listeners)
 	assignNodes(d, &opts.Nodes)
 	return assignHealthCheck(d, &opts.Healthcheck)
@@ -492,8 +488,5 @@ func outputLoadBalancerOptions(opts *brightbox.LoadBalancerOptions) {
 	}
 	if opts.CertificatePrivateKey != nil {
 		log.Printf("[DEBUG] Load Balancer CertificatePrivateKey %v", *opts.CertificatePrivateKey)
-	}
-	if opts.SslV3 != nil {
-		log.Printf("[DEBUG] Load Balancer SslV3 %v", *opts.SslV3)
 	}
 }

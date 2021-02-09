@@ -322,7 +322,6 @@ func setCloudipAttributes(
 	d.Set("public_ipv4", cloudip.PublicIPv4)
 	d.Set("public_ipv6", cloudip.PublicIPv6)
 	d.Set("status", cloudip.Status)
-	d.Set("locked", cloudip.Locked)
 	d.Set("reverse_dns", cloudip.ReverseDns)
 	d.Set("fqdn", cloudip.Fqdn)
 	// Set the server id first and let interface override it
