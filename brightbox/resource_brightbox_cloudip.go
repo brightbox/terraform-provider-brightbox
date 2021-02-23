@@ -8,10 +8,9 @@ import (
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -391,7 +390,7 @@ func resourceBrightboxPortTranslationHash(
 		strings.ToLower(m["protocol"].(string))))
 	buf.WriteString(fmt.Sprintf("%d-", m["outgoing"].(int)))
 
-	return hashcode.String(buf.String())
+	return HashcodeString(buf.String())
 }
 
 func assignPortTranslators(d *schema.ResourceData, target *[]brightbox.PortTranslator) {

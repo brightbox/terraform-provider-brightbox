@@ -7,8 +7,8 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/brightbox/gobrightbox/status"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
@@ -16,10 +16,9 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 	var loadBalancer brightbox.LoadBalancer
 
 	resource.Test(t, resource.TestCase{
-		DisableBinaryDriver: true,
-		PreCheck:            func() { testAccPreCheck(t) },
-		Providers:           testAccProviders,
-		CheckDestroy:        testAccCheckBrightboxLoadBalancerAndServerDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxLoadBalancerAndServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_locked,
@@ -33,10 +32,6 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "healthcheck.#", "1"),
 					resource.TestCheckResourceAttr(
 						resourceName, "listener.#", "2"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.1595392858.timeout", "50000"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.1462547963.timeout", "10000"),
 					resource.TestCheckResourceAttr(
 						resourceName, "nodes.#", "1"),
 				),
@@ -77,12 +72,6 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.3297149260.timeout", "10000"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.3297149260.out", "8080"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.1462547963.timeout", "10000"),
 				),
 			},
 			{
@@ -97,10 +86,6 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "healthcheck.#", "1"),
 					resource.TestCheckResourceAttr(
 						resourceName, "listener.#", "2"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.1595392858.timeout", "50000"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.1462547963.timeout", "10000"),
 				),
 			},
 			{
@@ -109,12 +94,6 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
 						resourceName, "listener.#", "3"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.2238538594.protocol", "https"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.2238538594.in", "443"),
-					resource.TestCheckResourceAttr(
-						resourceName, "listener.2238538594.timeout", "50000"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_private_key", "63158de92c07f5a53ee8bd56c5750deaa654aabf"),
 					resource.TestCheckResourceAttr(

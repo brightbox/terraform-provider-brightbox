@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"net/url"
 	"os"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gorhill/cronexpr"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -390,4 +391,21 @@ func diffSuppressJSONObject(k, old, new string, d *schema.ResourceData) bool {
 		return true
 	}
 	return false
+}
+
+// HashcodeString hashes a string to a unique hashcode.
+//
+// crc32 returns a uint32, but for our use we need
+// and non negative integer. Here we cast to an integer
+// and invert it if the result is negative.
+func HashcodeString(s string) int {
+	v := int(crc32.ChecksumIEEE([]byte(s)))
+	if v >= 0 {
+		return v
+	}
+	if -v >= 0 {
+		return -v
+	}
+	// v == MinInt
+	return 0
 }

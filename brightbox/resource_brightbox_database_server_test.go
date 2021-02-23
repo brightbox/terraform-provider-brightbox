@@ -8,9 +8,9 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/brightbox/gobrightbox/status"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
@@ -22,10 +22,9 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	var cloudip brightbox.CloudIP
 
 	resource.Test(t, resource.TestCase{
-		DisableBinaryDriver: true,
-		PreCheck:            func() { testAccPreCheck(t) },
-		Providers:           testAccProviders,
-		CheckDestroy:        testAccCheckBrightboxDatabaseServerAndOthersDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxDatabaseServerAndOthersDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_locked(name),
@@ -134,8 +133,6 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						resourceName, "allow_access.#", "3"),
-					resource.TestCheckResourceAttr(
-						resourceName, "allow_access.2131663435", "158.152.1.65/32"),
 				),
 			},
 			{
@@ -159,8 +156,6 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						resourceName, "allow_access.#", "3"),
-					resource.TestCheckResourceAttr(
-						resourceName, "allow_access.2131663435", "158.152.1.65/32"),
 				),
 			},
 			{
@@ -314,6 +309,9 @@ resource "brightbox_database_server" "default" {
 	maintenance_hour = 6
 	snapshots_schedule = ""
 	allow_access = [ "${data.brightbox_server_group.default.id}" ]
+	timeouts {
+	  create = "60m"
+	}
 }
 
 data "brightbox_database_type" "foobar" {
@@ -338,6 +336,9 @@ resource "brightbox_database_server" "default" {
 	maintenance_hour = 6
 	allow_access = [ "${data.brightbox_server_group.default.id}" ]
 	locked = true
+	timeouts {
+	  create = "60m"
+	}
 }
 
 data "brightbox_database_type" "foobar" {
@@ -360,6 +361,9 @@ resource "brightbox_database_server" "default" {
 	maintenance_hour = 4
 	snapshots_schedule = "4 5 * * *"
 	allow_access = [ "${data.brightbox_server_group.default.id}" ]
+	timeouts {
+	  create = "60m"
+	}
 }
 
 data "brightbox_database_type" "foobar" {
@@ -382,6 +386,9 @@ resource "brightbox_database_server" "default" {
 	allow_access = [
 		"${brightbox_server_group.barfoo.id}", "${brightbox_server.foobar.id}", "158.152.1.65/32"
 	]
+	timeouts {
+	  create = "60m"
+	}
 }
 
 resource "brightbox_server" "foobar" {

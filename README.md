@@ -11,9 +11,14 @@ Usage
 ---------------------
 
 ```
-# For example, restrict brightbox version to 1.x.x
-provider "brightbox" {
-  version = "~> 1.0"
+# For example, restrict brightbox version to 2.x.x
+terraform {
+  required_providers {
+    brightbox = {
+      source  = "brightbox/brightbox"
+      version = "~> 2.0"
+    }
+  }
 }
 ```
 

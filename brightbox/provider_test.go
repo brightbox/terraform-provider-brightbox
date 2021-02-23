@@ -1,26 +1,27 @@
 package brightbox
 
 import (
+	"context"
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var testAccProviders map[string]terraform.ResourceProvider
+var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider().(*schema.Provider)
-	testAccProviders = map[string]terraform.ResourceProvider{
+	testAccProvider = Provider()
+	testAccProviders = map[string]*schema.Provider{
 		"brightbox": testAccProvider,
 	}
 }
 
 func TestProvider(t *testing.T) {
-	p := Provider()
-	if err := p.(*schema.Provider).InternalValidate(); err != nil {
+	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -113,12 +114,14 @@ func TestProvider_badConfigs(t *testing.T) {
 		t.Run(
 			example.name,
 			func(t *testing.T) {
-				err := p.Configure(terraform.NewResourceConfigRaw(example.raw))
-				if err == nil {
+				err := p.Configure(context.Background(), terraform.NewResourceConfigRaw(example.raw))
+				if !err.HasError() {
 					t.Errorf("Expected %q, but no error was returned", example.err)
 				} else {
-					if err.Error() != example.err {
-						t.Errorf("Got error %q, expected %q", err.Error(), example.err)
+					for i := range err {
+						if err[i].Summary != example.err {
+							t.Errorf("Got error %q, expected %q", err[i].Summary, example.err)
+						}
 					}
 				}
 			},
@@ -127,7 +130,7 @@ func TestProvider_badConfigs(t *testing.T) {
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ terraform.ResourceProvider = Provider()
+	var _ *schema.Provider = Provider()
 }
 
 func testAccPreCheck(t *testing.T) {
@@ -138,13 +141,13 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
 	}
 
-	err := testAccProvider.Configure(terraform.NewResourceConfigRaw(nil))
+	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-//func TestMain(m *testing.M) {
-//	acctest.UseBinaryDriver("brightbox", Provider)
-//	resource.TestMain(m)
-//}
+// This delegation activates the sweepers
+func TestMain(m *testing.M) {
+	resource.TestMain(m)
+}

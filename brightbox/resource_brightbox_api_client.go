@@ -5,8 +5,8 @@ import (
 	"log"
 
 	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var validPermissionsGroups = []string{"full", "storage"}

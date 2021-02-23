@@ -7,10 +7,9 @@ import (
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceBrightboxLoadBalancer() *schema.Resource {
@@ -191,7 +190,7 @@ func resourceBrightboxLbListenerHash(
 	buf.WriteString(fmt.Sprintf("%d-", m["out"].(int)))
 	buf.WriteString(fmt.Sprintf("%d-", m["timeout"].(int)))
 
-	return hashcode.String(buf.String())
+	return HashcodeString(buf.String())
 }
 
 func setLoadBalancerAttributes(

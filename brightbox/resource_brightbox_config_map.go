@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/structure"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 )
 
 func resourceBrightboxConfigMap() *schema.Resource {
@@ -38,7 +38,6 @@ func resourceBrightboxConfigMap() *schema.Resource {
 				Type:        schema.TypeMap,
 				Elem: &schema.Schema{
 					Type:             schema.TypeString,
-					Required:         true,
 					ValidateFunc:     validateJSONObject,
 					DiffSuppressFunc: diffSuppressJSONObject,
 					StateFunc: func(v interface{}) string {
