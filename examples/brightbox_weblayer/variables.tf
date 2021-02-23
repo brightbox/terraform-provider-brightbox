@@ -1,6 +1,6 @@
 variable "web_image" {
   description = "search string for server image"
-  default     = "^ubuntu-xenial.*server$"
+  default     = "^ubuntu-focal.*server$"
 }
 
 variable "web_type" {

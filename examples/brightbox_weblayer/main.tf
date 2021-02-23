@@ -1,20 +1,17 @@
-# Specify the provider and access details
-provider "brightbox" {}
-
 resource "brightbox_cloudip" "lb" {
-  target = "${brightbox_load_balancer.lb.id}"
+  target = brightbox_load_balancer.lb.id
 }
 
 resource "brightbox_cloudip" "server1" {
-  target = "${brightbox_server.server1.interface}"
+  target = brightbox_server.server1.interface
 }
 
 resource "brightbox_cloudip" "server2" {
-  target = "${brightbox_server.server2.interface}"
+  target = brightbox_server.server2.interface
 }
 
 resource "brightbox_cloudip" "database" {
-  target = "${brightbox_database_server.database.id}"
+  target = brightbox_database_server.database.id
 }
 
 resource "brightbox_load_balancer" "lb" {
@@ -46,8 +43,8 @@ resource "brightbox_load_balancer" "lb" {
   }
 
   nodes = [
-    "${brightbox_server.server2.id}",
-    "${brightbox_server.server1.id}",
+    brightbox_server.server2.id,
+    brightbox_server.server1.id,
   ]
 
   certificate_pem = <<EOF
@@ -103,19 +100,18 @@ L6c41r4AZ3Iyvr3MYoSohogBbAnd6TW14NjvBHceREhAqvmIWlWmAQ==
 EOF
 }
 
-resource "brightbox_container" "backups" {
-  name        = "terraform_backups"
-  description = "Terraform example backup area"
+resource "brightbox_orbit_container" "backups" {
+  name = "terraform_backups"
 }
 
 resource "brightbox_database_server" "database" {
   name                = "Terraform weblayer example database"
   database_engine     = "mysql"
   database_version    = "5.6"
-  database_type       = "${data.brightbox_database_type.4gb.id}"
+  database_type       = data.brightbox_database_type.four_gb.id
   maintenance_weekday = 6
   maintenance_hour    = 6
-  allow_access        = ["${brightbox_server_group.weblayer.id}"]
+  allow_access        = [brightbox_server_group.weblayer.id]
 }
 
 resource "brightbox_server_group" "weblayer" {
@@ -124,7 +120,7 @@ resource "brightbox_server_group" "weblayer" {
 
 resource "brightbox_firewall_policy" "weblayer" {
   name         = "Used by terraform"
-  server_group = "${brightbox_server_group.weblayer.id}"
+  server_group = brightbox_server_group.weblayer.id
 }
 
 resource "brightbox_firewall_rule" "weblayer_ssh" {
@@ -132,7 +128,7 @@ resource "brightbox_firewall_rule" "weblayer_ssh" {
   protocol         = "tcp"
   source           = "any"
   description      = "SSH access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.weblayer.id}"
+  firewall_policy  = brightbox_firewall_policy.weblayer.id
 }
 
 resource "brightbox_firewall_rule" "weblayer_http" {
@@ -140,7 +136,7 @@ resource "brightbox_firewall_rule" "weblayer_http" {
   protocol         = "tcp"
   source           = "any"
   description      = "HTTP access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.weblayer.id}"
+  firewall_policy  = brightbox_firewall_policy.weblayer.id
 }
 
 resource "brightbox_firewall_rule" "weblayer_https" {
@@ -148,51 +144,51 @@ resource "brightbox_firewall_rule" "weblayer_https" {
   protocol         = "tcp"
   source           = "any"
   description      = "HTTPs access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.weblayer.id}"
+  firewall_policy  = brightbox_firewall_policy.weblayer.id
 }
 
 resource "brightbox_firewall_rule" "weblayer_outbound" {
   destination     = "any"
   description     = "Outbound internet access"
-  firewall_policy = "${brightbox_firewall_policy.weblayer.id}"
+  firewall_policy = brightbox_firewall_policy.weblayer.id
 }
 
 resource "brightbox_firewall_rule" "weblayer_icmp" {
   protocol        = "icmp"
   source          = "any"
   icmp_type_name  = "any"
-  firewall_policy = "${brightbox_firewall_policy.weblayer.id}"
+  firewall_policy = brightbox_firewall_policy.weblayer.id
 }
 
 resource "brightbox_server" "server1" {
-  depends_on = ["brightbox_firewall_policy.weblayer"]
+  depends_on = [brightbox_firewall_policy.weblayer]
 
   name  = "Terraform web server example 1"
-  image = "${data.brightbox_image.ubuntu_lts.id}"
-  type  = "${var.web_type}"
+  image = data.brightbox_image.ubuntu_lts.id
+  type  = var.web_type
 
   # Our Security group to allow HTTP and SSH access
-  server_groups = ["${brightbox_server_group.weblayer.id}"]
+  server_groups = [brightbox_server_group.weblayer.id]
 }
 
 resource "brightbox_server" "server2" {
-  depends_on = ["brightbox_firewall_policy.weblayer"]
+  depends_on = [brightbox_firewall_policy.weblayer]
 
   name  = "Terraform web server example 2"
-  image = "${data.brightbox_image.ubuntu_lts.id}"
-  type  = "${var.web_type}"
+  image = data.brightbox_image.ubuntu_lts.id
+  type  = var.web_type
 
   # Our Security group to allow HTTP and SSH access
-  server_groups = ["${brightbox_server_group.weblayer.id}"]
+  server_groups = [brightbox_server_group.weblayer.id]
 }
 
 data "brightbox_image" "ubuntu_lts" {
-  name        = "${var.web_image}"
+  name        = var.web_image
   arch        = "x86_64"
   official    = true
   most_recent = true
 }
 
-data "brightbox_database_type" "4gb" {
-  name = "${var.database_type}"
+data "brightbox_database_type" "four_gb" {
+  name = var.database_type
 }

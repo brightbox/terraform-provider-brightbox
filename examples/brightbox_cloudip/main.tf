@@ -1,8 +1,5 @@
-# Specify the provider and access details
-provider "brightbox" {}
-
 resource "brightbox_cloudip" "default" {
-  target = "${brightbox_server.web.interface}"
+  target = brightbox_server.web.interface
 }
 
 # Our default server group to access
@@ -13,7 +10,7 @@ resource "brightbox_server_group" "default" {
 
 resource "brightbox_firewall_policy" "default" {
   name         = "Used by terraform"
-  server_group = "${brightbox_server_group.default.id}"
+  server_group = brightbox_server_group.default.id
 }
 
 resource "brightbox_firewall_rule" "default_ssh" {
@@ -21,7 +18,7 @@ resource "brightbox_firewall_rule" "default_ssh" {
   protocol         = "tcp"
   source           = "any"
   description      = "SSH access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.default.id}"
+  firewall_policy  = brightbox_firewall_policy.default.id
 }
 
 resource "brightbox_firewall_rule" "default_http" {
@@ -29,7 +26,7 @@ resource "brightbox_firewall_rule" "default_http" {
   protocol         = "tcp"
   source           = "any"
   description      = "HTTP access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.default.id}"
+  firewall_policy  = brightbox_firewall_policy.default.id
 }
 
 resource "brightbox_firewall_rule" "default_https" {
@@ -37,36 +34,36 @@ resource "brightbox_firewall_rule" "default_https" {
   protocol         = "tcp"
   source           = "any"
   description      = "HTTPs access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.default.id}"
+  firewall_policy  = brightbox_firewall_policy.default.id
 }
 
 resource "brightbox_firewall_rule" "default_outbound" {
   destination     = "any"
   description     = "Outbound internet access"
-  firewall_policy = "${brightbox_firewall_policy.default.id}"
+  firewall_policy = brightbox_firewall_policy.default.id
 }
 
 resource "brightbox_firewall_rule" "default_icmp" {
   protocol        = "icmp"
   source          = "any"
   icmp_type_name  = "any"
-  firewall_policy = "${brightbox_firewall_policy.default.id}"
+  firewall_policy = brightbox_firewall_policy.default.id
 }
 
 resource "brightbox_server" "web" {
-  depends_on = ["brightbox_firewall_policy.default"]
+  depends_on = [brightbox_firewall_policy.default]
 
   name  = "Terraform web server example"
-  image = "${data.brightbox_image.ubuntu_lts.id}"
-  type  = "${var.web_type}"
+  image = data.brightbox_image.ubuntu_lts.id
+  type  = var.web_type
 
   # Our Security group to allow HTTP and SSH access
-  server_groups = ["${brightbox_server_group.default.id}"]
+  server_groups = [brightbox_server_group.default.id]
 
   # We run a remote provisioner on the instance after creating it.
   # In this case, we just install nginx and start it. By default,
   # this should be on port 80
-  user_data = "${file("userdata.sh")}"
+  user_data = file("userdata.sh")
 }
 
 data "brightbox_image" "ubuntu_lts" {
