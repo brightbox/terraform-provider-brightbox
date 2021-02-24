@@ -11,10 +11,11 @@ import (
 
 func resourceBrightboxFirewallRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxFirewallRuleCreate,
-		Read:   resourceBrightboxFirewallRuleRead,
-		Update: resourceBrightboxFirewallRuleUpdate,
-		Delete: resourceBrightboxFirewallRuleDelete,
+		Description: "Provides a Brightbox Firewall Rule resource",
+		Create:      resourceBrightboxFirewallRuleCreate,
+		Read:        resourceBrightboxFirewallRuleRead,
+		Update:      resourceBrightboxFirewallRuleUpdate,
+		Delete:      resourceBrightboxFirewallRuleDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -25,43 +26,51 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"firewall_policy": {
-				Description: "The firewall policy this rule is linked to",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"protocol": {
-				Description: "Protocol Number, or one of tcp, udp, icmp",
+
+			"description": {
+				Description: "User editable label",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			"source": {
-				Description: "Subnet, ServerGroup or ServerID",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"source_port": {
-				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
+
 			"destination": {
 				Description: "Subnet, ServerGroup or ServerID",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+
 			"destination_port": {
 				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+
+			"firewall_policy": {
+				Description: "The firewall policy this rule is linked to",
+				Type:        schema.TypeString,
+				Required:    true,
+			},
+
 			"icmp_type_name": {
 				Description: "ICMP type name. 'echo-request', 'echo-reply'",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			"description": {
-				Description: "User editable label",
+
+			"protocol": {
+				Description: "Protocol Number, or one of tcp, udp, icmp",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
+			"source": {
+				Description: "Subnet, ServerGroup or ServerID",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
+			"source_port": {
+				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},

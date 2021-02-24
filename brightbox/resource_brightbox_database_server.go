@@ -15,10 +15,11 @@ var blankDatabaseServerOpts = brightbox.DatabaseServerOptions{}
 
 func resourceBrightboxDatabaseServer() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxDatabaseServerCreate,
-		Read:   resourceBrightboxDatabaseServerRead,
-		Update: resourceBrightboxDatabaseServerUpdate,
-		Delete: resourceBrightboxDatabaseServerDelete,
+		Description: "Provides a Brightbox Database Server resource",
+		Create:      resourceBrightboxDatabaseServerCreate,
+		Read:        resourceBrightboxDatabaseServerRead,
+		Update:      resourceBrightboxDatabaseServerUpdate,
+		Delete:      resourceBrightboxDatabaseServerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -29,49 +30,20 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "Editable user label",
+
+			"admin_password": {
+				Description: "Initial password required to login, only available at creation or following a password reset request",
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
+				Sensitive:   true,
 			},
-			"description": {
-				Description: "Editable user label",
+
+			"admin_username": {
+				Description: "Initial username required to login",
 				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"maintenance_weekday": {
-				Description: "Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed",
-				Type:        schema.TypeInt,
-				Optional:    true,
 				Computed:    true,
 			},
-			"maintenance_hour": {
-				Description: "Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23)",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-			},
-			"database_engine": {
-				Description: "The DBMS engine of the Database Server",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-			},
-			"database_version": {
-				Description: "The version of the given engine in use",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-			},
-			"database_type": {
-				Description: "ID of the database type to use",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-			},
+
 			"allow_access": {
 				Description: "An array of resources allowed to access the database. Accepted values include `any`, `IPv4 address`, `server identifier`, `server group identifier`",
 				Type:        schema.TypeSet,
@@ -80,12 +52,71 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				MinItems:    1,
 				Set:         schema.HashString,
 			},
+
+			"database_engine": {
+				Description: "The DBMS engine of the Database Server",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+			},
+
+			"database_type": {
+				Description: "ID of the database type to use",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+			},
+
+			"database_version": {
+				Description: "The version of the given engine in use",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+			},
+
+			"description": {
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
+			"locked": {
+				Description: "Initial password required to login, only available at creation or following a password reset request",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
+
+			"maintenance_hour": {
+				Description: "Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23)",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"maintenance_weekday": {
+				Description: "Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"name": {
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
 			"snapshot": {
 				Description: "Identifier for an SQL snapshot to use as the basis of the new instance. Creates and restores the database from the snapshot",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 			},
+
 			"snapshots_schedule": {
 				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
 				Type:         schema.TypeString,
@@ -93,39 +124,25 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Default:      "0 7 * * *",
 				ValidateFunc: ValidateCronString,
 			},
+
 			"snapshots_schedule_next_at": {
 				Description: "time in UTC when next approximate scheduled snapshot will be run",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+
+			"status": {
+				Description: "State the database server is in",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
 			"zone": {
 				Description: "ID of the zone the database server is in",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-			},
-			"admin_username": {
-				Description: "Initial username required to login",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"admin_password": {
-				Description: "Initial password required to login, only available at creation or following a password reset request",
-				Type:        schema.TypeString,
-				Computed:    true,
-				Sensitive:   true,
-			},
-			"status": {
-				Description: "State the database server is in",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"locked": {
-				Description: "Initial password required to login, only available at creation or following a password reset request",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
 			},
 		},
 	}

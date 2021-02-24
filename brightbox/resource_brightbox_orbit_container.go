@@ -17,11 +17,11 @@ const (
 
 func resourceBrightboxContainer() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxContainerCreate,
-		Read:   resourceBrightboxContainerRead,
-		Update: resourceBrightboxContainerUpdate,
-		Delete: resourceBrightboxContainerDelete,
-		//Exists: resourceBrightboxContainerExists,
+		Description: "Provides a Brightbox Orbit Container resource",
+		Create:      resourceBrightboxContainerCreate,
+		Read:        resourceBrightboxContainerRead,
+		Update:      resourceBrightboxContainerUpdate,
+		Delete:      resourceBrightboxContainerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -32,22 +32,13 @@ func resourceBrightboxContainer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description:  "Name of the Container",
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.NoZeroValues,
+
+			"bytes_used": {
+				Description: "Number of bytes used by the container",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
-			"metadata": {
-				Description: "Set of key/value metadata associated with the container",
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				ValidateFunc: http1Keys,
-			},
+
 			"container_read": {
 				Description: "Who can read the container",
 				Type:        schema.TypeSet,
@@ -57,6 +48,19 @@ func resourceBrightboxContainer() *schema.Resource {
 				},
 				Set: schema.HashString,
 			},
+
+			"container_sync_key": {
+				Description: "Container sync key",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
+			"container_sync_to": {
+				Description: "Container to sync to",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
 			"container_write": {
 				Description: "Who can write to the container",
 				Type:        schema.TypeSet,
@@ -66,47 +70,55 @@ func resourceBrightboxContainer() *schema.Resource {
 				},
 				Set: schema.HashString,
 			},
-			"container_sync_key": {
-				Description: "Container sync key",
+
+			"created_at": {
+				Description: "The time the container was created",
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 			},
-			"container_sync_to": {
-				Description: "Container to sync to",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"versions_location": {
-				Description:   "Versions Location",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"history_location"},
-			},
+
 			"history_location": {
 				Description:   "History location",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"versions_location"},
 			},
+
+			"metadata": {
+				Description: "Set of key/value metadata associated with the container",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateFunc: http1Keys,
+			},
+
+			"name": {
+				Description:  "Name of the Container",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.NoZeroValues,
+			},
+
 			"object_count": {
 				Description: "Number of objects in the container",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
-			"bytes_used": {
-				Description: "Number of bytes used by the container",
-				Type:        schema.TypeInt,
-				Computed:    true,
-			},
+
 			"storage_policy": {
 				Description: "Any storage policy in place",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			"created_at": {
-				Description: "The time the container was created",
-				Type:        schema.TypeString,
-				Computed:    true,
+
+			"versions_location": {
+				Description:   "Versions Location",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"history_location"},
 			},
 		},
 	}

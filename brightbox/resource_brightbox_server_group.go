@@ -13,10 +13,11 @@ import (
 
 func resourceBrightboxServerGroup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxServerGroupCreate,
-		Read:   resourceBrightboxServerGroupRead,
-		Update: resourceBrightboxServerGroupUpdate,
-		Delete: resourceBrightboxServerGroupDelete,
+		Description: "Provides a Brightbox Server Group resource",
+		Create:      resourceBrightboxServerGroupCreate,
+		Read:        resourceBrightboxServerGroupRead,
+		Update:      resourceBrightboxServerGroupUpdate,
+		Delete:      resourceBrightboxServerGroupDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -27,10 +28,10 @@ func resourceBrightboxServerGroup() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "USer editable label",
-				Type:        schema.TypeString,
-				Optional:    true,
+			"default": {
+				Description: "Is this the default group for the account?",
+				Type:        schema.TypeBool,
+				Computed:    true,
 			},
 
 			"description": {
@@ -38,15 +39,17 @@ func resourceBrightboxServerGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			"default": {
-				Description: "Is this the default group for the account?",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
+
 			"fqdn": {
 				Description: "Fully Qualified Domain Name",
 				Type:        schema.TypeString,
 				Computed:    true,
+			},
+
+			"name": {
+				Description: "USer editable label",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 		},
 	}

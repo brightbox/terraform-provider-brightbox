@@ -23,10 +23,11 @@ const (
 
 func resourceBrightboxCloudip() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxCloudipCreate,
-		Read:   resourceBrightboxCloudipRead,
-		Update: resourceBrightboxCloudipUpdate,
-		Delete: resourceBrightboxCloudipDelete,
+		Description: "Provides a Brightbox CloudIP resource",
+		Create:      resourceBrightboxCloudipCreate,
+		Read:        resourceBrightboxCloudipRead,
+		Update:      resourceBrightboxCloudipUpdate,
+		Delete:      resourceBrightboxCloudipDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -37,20 +38,9 @@ func resourceBrightboxCloudip() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "Name assigned to the Cloud IP",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
 
-			"target": {
-				Description: "The object this Cloud IP maps to",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-
-			"status": {
-				Description: "Current state of the Cloud IP",
+			"fqdn": {
+				Description: "Full Domain name entry for the Cloud IP",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -62,36 +52,12 @@ func resourceBrightboxCloudip() *schema.Resource {
 				Deprecated:  "No lock on Cloud IPs",
 			},
 
-			"public_ip": {
-				Description: "Old alias of the IPv4 address",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"public_ipv4": {
-				Description: "IPv4 address",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"public_ipv6": {
-				Description: "IPv6 address",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"fqdn": {
-				Description: "Full Domain name entry for the Cloud IP",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"reverse_dns": {
-				Description: "Reverse DNS entry for the Cloud IP",
+			"name": {
+				Description: "Name assigned to the Cloud IP",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
+
 			"port_translator": {
 				Description: "Array of Port Translators",
 				Type:        schema.TypeSet,
@@ -120,6 +86,43 @@ func resourceBrightboxCloudip() *schema.Resource {
 					},
 				},
 				Set: resourceBrightboxPortTranslationHash,
+			},
+
+			"public_ip": {
+				Description: "Old alias of the IPv4 address",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"public_ipv4": {
+				Description: "IPv4 address",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"public_ipv6": {
+				Description: "IPv6 address",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"reverse_dns": {
+				Description: "Reverse DNS entry for the Cloud IP",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"status": {
+				Description: "Current state of the Cloud IP",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"target": {
+				Description: "The object this Cloud IP maps to",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 		},
 	}

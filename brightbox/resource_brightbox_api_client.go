@@ -13,10 +13,11 @@ var validPermissionsGroups = []string{"full", "storage"}
 
 func resourceBrightboxAPIClient() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxAPIClientCreate,
-		Read:   resourceBrightboxAPIClientRead,
-		Update: resourceBrightboxAPIClientUpdate,
-		Delete: resourceBrightboxAPIClientDelete,
+		Description: "Provides a Brightbox API Client resource",
+		Create:      resourceBrightboxAPIClientCreate,
+		Read:        resourceBrightboxAPIClientRead,
+		Update:      resourceBrightboxAPIClientUpdate,
+		Delete:      resourceBrightboxAPIClientDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -27,10 +28,11 @@ func resourceBrightboxAPIClient() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "Human Readable Name",
+
+			"account": {
+				Description: "The account the API client relates to",
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 			},
 
 			"description": {
@@ -38,12 +40,13 @@ func resourceBrightboxAPIClient() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
-			"secret": {
-				Description: "A shared secret the client must present when authenticating",
+
+			"name": {
+				Description: "Human Readable Name",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Sensitive:   true,
+				Optional:    true,
 			},
+
 			"permissions_group": {
 				Description:  "Summary of the permissions granted to the client (full, storage)",
 				Type:         schema.TypeString,
@@ -51,10 +54,12 @@ func resourceBrightboxAPIClient() *schema.Resource {
 				Default:      validPermissionsGroups[0],
 				ValidateFunc: validation.StringInSlice(validPermissionsGroups, false),
 			},
-			"account": {
-				Description: "The account the API client relates to",
+
+			"secret": {
+				Description: "A shared secret the client must present when authenticating",
 				Type:        schema.TypeString,
 				Computed:    true,
+				Sensitive:   true,
 			},
 		},
 	}

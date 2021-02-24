@@ -14,10 +14,11 @@ import (
 
 func resourceBrightboxLoadBalancer() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxLoadBalancerCreate,
-		Read:   resourceBrightboxLoadBalancerRead,
-		Update: resourceBrightboxLoadBalancerUpdate,
-		Delete: resourceBrightboxLoadBalancerDelete,
+		Description: "Provides a Brightbox Load Balancer resource",
+		Create:      resourceBrightboxLoadBalancerCreate,
+		Read:        resourceBrightboxLoadBalancerRead,
+		Update:      resourceBrightboxLoadBalancerUpdate,
+		Delete:      resourceBrightboxLoadBalancerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -28,47 +29,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "Eitable user label",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"policy": {
-				Description: "Method of load balancing. Supports `least-connections`, `round-robin` or `source-address`)",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-			"certificate_pem": {
-				Description: "A X509 SSL certificate in PEM format",
-				Type:        schema.TypeString,
-				Optional:    true,
-				StateFunc:   hash_string,
-			},
-			"certificate_private_key": {
-				Description: "RSA private key used to sign the certificate in PEM format",
-				Type:        schema.TypeString,
-				Optional:    true,
-				StateFunc:   hash_string,
-			},
-			"sslv3": {
-				Description: "Allow SSLv3 to be used",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Deprecated:  "No longer supported. Will always return false",
-			},
-			"status": {
-				Description: "Current state of the load balancer",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"locked": {
-				Description: "Is true if resource has been set as locked and can not be deleted",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-			},
+
 			"buffer_size": {
 				Description:  "Buffer size in bytes",
 				Type:         schema.TypeInt,
@@ -76,25 +37,90 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.IntAtLeast(0),
 			},
-			"nodes": {
-				Description: "IDs of servers connected to this load balancer",
-				Type:        schema.TypeSet,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+
+			"certificate_pem": {
+				Description: "A X509 SSL certificate in PEM format",
+				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
-				Set:         schema.HashString,
+				StateFunc:   hash_string,
 			},
+
+			"certificate_private_key": {
+				Description: "RSA private key used to sign the certificate in PEM format",
+				Type:        schema.TypeString,
+				Optional:    true,
+				StateFunc:   hash_string,
+			},
+
+			"healthcheck": {
+				Description: "Healthcheck options",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+
+						"interval": {
+							Description:  "How often to check in milliseconds",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+
+						"port": {
+							Description:  "Port on server to connect to for healthcheck",
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(minPort, maxPort),
+						},
+
+						"request": {
+							Description: "HTTP path to check if http type healthcheck",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+						},
+
+						"threshold_down": {
+							Description:  "How many checks have to fail before the load balancers considers a server inactive",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+
+						"threshold_up": {
+							Description:  "How many checks have to pass before the load balancer considers the server active",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+
+						"timeout": {
+							Description:  "How long to wait for a response before marking the check as a fail",
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+
+						"type": {
+							Description: "Protocol type to check (tcp/http)",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+					},
+				},
+			},
+
 			"listener": {
 				Description: "Array of listeners",
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"protocol": {
-							Description: "The protocol to load balance (http/tcp)",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
 						"in": {
 							Description:  "The port this listener listens on",
 							Type:         schema.TypeInt,
@@ -109,6 +135,12 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							ValidateFunc: validation.IntBetween(minPort, maxPort),
 						},
 
+						"protocol": {
+							Description: "The protocol to load balance (http/tcp)",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+
 						"timeout": {
 							Description:  "Connection timeout in milliseconds",
 							Type:         schema.TypeInt,
@@ -120,60 +152,48 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				},
 				Set: resourceBrightboxLbListenerHash,
 			},
-			"healthcheck": {
-				Description: "Healthcheck options",
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Required:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"type": {
-							Description: "Protocol type to check (tcp/http)",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-						"port": {
-							Description:  "Port on server to connect to for healthcheck",
-							Type:         schema.TypeInt,
-							Required:     true,
-							ValidateFunc: validation.IntBetween(minPort, maxPort),
-						},
-						"request": {
-							Description: "HTTP path to check if http type healthcheck",
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
-						},
-						"interval": {
-							Description:  "How often to check in milliseconds",
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.IntAtLeast(0),
-						},
-						"timeout": {
-							Description:  "How long to wait for a response before marking the check as a fail",
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.IntAtLeast(0),
-						},
-						"threshold_up": {
-							Description:  "How many checks have to pass before the load balancer considers the server active",
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.IntAtLeast(0),
-						},
-						"threshold_down": {
-							Description:  "How many checks have to fail before the load balancers considers a server inactive",
-							Type:         schema.TypeInt,
-							Optional:     true,
-							Computed:     true,
-							ValidateFunc: validation.IntAtLeast(0),
-						},
-					},
-				},
+
+			"locked": {
+				Description: "Is true if resource has been set as locked and can not be deleted",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
+
+			"name": {
+				Description: "Eitable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
+			"nodes": {
+				Description: "IDs of servers connected to this load balancer",
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Computed:    true,
+				Set:         schema.HashString,
+			},
+
+			"policy": {
+				Description: "Method of load balancing. Supports `least-connections`, `round-robin` or `source-address`)",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"sslv3": {
+				Description: "Allow SSLv3 to be used",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Deprecated:  "No longer supported. Will always return false",
+			},
+
+			"status": {
+				Description: "Current state of the load balancer",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

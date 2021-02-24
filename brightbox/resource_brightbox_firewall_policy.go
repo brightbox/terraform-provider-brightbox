@@ -13,10 +13,11 @@ import (
 
 func resourceBrightboxFirewallPolicy() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxFirewallPolicyCreate,
-		Read:   resourceBrightboxFirewallPolicyRead,
-		Update: resourceBrightboxFirewallPolicyUpdate,
-		Delete: resourceBrightboxFirewallPolicyDelete,
+		Description: "Provides a Brightbox Firewall Policy resource",
+		Create:      resourceBrightboxFirewallPolicyCreate,
+		Read:        resourceBrightboxFirewallPolicyRead,
+		Update:      resourceBrightboxFirewallPolicyUpdate,
+		Delete:      resourceBrightboxFirewallPolicyDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -26,19 +27,21 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"server_group": {
-				Description: "The server group using this policy",
+
+			"description": {
+				Description: "Optional description of the policy",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+
 			"name": {
 				Description: "Optional name for this policy",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 
-			"description": {
-				Description: "Optional description of the policy",
+			"server_group": {
+				Description: "The server group using this policy",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},

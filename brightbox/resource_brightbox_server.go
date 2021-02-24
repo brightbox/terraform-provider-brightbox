@@ -15,10 +15,11 @@ const (
 
 func resourceBrightboxServer() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBrightboxServerCreate,
-		Read:   resourceBrightboxServerRead,
-		Update: resourceBrightboxServerUpdate,
-		Delete: resourceBrightboxServerDelete,
+		Description: "Provides a Brightbox Server resource",
+		Create:      resourceBrightboxServerCreate,
+		Read:        resourceBrightboxServerRead,
+		Update:      resourceBrightboxServerUpdate,
+		Delete:      resourceBrightboxServerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -29,53 +30,7 @@ func resourceBrightboxServer() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"image": {
-				Description: "Image used to create the server",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
-			"name": {
-				Description: "Editable user label",
-				Type:        schema.TypeString,
-				Optional:    true,
-			},
-			"type": {
-				Description: "Server type of the server",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-			},
-			"zone": {
-				Description: "Zone where server is located",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-			},
-			"user_data": {
-				Description:   "Data made available to Cloud Init",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"user_data_base64"},
-				StateFunc:     hash_string,
-			},
-			"user_data_base64": {
-				Description:   "Base64 encoded data made available to Cloud Init",
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"user_data"},
-				ValidateFunc:  mustBeBase64Encoded,
-			},
-			"server_groups": {
-				Description: "Array of server groups to add server to",
-				Type:        schema.TypeSet,
-				Required:    true,
-				MinItems:    1,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
-			},
+
 			"disk_encrypted": {
 				Description: "Is true if the server has been built with an encrpyted disk",
 				Type:        schema.TypeBool,
@@ -83,27 +38,28 @@ func resourceBrightboxServer() *schema.Resource {
 				Computed:    true,
 				ForceNew:    true,
 			},
-			"locked": {
-				Description: "Is true if resource has been set as locked and cannot be deleted",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-			},
 
-			"status": {
-				Description: "Current state of server",
+			"fqdn": {
+				Description: "Fully qualified domain name",
 				Type:        schema.TypeString,
 				Computed:    true,
+			},
+
+			"hostname": {
+				Description: "Short hostname",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"image": {
+				Description: "Image used to create the server",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
 
 			"interface": {
 				Description: "Network Interface connected to this server",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"ipv6_address": {
-				Description: "Public IPv6 address of the interface",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -120,20 +76,8 @@ func resourceBrightboxServer() *schema.Resource {
 				Computed:    true,
 			},
 
-			"hostname": {
-				Description: "Short hostname",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"fqdn": {
-				Description: "Fully qualified domain name",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			"public_hostname": {
-				Description: "Public IPv4 FQDN",
+			"ipv6_address": {
+				Description: "Public IPv6 address of the interface",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -143,10 +87,77 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+
+			"locked": {
+				Description: "Is true if resource has been set as locked and cannot be deleted",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
+
+			"name": {
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+
+			"public_hostname": {
+				Description: "Public IPv4 FQDN",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"server_groups": {
+				Description: "Array of server groups to add server to",
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+			},
+
+			"status": {
+				Description: "Current state of server",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"type": {
+				Description: "Server type of the server",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+			},
+
+			"user_data": {
+				Description:   "Data made available to Cloud Init",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"user_data_base64"},
+				StateFunc:     hash_string,
+			},
+
+			"user_data_base64": {
+				Description:   "Base64 encoded data made available to Cloud Init",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"user_data"},
+				ValidateFunc:  mustBeBase64Encoded,
+			},
+
 			"username": {
 				Description: "Username to use when logging into a server",
 				Type:        schema.TypeString,
 				Computed:    true,
+			},
+
+			"zone": {
+				Description: "Zone where server is located",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
 			},
 		},
 	}
