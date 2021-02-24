@@ -25,29 +25,8 @@ func dataSourceBrightboxImage() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 
-			"most_recent": {
-				Description: "Select the most recent image",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-			},
-
-			"source_type": {
-				Description: "Source type for this image (upload or snapshot)",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			"owner": {
-				Description: "Account ID this image belongs to",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			"status": {
-				Description: "State of the image",
+			"ancestor_id": {
+				Description: "Image this image was derived from",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
@@ -60,6 +39,53 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Computed:    true,
 			},
 
+			"compatibility_mode": {
+				Description: "Does this image require a non-virtio VM shell",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"created_at": {
+				Description: "The time this image was created/registered (UTC)",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"description": {
+				Description: "A Description of the image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"disk_size": {
+				Description: "The actual size of the data within this image in Megabytes",
+				Type:        schema.TypeInt,
+				Computed:    true,
+			},
+
+			"licence_name": {
+				Description: "The licence name for this image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			//Locked is computed only because there is no 'null' search option
+			"locked": {
+				Description: "Is true if the image is set as locked and cannot be deleted",
+				Type:        schema.TypeBool,
+				Computed:    true,
+			},
+
+			"most_recent": {
+				Description: "Select the most recent image",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
+
 			"name": {
 				Description: "User Label for this image",
 				Type:        schema.TypeString,
@@ -67,8 +93,15 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Computed:    true,
 			},
 
-			"description": {
-				Description: "A Description of the image",
+			"official": {
+				Description: "Is this image an official Brightbox provided one?",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"owner": {
+				Description: "Account ID this image belongs to",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
@@ -81,16 +114,16 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Computed:    true,
 			},
 
-			"official": {
-				Description: "Is this image an official Brightbox provided one?",
-				Type:        schema.TypeBool,
+			"source_type": {
+				Description: "Source type for this image (upload or snapshot)",
+				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"compatibility_mode": {
-				Description: "Does this image require a non-virtio VM shell",
-				Type:        schema.TypeBool,
+			"status": {
+				Description: "State of the image",
+				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 			},
@@ -102,42 +135,8 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Computed:    true,
 			},
 
-			"ancestor_id": {
-				Description: "Image this image was derived from",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			"licence_name": {
-				Description: "The licence name for this image",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			//Computed Values
-			"created_at": {
-				Description: "The time this image was created/registered (UTC)",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			//Locked is computed only because there is no 'null' search option
-			"locked": {
-				Description: "Is true if the image is set as locked and cannot be deleted",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-
 			"virtual_size": {
 				Description: "The virtual size of the disk image container in Megabytes",
-				Type:        schema.TypeInt,
-				Computed:    true,
-			},
-
-			"disk_size": {
-				Description: "The actual size of the data within this image in Megabytes",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},

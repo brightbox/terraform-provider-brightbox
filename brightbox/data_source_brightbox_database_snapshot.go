@@ -18,6 +18,40 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 
+			"created_at": {
+				Description: "Time of resource creation (UTC)",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"database_engine": {
+				Description: "The engine of the database used to create this snapshot",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"database_version": {
+				Description: "The version of the database engine used to create this snapshot",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"description": {
+				Description: "Editable user label",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			//Locked is computed only because there is no 'null' search option
+			"locked": {
+				Description: "True if snapshot is locked and cannot be deleted",
+				Type:        schema.TypeBool,
+				Computed:    true,
+			},
+
 			"most_recent": {
 				Description: "Snapshot with the latest 'created_at' time",
 				Type:        schema.TypeBool,
@@ -32,50 +66,15 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 				Computed:    true,
 			},
 
-			"description": {
-				Description: "Editable user label",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			"database_version": {
-				Description: "The version of the database engine used to create this snapshot",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			"database_engine": {
-				Description: "The engine of the database used to create this snapshot",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
-			//Computed Values
-			"status": {
-				Description: "Snapshot state",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
 			"size": {
 				Description: "Size of database partition in megabytes",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 
-			"created_at": {
-				Description: "Time of resource creation (UTC)",
+			"status": {
+				Description: "Snapshot state",
 				Type:        schema.TypeString,
-				Computed:    true,
-			},
-
-			//Locked is computed only because there is no 'null' search option
-			"locked": {
-				Description: "True if snapshot is locked and cannot be deleted",
-				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 		},

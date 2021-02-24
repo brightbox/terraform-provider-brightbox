@@ -16,13 +16,6 @@ func dataSourceBrightboxDatabaseType() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 
-			"name": {
-				Description: "Name of this database type",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-			},
-
 			"description": {
 				Description: "Description of this database type",
 				Type:        schema.TypeString,
@@ -33,6 +26,13 @@ func dataSourceBrightboxDatabaseType() *schema.Resource {
 			"disk_size": {
 				Description: "Disk size in megabytes",
 				Type:        schema.TypeInt,
+				Computed:    true,
+			},
+
+			"name": {
+				Description: "Name of this database type",
+				Type:        schema.TypeString,
+				Optional:    true,
 				Computed:    true,
 			},
 

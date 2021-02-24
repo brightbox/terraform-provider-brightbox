@@ -15,10 +15,9 @@ func dataSourceBrightboxServerGroup() *schema.Resource {
 		Read:        dataSourceBrightboxServerGroupRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Description: "User Label",
-				Type:        schema.TypeString,
-				Optional:    true,
+			"default": {
+				Description: "Is this the default group for the account?",
+				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 
@@ -28,14 +27,17 @@ func dataSourceBrightboxServerGroup() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 			},
-			"default": {
-				Description: "Is this the default group for the account?",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
+
 			"fqdn": {
 				Description: "Fully Qualified Domain Name",
 				Type:        schema.TypeString,
+				Computed:    true,
+			},
+
+			"name": {
+				Description: "User Label",
+				Type:        schema.TypeString,
+				Optional:    true,
 				Computed:    true,
 			},
 		},

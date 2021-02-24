@@ -9,6 +9,12 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
+			"account": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc(accountEnvVar, nil),
+				Description: "Brightbox Cloud Account to operate on",
+			},
 			"apiclient": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -21,25 +27,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc(clientSecretEnvVar, defaultClientSecret),
 				Description: "Brightbox Cloud API Client/OAuth Application Secret",
 			},
-			"username": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(usernameEnvVar, nil),
-				Description: "Brightbox Cloud User Name",
-			},
-			"password": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Sensitive:   true,
-				DefaultFunc: schema.EnvDefaultFunc(passwordEnvVar, nil),
-				Description: "Brightbox Cloud Password for User Name",
-			},
-			"account": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(accountEnvVar, nil),
-				Description: "Brightbox Cloud Account to operate on",
-			},
 			"apiurl": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -51,6 +38,19 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc(orbitURLEnvVar, brightbox.DefaultOrbitAuthURL),
 				Description: "Brightbox Cloud Orbit URL for selected Region",
+			},
+			"password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc(passwordEnvVar, nil),
+				Description: "Brightbox Cloud Password for User Name",
+			},
+			"username": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc(usernameEnvVar, nil),
+				Description: "Brightbox Cloud User Name",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
