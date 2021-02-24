@@ -27,6 +27,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
 					resource.TestCheckResourceAttr(
+						resourceName, "https_redirect", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "ssl_minimum_version", "TLSv1.2"),
+					resource.TestCheckResourceAttr(
+						resourceName, "policy", "least-connections"),
+					resource.TestCheckResourceAttr(
 						resourceName, "healthcheck.0.request", "/"),
 					resource.TestCheckResourceAttr(
 						resourceName, "healthcheck.#", "1"),
@@ -93,6 +99,8 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
+						resourceName, "https_redirect", "true"),
+					resource.TestCheckResourceAttr(
 						resourceName, "listener.#", "3"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_private_key", "63158de92c07f5a53ee8bd56c5750deaa654aabf"),
@@ -111,11 +119,35 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
 					resource.TestCheckResourceAttr(
+						resourceName, "https_redirect", "false"),
+					resource.TestCheckResourceAttr(
 						resourceName, "listener.#", "2"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_private_key", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_pem", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxLoadBalancerConfig_change_defaults,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "https_redirect", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "ssl_minimum_version", "TLSv1.3"),
+					resource.TestCheckResourceAttr(
+						resourceName, "policy", "round-robin"),
+					resource.TestCheckResourceAttr(
+						resourceName, "healthcheck.0.request", "/"),
+					resource.TestCheckResourceAttr(
+						resourceName, "healthcheck.#", "1"),
+					resource.TestCheckResourceAttr(
+						resourceName, "listener.#", "2"),
+					resource.TestCheckResourceAttr(
+						resourceName, "nodes.#", "1"),
 				),
 			},
 		},
@@ -223,7 +255,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 81
 		timeout = 10000
 	}
-	
+
 	healthcheck {
 		type = "http"
 		port = 8080
@@ -258,7 +290,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 81
 		timeout = 10000
 	}
-	
+
 	healthcheck {
 		type = "http"
 		port = 8080
@@ -293,7 +325,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 81
 		timeout = 10000
 	}
-	
+
 	healthcheck {
 		type = "http"
 		port = 8080
@@ -326,7 +358,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 81
 		timeout = 10000
 	}
-	
+
 	healthcheck {
 		type = "tcp"
 		port = 23
@@ -348,6 +380,7 @@ var testAccCheckBrightboxLoadBalancerConfig_addListener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {
 	name = "foo-20200513"
+	https_redirect = true
 	listener {
 		protocol = "https"
 		in = 443
@@ -364,7 +397,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 81
 		timeout = 10000
 	}
-	
+
 	healthcheck {
 		type = "tcp"
 		port = 23
@@ -450,7 +483,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 81
 		timeout = 10000
 	}
-	
+
 	healthcheck {
 		type = "tcp"
 		port = 23
@@ -459,6 +492,45 @@ resource "brightbox_load_balancer" "default" {
 
 	certificate_pem = ""
 	certificate_private_key= ""
+
+}
+
+resource "brightbox_server" "foobar" {
+	image = "${data.brightbox_image.foobar.id}"
+	name = "foo-20200513"
+	type = "1gb.ssd"
+	server_groups = ["${data.brightbox_server_group.default.id}"]
+}
+
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
+
+var testAccCheckBrightboxLoadBalancerConfig_change_defaults = fmt.Sprintf(`
+
+resource "brightbox_load_balancer" "default" {
+	name = "foo-20201513"
+	listener {
+		protocol = "http"
+		in = 80
+		out = 8080
+	}
+	listener {
+		protocol = "http+ws"
+		in = 81
+		out = 81
+		timeout = 10000
+	}
+
+	healthcheck {
+		type = "tcp"
+		port = 23
+	}
+	nodes = ["${brightbox_server.foobar.id}"]
+
+	certificate_pem = ""
+	certificate_private_key = ""
+	ssl_minimum_version = "TLSv1.3"
+	policy = "round-robin"
 
 }
 

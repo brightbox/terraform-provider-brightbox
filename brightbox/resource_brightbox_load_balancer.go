@@ -12,6 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+var (
+	validSSLVersions           = []string{"TLSv1.0", "TLSv1.1", "TLSv1.2", "TLSv1.3", "SSLv3"}
+	validListenerProtocols     = []string{"tcp", "http", "https", "http+ws", "https+wss"}
+	validHealthcheckType       = []string{"tcp", "http"}
+	validLoadBalancingPolicies = []string{"least-connections", "round-robin", "source-address"}
+)
+
 func resourceBrightboxLoadBalancer() *schema.Resource {
 	return &schema.Resource{
 		Description: "Provides a Brightbox Load Balancer resource",
@@ -110,9 +117,20 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Description: "Protocol type to check (tcp/http)",
 							Type:        schema.TypeString,
 							Required:    true,
+							ValidateFunc: validation.StringInSlice(
+								validHealthcheckType,
+								false,
+							),
 						},
 					},
 				},
+			},
+
+			"https_redirect": {
+				Description: "Redirect any requests on port 80 automatically to port 443",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
 			},
 
 			"listener": {
@@ -139,6 +157,10 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Description: "The protocol to load balance (http/tcp)",
 							Type:        schema.TypeString,
 							Required:    true,
+							ValidateFunc: validation.StringInSlice(
+								validListenerProtocols,
+								false,
+							),
 						},
 
 						"timeout": {
@@ -161,7 +183,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			},
 
 			"name": {
-				Description: "Eitable user label",
+				Description: "Editable user label",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -180,6 +202,11 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				// Default:     "least-connections",
+				ValidateFunc: validation.StringInSlice(
+					validLoadBalancingPolicies,
+					false,
+				),
 			},
 
 			"sslv3": {
@@ -188,6 +215,18 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Deprecated:  "No longer supported. Will always return false",
+			},
+
+			"ssl_minimum_version": {
+				Description: "The minimum TLS/SSL version for the load balancer to accept. Supports `TLSv1.0`, TLSv1.1`, `TLSv1.2`, `TLSv1.3` and `SSLv3`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				// Default:     "TLSv1.2",
+				ValidateFunc: validation.StringInSlice(
+					validSSLVersions,
+					false,
+				),
 			},
 
 			"status": {
@@ -222,6 +261,8 @@ func setLoadBalancerAttributes(
 	d.Set("locked", loadBalancer.Locked)
 	d.Set("policy", loadBalancer.Policy)
 	d.Set("buffer_size", loadBalancer.BufferSize)
+	d.Set("https_redirect", loadBalancer.HttpsRedirect)
+	d.Set("ssl_minimum_version", loadBalancer.SslMinimumVersion)
 	d.Set("sslv3", false)
 
 	nodeIds := make([]string, 0, len(loadBalancer.Nodes))
@@ -413,7 +454,9 @@ func addUpdateableLoadBalancerOptions(
 	assign_string(d, &opts.Policy, "policy")
 	assign_string(d, &opts.CertificatePem, "certificate_pem")
 	assign_string(d, &opts.CertificatePrivateKey, "certificate_private_key")
+	assign_string(d, &opts.SslMinimumVersion, "ssl_minimum_version")
 	assign_int(d, &opts.BufferSize, "buffer_size")
+	assign_bool(d, &opts.HttpsRedirect, "https_redirect")
 	assignListeners(d, &opts.Listeners)
 	assignNodes(d, &opts.Nodes)
 	return assignHealthCheck(d, &opts.Healthcheck)
