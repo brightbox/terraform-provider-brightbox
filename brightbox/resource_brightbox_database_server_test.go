@@ -304,11 +304,11 @@ resource "brightbox_database_server" "default" {
 	description = "%s"
 	database_engine = "mysql"
 	database_version = "8.0"
-	database_type = "${data.brightbox_database_type.foobar.id}"
+	database_type = data.brightbox_database_type.foobar.id
 	maintenance_weekday = 6
 	maintenance_hour = 6
 	snapshots_schedule = ""
-	allow_access = [ "${data.brightbox_server_group.default.id}" ]
+	allow_access = [ data.brightbox_server_group.default.id ]
 	timeouts {
 	  create = "60m"
 	}
@@ -331,10 +331,10 @@ resource "brightbox_database_server" "default" {
 	description = "%s"
 	database_engine = "mysql"
 	database_version = "8.0"
-	database_type = "${data.brightbox_database_type.foobar.id}"
+	database_type = data.brightbox_database_type.foobar.id
 	maintenance_weekday = 6
 	maintenance_hour = 6
-	allow_access = [ "${data.brightbox_server_group.default.id}" ]
+	allow_access = [ data.brightbox_server_group.default.id ]
 	locked = true
 	timeouts {
 	  create = "60m"
@@ -356,11 +356,11 @@ resource "brightbox_database_server" "default" {
 	description = "%s"
 	database_engine = "mysql"
 	database_version = "8.0"
-	database_type = "${data.brightbox_database_type.foobar.id}"
+	database_type = data.brightbox_database_type.foobar.id
 	maintenance_weekday = 5
 	maintenance_hour = 4
 	snapshots_schedule = "4 5 * * *"
-	allow_access = [ "${data.brightbox_server_group.default.id}" ]
+	allow_access = [ data.brightbox_server_group.default.id ]
 	timeouts {
 	  create = "60m"
 	}
@@ -384,7 +384,9 @@ resource "brightbox_database_server" "default" {
 	maintenance_weekday = 5
 	maintenance_hour = 4
 	allow_access = [
-		"${brightbox_server_group.barfoo.id}", "${brightbox_server.foobar.id}", "158.152.1.65/32"
+		brightbox_server_group.barfoo.id,
+		brightbox_server.foobar.id,
+		"158.152.1.65/32"
 	]
 	timeouts {
 	  create = "60m"
@@ -393,8 +395,8 @@ resource "brightbox_database_server" "default" {
 
 resource "brightbox_server" "foobar" {
 	name = "bar-20200513"
-	image = "${data.brightbox_image.foobar.id}"
-	server_groups = [ "${data.brightbox_server_group.default.id}" ]
+	image = data.brightbox_image.foobar.id
+	server_groups = [ data.brightbox_server_group.default.id ]
 }
 
 resource "brightbox_server_group" "barfoo" {
@@ -411,7 +413,7 @@ func testAccCheckBrightboxDatabaseServerConfig_map_cloudip(name string, rInt int
 
 	resource "brightbox_cloudip" "barfar" {
 		name = "baz-%d"
-		target = "${brightbox_database_server.default.id}"
+		target = brightbox_database_server.default.id
 	}
 `, testAccCheckBrightboxDatabaseServerConfig_update_access(name), rInt)
 }

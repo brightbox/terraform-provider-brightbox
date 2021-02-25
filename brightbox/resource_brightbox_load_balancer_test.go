@@ -260,14 +260,14 @@ resource "brightbox_load_balancer" "default" {
 		type = "http"
 		port = 8080
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200426"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 
 }
 
@@ -295,14 +295,14 @@ resource "brightbox_load_balancer" "default" {
 		type = "http"
 		port = 8080
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200426"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 
 }
 
@@ -330,14 +330,14 @@ resource "brightbox_load_balancer" "default" {
 		type = "http"
 		port = 8080
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200426"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
@@ -363,14 +363,14 @@ resource "brightbox_load_balancer" "default" {
 		type = "tcp"
 		port = 23
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200426"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
@@ -402,7 +402,7 @@ resource "brightbox_load_balancer" "default" {
 		type = "tcp"
 		port = 23
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 
 	certificate_pem = <<EOF
 -----BEGIN CERTIFICATE-----
@@ -459,10 +459,10 @@ EOF
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200513"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
@@ -488,7 +488,7 @@ resource "brightbox_load_balancer" "default" {
 		type = "tcp"
 		port = 23
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 
 	certificate_pem = ""
 	certificate_private_key= ""
@@ -496,10 +496,10 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200513"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
@@ -525,7 +525,7 @@ resource "brightbox_load_balancer" "default" {
 		type = "tcp"
 		port = 23
 	}
-	nodes = ["${brightbox_server.foobar.id}"]
+	nodes = [brightbox_server.foobar.id]
 
 	certificate_pem = ""
 	certificate_private_key = ""
@@ -535,10 +535,10 @@ resource "brightbox_load_balancer" "default" {
 }
 
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-20200513"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,

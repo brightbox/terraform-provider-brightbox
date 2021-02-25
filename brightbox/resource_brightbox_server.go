@@ -7,6 +7,7 @@ import (
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -32,7 +33,7 @@ func resourceBrightboxServer() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"disk_encrypted": {
-				Description: "Is true if the server has been built with an encrpyted disk",
+				Description: "Is true if the server has been built with an encrypted disk",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
@@ -52,10 +53,11 @@ func resourceBrightboxServer() *schema.Resource {
 			},
 
 			"image": {
-				Description: "Image used to create the server",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Description:  "Image used to create the server",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(imageRegexp, "must be a valid image ID"),
 			},
 
 			"interface": {
@@ -112,8 +114,11 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				MinItems:    1,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringMatch(serverGroupRegexp, "must be a valid server group ID"),
+				},
+				Set: schema.HashString,
 			},
 
 			"status": {
@@ -128,6 +133,10 @@ func resourceBrightboxServer() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
+				ValidateFunc: validation.Any(
+					validation.StringMatch(serverTypeRegexp, "must be a valid server type"),
+					validation.StringIsNotWhiteSpace,
+				),
 			},
 
 			"user_data": {
@@ -135,7 +144,8 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data_base64"},
-				StateFunc:     hash_string,
+				StateFunc:     hashString,
+				ValidateFunc:  validation.StringIsNotWhiteSpace,
 			},
 
 			"user_data_base64": {
@@ -143,7 +153,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"user_data"},
-				ValidateFunc:  mustBeBase64Encoded,
+				ValidateFunc:  validation.StringIsBase64,
 			},
 
 			"username": {
@@ -153,11 +163,12 @@ func resourceBrightboxServer() *schema.Resource {
 			},
 
 			"zone": {
-				Description: "Zone where server is located",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Description:  "Zone where server is located",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(zoneRegexp, "must be a valid zone ID or handle"),
 			},
 		},
 	}

@@ -9,6 +9,7 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
@@ -29,13 +30,18 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				ValidateFunc: validation.StringInSlice(
+					validDatabaseEngines,
+					false,
+				),
 			},
 
 			"database_version": {
-				Description: "The version of the database engine used to create this snapshot",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+				Description:  "The version of the database engine used to create this snapshot",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 
 			"description": {
@@ -168,7 +174,7 @@ func snapshotMatch(
 	descRe *regexp.Regexp,
 ) bool {
 	// Only check available snapshots
-	if !validImageStatus[image.Status] {
+	if !validImageStatusMap[image.Status] {
 		return false
 	}
 	_, ok := d.GetOk("name")

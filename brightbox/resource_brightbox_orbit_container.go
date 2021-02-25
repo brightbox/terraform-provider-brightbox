@@ -99,7 +99,7 @@ func resourceBrightboxContainer() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.NoZeroValues,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 
 			"object_count": {

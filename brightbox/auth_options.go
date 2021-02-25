@@ -15,7 +15,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-var infrastructureScope = []string{"infrastructure, orbit"}
+var infrastructureScope = []string{"infrastructure"}
 
 type authdetails struct {
 	APIClient    string

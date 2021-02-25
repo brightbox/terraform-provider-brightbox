@@ -9,25 +9,42 @@ import (
 	"hash/crc32"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gorhill/cronexpr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	maxPort = 65535
-	minPort = 1
+// const (
+// 	maxPort = 65535
+// 	minPort = 1
+// )
+
+var (
+	serverRegexp           = regexp.MustCompile("^srv-.....$")
+	serverGroupRegexp      = regexp.MustCompile("^grp-.....$")
+	databaseTypeRegexp     = regexp.MustCompile("^dbt-.....$")
+	databaseServerRegexp   = regexp.MustCompile("^dbs-.....$")
+	databaseSnapshotRegexp = regexp.MustCompile("^dbi-.....$")
+	loadBalancerRegexp     = regexp.MustCompile("^lba-.....$")
+	zoneRegexp             = regexp.MustCompile("^(zon-.....$|gb1s?-[ab])$")
+	serverTypeRegexp       = regexp.MustCompile("^typ-.....$")
+	firewallPolicyRegexp   = regexp.MustCompile("^fwp-.....$")
+	firewallRuleRegexp     = regexp.MustCompile("^fwr-.....$")
+	interfaceRegexp        = regexp.MustCompile("^int-.....$")
+	imageRegexp            = regexp.MustCompile("^img-.....$")
+	dnsNameRegexp          = regexp.MustCompile("^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$")
+	unreadable             = map[string]bool{
+		"deleted": true,
+		"failed":  true,
+	}
 )
 
-var unreadable = map[string]bool{
-	"deleted": true,
-	"failed":  true,
-}
-
-func hash_string(
+func hashString(
 	v interface{},
 ) string {
 	switch v.(type) {
@@ -152,15 +169,6 @@ func stringValidateFunc(v interface{}, name string, failureTest func(string) boo
 		errors = append(errors, fmt.Errorf(formatString, name))
 	}
 	return
-}
-
-func mustBeBase64Encoded(v interface{}, name string) ([]string, []error) {
-	return stringValidateFunc(
-		v,
-		name,
-		func(value string) bool { return !isBase64Encoded(value) },
-		"%q must be base64-encoded",
-	)
 }
 
 // ValidateCronString checks if the string is a valid cron layout
@@ -408,4 +416,16 @@ func HashcodeString(s string) int {
 	}
 	// v == MinInt
 	return 0
+}
+
+// StringIsValidFirewallTarget checks whether a string would
+// pass the Iptables validation as a valid source or destination.
+func stringIsValidFirewallTarget() schema.SchemaValidateFunc {
+	return validation.Any(
+		validation.StringInSlice([]string{"any"}, false),
+		validation.StringMatch(serverRegexp, "must be a valid server ID"),
+		validation.StringMatch(serverGroupRegexp, "must be a valid server Group ID"),
+		validation.IsCIDR,
+		validation.IsIPAddress,
+	)
 }

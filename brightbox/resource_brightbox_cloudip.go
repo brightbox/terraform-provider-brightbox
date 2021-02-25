@@ -21,6 +21,10 @@ const (
 	checkDelay         = 10 * time.Second
 )
 
+var (
+	validTranslatorProtocols = []string{"tcp", "udp"}
+)
+
 func resourceBrightboxCloudip() *schema.Resource {
 	return &schema.Resource{
 		Description: "Provides a Brightbox CloudIP resource",
@@ -68,20 +72,23 @@ func resourceBrightboxCloudip() *schema.Resource {
 							Description:  "Incoming Port",
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(minPort, maxPort),
+							ValidateFunc: validation.IsPortNumber,
 						},
 
 						"outgoing": {
 							Description:  "Outgoing Port",
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(minPort, maxPort),
+							ValidateFunc: validation.IsPortNumber,
 						},
 						"protocol": {
-							Description:  "Transport protocol to port translate (tcp/udp)",
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"tcp", "udp"}, false),
+							Description: "Transport protocol to port translate (tcp/udp)",
+							Type:        schema.TypeString,
+							Required:    true,
+							ValidateFunc: validation.StringInSlice(
+								validTranslatorProtocols,
+								false,
+							),
 						},
 					},
 				},
@@ -107,10 +114,11 @@ func resourceBrightboxCloudip() *schema.Resource {
 			},
 
 			"reverse_dns": {
-				Description: "Reverse DNS entry for the Cloud IP",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+				Description:  "Reverse DNS entry for the Cloud IP",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringMatch(dnsNameRegexp, "must be a valid DNS name"),
 			},
 
 			"status": {
@@ -123,6 +131,12 @@ func resourceBrightboxCloudip() *schema.Resource {
 				Description: "The object this Cloud IP maps to",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ValidateFunc: validation.Any(
+					validation.StringMatch(interfaceRegexp, "must by a valid server interface ID"),
+					validation.StringMatch(loadBalancerRegexp, "must be a valid load balancer ID"),
+					validation.StringMatch(databaseServerRegexp, "must be a valid database server ID"),
+					validation.StringMatch(serverGroupRegexp, "must be a valid serer group ID"),
+				),
 			},
 		},
 	}

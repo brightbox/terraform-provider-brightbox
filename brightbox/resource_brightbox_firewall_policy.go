@@ -9,6 +9,7 @@ import (
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceBrightboxFirewallPolicy() *schema.Resource {
@@ -41,9 +42,10 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 			},
 
 			"server_group": {
-				Description: "The server group using this policy",
-				Type:        schema.TypeString,
-				Optional:    true,
+				Description:  "The server group using this policy",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringMatch(serverGroupRegexp, "must be a valid server group ID"),
 			},
 		},
 	}

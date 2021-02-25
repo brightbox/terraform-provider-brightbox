@@ -19,6 +19,10 @@ var (
 	validLoadBalancingPolicies = []string{"least-connections", "round-robin", "source-address"}
 )
 
+const (
+	defaultListenerTimeout = 50000
+)
+
 func resourceBrightboxLoadBalancer() *schema.Resource {
 	return &schema.Resource{
 		Description: "Provides a Brightbox Load Balancer resource",
@@ -49,14 +53,14 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Description: "A X509 SSL certificate in PEM format",
 				Type:        schema.TypeString,
 				Optional:    true,
-				StateFunc:   hash_string,
+				StateFunc:   hashString,
 			},
 
 			"certificate_private_key": {
 				Description: "RSA private key used to sign the certificate in PEM format",
 				Type:        schema.TypeString,
 				Optional:    true,
-				StateFunc:   hash_string,
+				StateFunc:   hashString,
 			},
 
 			"healthcheck": {
@@ -79,14 +83,15 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Description:  "Port on server to connect to for healthcheck",
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(minPort, maxPort),
+							ValidateFunc: validation.IsPortNumber,
 						},
 
 						"request": {
-							Description: "HTTP path to check if http type healthcheck",
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
+							Description:  "HTTP path to check if http type healthcheck",
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringIsNotWhiteSpace,
 						},
 
 						"threshold_down": {
@@ -143,14 +148,14 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Description:  "The port this listener listens on",
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(minPort, maxPort),
+							ValidateFunc: validation.IsPortNumber,
 						},
 
 						"out": {
 							Description:  "The port on this server the listener should talk to",
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: validation.IntBetween(minPort, maxPort),
+							ValidateFunc: validation.IsPortNumber,
 						},
 
 						"protocol": {
@@ -167,7 +172,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Description:  "Connection timeout in milliseconds",
 							Type:         schema.TypeInt,
 							Optional:     true,
-							Default:      50000,
+							Default:      defaultListenerTimeout,
 							ValidateFunc: validation.IntAtLeast(0),
 						},
 					},
@@ -191,10 +196,13 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			"nodes": {
 				Description: "IDs of servers connected to this load balancer",
 				Type:        schema.TypeSet,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Optional:    true,
-				Computed:    true,
-				Set:         schema.HashString,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringMatch(serverRegexp, "must be a valid server ID"),
+				},
+				Optional: true,
+				Computed: true,
+				Set:      schema.HashString,
 			},
 
 			"policy": {
@@ -222,7 +230,6 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				// Default:     "TLSv1.2",
 				ValidateFunc: validation.StringInSlice(
 					validSSLVersions,
 					false,

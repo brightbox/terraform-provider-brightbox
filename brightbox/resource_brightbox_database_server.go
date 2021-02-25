@@ -9,9 +9,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var blankDatabaseServerOpts = brightbox.DatabaseServerOptions{}
+var (
+	blankDatabaseServerOpts = brightbox.DatabaseServerOptions{}
+	validDatabaseEngines    = []string{"mysql", "postgresql"}
+)
 
 func resourceBrightboxDatabaseServer() *schema.Resource {
 	return &schema.Resource{
@@ -47,10 +51,13 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			"allow_access": {
 				Description: "An array of resources allowed to access the database. Accepted values include `any`, `IPv4 address`, `server identifier`, `server group identifier`",
 				Type:        schema.TypeSet,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Required:    true,
-				MinItems:    1,
-				Set:         schema.HashString,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: stringIsValidFirewallTarget(),
+				},
+				Required: true,
+				MinItems: 1,
+				Set:      schema.HashString,
 			},
 
 			"database_engine": {
@@ -59,22 +66,28 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
+				ValidateFunc: validation.StringInSlice(
+					validDatabaseEngines,
+					false,
+				),
 			},
 
 			"database_type": {
-				Description: "ID of the database type to use",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Description:  "ID of the database type to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(databaseTypeRegexp, "must be a valid database type ID"),
 			},
 
 			"database_version": {
-				Description: "The version of the given engine in use",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Description:  "The version of the given engine in use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 
 			"description": {
@@ -91,17 +104,19 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			},
 
 			"maintenance_hour": {
-				Description: "Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23)",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
+				Description:  "Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23)",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(0, 23),
 			},
 
 			"maintenance_weekday": {
-				Description: "Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
+				Description:  "Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(0, 6),
 			},
 
 			"name": {
@@ -111,10 +126,11 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			},
 
 			"snapshot": {
-				Description: "Identifier for an SQL snapshot to use as the basis of the new instance. Creates and restores the database from the snapshot",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Description:  "Identifier for an SQL snapshot to use as the basis of the new instance. Creates and restores the database from the snapshot",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(databaseSnapshotRegexp, "must be a valid database snapshot ID"),
 			},
 
 			"snapshots_schedule": {
@@ -138,11 +154,12 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			},
 
 			"zone": {
-				Description: "ID of the zone the database server is in",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Description:  "ID of the zone the database server is in",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringMatch(zoneRegexp, "must be a valid zone ID or handle"),
 			},
 		},
 	}

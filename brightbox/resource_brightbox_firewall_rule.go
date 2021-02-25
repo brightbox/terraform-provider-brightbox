@@ -3,10 +3,18 @@ package brightbox
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+)
+
+var (
+	validFirewallRuleProtocols = []string{"tcp", "udp", "icmp"}
+	validICMPTypeRegexp        = regexp.MustCompile("^[a-z-]+$")
+	validMultiplePortRegexp    = regexp.MustCompile("^[0-9:,-]+$")
 )
 
 func resourceBrightboxFirewallRule() *schema.Resource {
@@ -34,45 +42,69 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 			},
 
 			"destination": {
-				Description: "Subnet, ServerGroup or ServerID",
-				Type:        schema.TypeString,
-				Optional:    true,
+				Description:   "Subnet, ServerGroup or ServerID",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"source"},
+				ValidateFunc:  stringIsValidFirewallTarget(),
 			},
 
 			"destination_port": {
 				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ValidateFunc: validation.All(
+					validation.StringLenBetween(1, 255),
+					validation.StringMatch(validMultiplePortRegexp, "must be a valid set of port ranges"),
+				),
 			},
 
 			"firewall_policy": {
-				Description: "The firewall policy this rule is linked to",
-				Type:        schema.TypeString,
-				Required:    true,
+				Description:  "The firewall policy this rule is linked to",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringMatch(firewallPolicyRegexp, "must be a valid firewall policy ID"),
 			},
 
 			"icmp_type_name": {
 				Description: "ICMP type name. 'echo-request', 'echo-reply'",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ValidateFunc: validation.Any(
+					validation.IntBetween(0, 255),
+					validation.StringMatch(validICMPTypeRegexp, "must be a valid ICMP type"),
+				),
 			},
 
 			"protocol": {
 				Description: "Protocol Number, or one of tcp, udp, icmp",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ValidateFunc: validation.Any(
+					validation.StringInSlice(
+						validFirewallRuleProtocols,
+						false,
+					),
+					validation.IntBetween(0, 255),
+				),
 			},
 
 			"source": {
-				Description: "Subnet, ServerGroup or ServerID",
-				Type:        schema.TypeString,
-				Optional:    true,
+				Description:   "Subnet, ServerGroup or ServerID",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ValidateFunc:  stringIsValidFirewallTarget(),
+				ConflictsWith: []string{"destination"},
 			},
 
 			"source_port": {
 				Description: "single port, multiple ports or range separated by '-' or ':'; upto 255 characters example - '80', '80,443,21' or '3000-3999'",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ValidateFunc: validation.All(
+					validation.StringLenBetween(1, 255),
+					validation.StringMatch(validMultiplePortRegexp, "must be a valid set of port ranges"),
+				),
 			},
 		},
 	}

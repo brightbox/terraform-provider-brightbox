@@ -316,7 +316,7 @@ func testAccCheckBrightboxCloudipConfig_mappedGroup(rInt int) string {
 
 resource "brightbox_cloudip" "groupmap" {
 	name = "bar-%d"
-	target = "${brightbox_server_group.barfoo.id}"
+	target = brightbox_server_group.barfoo.id
 }
 
 %s`, rInt, testAccCheckBrightboxServerConfig_serverGroup(rInt))
@@ -327,7 +327,7 @@ func testAccCheckBrightboxCloudipConfig_mappedLb(rInt int) string {
 
 resource "brightbox_cloudip" "lbmap" {
 	name = "bar-%d"
-	target = "${brightbox_load_balancer.default.id}"
+	target = brightbox_load_balancer.default.id
 }
 
 %s`, rInt, testAccCheckBrightboxLoadBalancerConfig_basic)
@@ -353,13 +353,13 @@ func testAccCheckBrightboxCloudipConfig_mapped(rInt int) string {
 
 resource "brightbox_cloudip" "foobar" {
 	name = "bar-%d"
-	target = "${brightbox_server.boofar.interface}"
+	target = brightbox_server.boofar.interface
 }
 
 resource "brightbox_server" "boofar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "bar-%d"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 %s%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
 		TestAccBrightboxDataServerGroupConfig_default)
@@ -370,7 +370,7 @@ func testAccCheckBrightboxCloudipConfig_port_mapped(rInt int) string {
 
 resource "brightbox_cloudip" "foobar" {
 	name = "bar-%d"
-	target = "${brightbox_server.boofar.interface}"
+	target = brightbox_server.boofar.interface
 	port_translator {
 		protocol = "tcp"
 		incoming = 80
@@ -384,9 +384,9 @@ resource "brightbox_cloudip" "foobar" {
 }
 
 resource "brightbox_server" "boofar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "bar-%d"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 %s%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
 		TestAccBrightboxDataServerGroupConfig_default)
@@ -396,19 +396,19 @@ func testAccCheckBrightboxCloudipConfig_remapped(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_cloudip" "foobar" {
 	name = "baz-%d"
-	target = "${brightbox_server.fred.interface}"
+	target = brightbox_server.fred.interface
 }
 
 resource "brightbox_server" "boofar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "bar-%d"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 resource "brightbox_server" "fred" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "baz-%d"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 }
 %s%s`, rInt, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
 		TestAccBrightboxDataServerGroupConfig_default)

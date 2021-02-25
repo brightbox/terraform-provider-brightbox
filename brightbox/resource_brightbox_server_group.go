@@ -35,7 +35,7 @@ func resourceBrightboxServerGroup() *schema.Resource {
 			},
 
 			"description": {
-				Description: "USer editable label",
+				Description: "User editable label",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -47,7 +47,7 @@ func resourceBrightboxServerGroup() *schema.Resource {
 			},
 
 			"name": {
-				Description: "USer editable label",
+				Description: "User editable label",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},

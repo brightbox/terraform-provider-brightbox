@@ -9,13 +9,17 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
-	validImageStatus = map[string]bool{
+	validImageStatusMap = map[string]bool{
 		"available":  true,
 		"deprecated": true,
 	}
+	validImageStatus        = []string{"available", "deprecated"}
+	validImageArchitectures = []string{"x86_64", "i686"}
+	validImageSourceTypes   = []string{"upload", "snapshot"}
 )
 
 func dataSourceBrightboxImage() *schema.Resource {
@@ -37,6 +41,10 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				ValidateFunc: validation.StringInSlice(
+					validImageArchitectures,
+					false,
+				),
 			},
 
 			"compatibility_mode": {
@@ -119,6 +127,10 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				ValidateFunc: validation.StringInSlice(
+					validImageSourceTypes,
+					false,
+				),
 			},
 
 			"status": {
@@ -126,13 +138,18 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				ValidateFunc: validation.StringInSlice(
+					validImageStatus,
+					false,
+				),
 			},
 
 			"username": {
-				Description: "Username to use when logging into a server booted with this image",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+				Description:  "Username to use when logging into a server booted with this image",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 
 			"virtual_size": {
@@ -241,7 +258,7 @@ func imageMatch(
 	descRe *regexp.Regexp,
 ) bool {
 	// Only check available images
-	if !validImageStatus[image.Status] {
+	if !validImageStatusMap[image.Status] {
 		return false
 	}
 	_, ok := d.GetOk("name")

@@ -7,6 +7,7 @@ test.tf
 example.tf
 terraform.tfplan
 terraform.tfstate
+.terraformrc
 bin/
 dist/
 modules-dev/

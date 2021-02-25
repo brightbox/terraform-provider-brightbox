@@ -432,10 +432,10 @@ func testAccCheckBrightboxServerRecreated(t *testing.T,
 func testAccCheckBrightboxServerConfig_basic(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-%d"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-character's"
 }
 
@@ -450,10 +450,10 @@ data "brightbox_server_group" "barfoo" {
 func testAccCheckBrightboxServerConfig_locked(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-%d"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-character's"
 	disk_encrypted = true
 	locked = true
@@ -470,11 +470,11 @@ data "brightbox_server_group" "barfoo" {
 func testAccCheckBrightboxServerConfig_base64_userdata(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-%d"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
-	user_data_base64 = "${base64encode("hello world")}"
+	server_groups = [data.brightbox_server_group.default.id]
+	user_data_base64 = base64encode("hello world")
 }
 
 data "brightbox_server_group" "barfoo" {
@@ -488,10 +488,10 @@ data "brightbox_server_group" "barfoo" {
 func testAccCheckBrightboxServerConfig_userdata_update(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = "foo-%d"
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-different-character's"
 }
 
@@ -508,8 +508,8 @@ func testAccCheckBrightboxServerConfig_rename(rInt int) string {
 resource "brightbox_server" "foobar" {
 	name = "baz-%d"
 	type = "1gb.ssd"
-	image = "${data.brightbox_image.foobar.id}"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	image = data.brightbox_image.foobar.id
+	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-character's"
 }
 
@@ -524,10 +524,10 @@ data "brightbox_server_group" "barfoo" {
 func testAccCheckBrightboxServerConfig_blank(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
-	image = "${data.brightbox_image.foobar.id}"
+	image = data.brightbox_image.foobar.id
 	name = ""
 	type = "1gb.ssd"
-	server_groups = ["${data.brightbox_server_group.default.id}"]
+	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-character's"
 }
 
@@ -543,8 +543,8 @@ func testAccCheckBrightboxServerConfig_serverGroup(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "foo-%d"
-	image = "${data.brightbox_image.foobar.id}"
-	server_groups = ["${brightbox_server_group.barfoo.id}"]
+	image = data.brightbox_image.foobar.id
+	server_groups = [brightbox_server_group.barfoo.id]
 	type = "512mb.ssd"
 }
 
@@ -559,9 +559,11 @@ func testAccCheckBrightboxServerConfig_multiServerGroup(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	name = "foo-%d"
-	image = "${data.brightbox_image.foobar.id}"
-	server_groups = ["${brightbox_server_group.barfoo.id}",
-	"${brightbox_server_group.barfoo2.id}"]
+	image = data.brightbox_image.foobar.id
+	server_groups = [
+	  brightbox_server_group.barfoo.id,
+	  brightbox_server_group.barfoo2.id
+	  ]
 	type = "512mb.ssd"
 }
 
