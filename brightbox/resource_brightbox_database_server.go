@@ -190,7 +190,7 @@ func setAllowAccessAttribute(
 	d *schema.ResourceData,
 	databaseServer *brightbox.DatabaseServer,
 ) error {
-	if err := d.Set("allow_access", schema.NewSet(schema.HashString, flatten_string_slice(databaseServer.AllowAccess))); err != nil {
+	if err := d.Set("allow_access", databaseServer.AllowAccess); err != nil {
 		return fmt.Errorf("error setting allow_access: %s", err)
 	}
 	return nil
@@ -217,7 +217,7 @@ func resourceBrightboxDatabaseServerCreate(
 		return err
 	}
 	databaseServerOpts := getBlankDatabaseServerOpts()
-	databaseServerOpts.AllowAccess = map_from_string_set(d, "allow_access")
+	databaseServerOpts.AllowAccess = sliceFromStringSet(d, "allow_access")
 	return updateDatabaseServerAttributes(d, meta, client, databaseServerOpts)
 }
 
@@ -229,15 +229,15 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 		return err
 	}
 	engine := &databaseServerOpts.Engine
-	assign_string(d, &engine, "database_engine")
+	assignString(d, &engine, "database_engine")
 	version := &databaseServerOpts.Version
-	assign_string(d, &version, "database_version")
+	assignString(d, &version, "database_version")
 	databaseType := &databaseServerOpts.DatabaseType
-	assign_string(d, &databaseType, "database_type")
+	assignString(d, &databaseType, "database_type")
 	snapshot := &databaseServerOpts.Snapshot
-	assign_string(d, &snapshot, "snapshot")
+	assignString(d, &snapshot, "snapshot")
 	zone := &databaseServerOpts.Zone
-	assign_string(d, &zone, "zone")
+	assignString(d, &zone, "zone")
 	log.Printf("[DEBUG] Database Server create configuration %#v", databaseServerOpts)
 	outputDatabaseServerOptions(databaseServerOpts)
 	databaseServer, err := client.CreateDatabaseServer(databaseServerOpts)
@@ -288,7 +288,7 @@ func resourceBrightboxDatabaseServerUpdate(
 	if err != nil {
 		return err
 	}
-	assign_string_set(d, &databaseServerOpts.AllowAccess, "allow_access")
+	assignStringSet(d, &databaseServerOpts.AllowAccess, "allow_access")
 	log.Printf("[DEBUG] Database Server update configuration %#v", databaseServerOpts)
 	outputDatabaseServerOptions(databaseServerOpts)
 	return updateDatabaseServerAttributes(d, meta, client, databaseServerOpts)
@@ -389,11 +389,11 @@ func addUpdateableDatabaseServerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.DatabaseServerOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.Description, "description")
-	assign_int(d, &opts.MaintenanceWeekday, "maintenance_weekday")
-	assign_int(d, &opts.MaintenanceHour, "maintenance_hour")
-	assign_string(d, &opts.SnapshotsSchedule, "snapshots_schedule")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Description, "description")
+	assignInt(d, &opts.MaintenanceWeekday, "maintenance_weekday")
+	assignInt(d, &opts.MaintenanceHour, "maintenance_hour")
+	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
 	return nil
 }
 

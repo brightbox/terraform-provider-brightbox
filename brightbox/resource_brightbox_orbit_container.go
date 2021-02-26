@@ -293,8 +293,8 @@ func getUpdateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.UpdateOpts {
 	opts := &containers.UpdateOpts{}
-	opts.ContainerRead = strings.Join(escapedStringList(map_from_string_set(d, "container_read")), ",")
-	opts.ContainerWrite = strings.Join(escapedStringList(map_from_string_set(d, "container_write")), ",")
+	opts.ContainerRead = strings.Join(escapedStringList(sliceFromStringSet(d, "container_read")), ",")
+	opts.ContainerWrite = strings.Join(escapedStringList(sliceFromStringSet(d, "container_write")), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
 		opts.Metadata = escapedStringMetadata(attr)
 	}
@@ -329,8 +329,8 @@ func getCreateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.CreateOpts {
 	opts := &containers.CreateOpts{}
-	opts.ContainerRead = strings.Join(escapedStringList(map_from_string_set(d, "container_read")), ",")
-	opts.ContainerWrite = strings.Join(escapedStringList(map_from_string_set(d, "container_write")), ",")
+	opts.ContainerRead = strings.Join(escapedStringList(sliceFromStringSet(d, "container_read")), ",")
+	opts.ContainerWrite = strings.Join(escapedStringList(sliceFromStringSet(d, "container_write")), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
 		opts.Metadata = escapedStringMetadata(attr)
 	}

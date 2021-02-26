@@ -221,13 +221,13 @@ func addUpdateableFirewallRuleOptions(
 	d *schema.ResourceData,
 	opts *brightbox.FirewallRuleOptions,
 ) error {
-	assign_string(d, &opts.Protocol, "protocol")
-	assign_string(d, &opts.Source, "source")
-	assign_string(d, &opts.SourcePort, "source_port")
-	assign_string(d, &opts.Destination, "destination")
-	assign_string(d, &opts.DestinationPort, "destination_port")
-	assign_string(d, &opts.IcmpTypeName, "icmp_type_name")
-	assign_string(d, &opts.Description, "description")
+	assignString(d, &opts.Protocol, "protocol")
+	assignString(d, &opts.Source, "source")
+	assignString(d, &opts.SourcePort, "source_port")
+	assignString(d, &opts.Destination, "destination")
+	assignString(d, &opts.DestinationPort, "destination_port")
+	assignString(d, &opts.IcmpTypeName, "icmp_type_name")
+	assignString(d, &opts.Description, "description")
 	return nil
 }
 

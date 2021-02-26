@@ -141,8 +141,8 @@ func addUpdateableConfigMapOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ConfigMapOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_map(d, &opts.Data, "data")
+	assignString(d, &opts.Name, "name")
+	assignMap(d, &opts.Data, "data")
 	return nil
 }
 

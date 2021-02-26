@@ -191,11 +191,11 @@ func resourceBrightboxServerCreate(
 	}
 
 	serverType := &serverOpts.ServerType
-	assign_string(d, &serverType, "type")
+	assignString(d, &serverType, "type")
 	zone := &serverOpts.Zone
-	assign_string(d, &zone, "zone")
+	assignString(d, &zone, "zone")
 	encrypted := &serverOpts.DiskEncrypted
-	assign_bool(d, encrypted, "disk_encrypted")
+	assignBool(d, encrypted, "disk_encrypted")
 
 	log.Printf("[DEBUG] Server create configuration: %#v", serverOpts)
 
@@ -314,8 +314,8 @@ func addUpdateableServerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string_set(d, &opts.ServerGroups, "server_groups")
+	assignString(d, &opts.Name, "name")
+	assignStringSet(d, &opts.ServerGroups, "server_groups")
 	encodedUserData := ""
 	if d.HasChange("user_data") {
 		if userData, ok := d.GetOk("user_data"); ok {

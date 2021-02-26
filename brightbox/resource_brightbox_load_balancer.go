@@ -63,6 +63,17 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				StateFunc:   hashString,
 			},
 
+			"domains": {
+				Description: "Array of domain names to attempt to register with ACME",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Set:         schema.HashString,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringMatch(dnsNameRegexp, "must be a valid DNS name"),
+				},
+			},
+
 			"healthcheck": {
 				Description: "Healthcheck options",
 				Type:        schema.TypeList,
@@ -259,6 +270,41 @@ func resourceBrightboxLbListenerHash(
 	return HashcodeString(buf.String())
 }
 
+func mapFromListeners(
+	listenerSet []brightbox.LoadBalancerListener,
+) []map[string]interface{} {
+	listeners := make([]map[string]interface{}, 0, len(listenerSet))
+	for _, listener := range listenerSet {
+		listeners = append(
+			listeners,
+			map[string]interface{}{
+				"protocol": listener.Protocol,
+				"in":       listener.In,
+				"out":      listener.Out,
+				"timeout":  listener.Timeout,
+			},
+		)
+	}
+	return listeners
+}
+
+func mapFromHealthcheck(
+	healthcheck *brightbox.LoadBalancerHealthcheck,
+) []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"type":           healthcheck.Type,
+			"port":           healthcheck.Port,
+			"request":        healthcheck.Request,
+			"interval":       healthcheck.Interval,
+			"timeout":        healthcheck.Timeout,
+			"threshold_up":   healthcheck.ThresholdUp,
+			"threshold_down": healthcheck.ThresholdDown,
+		},
+	}
+
+}
+
 func setLoadBalancerAttributes(
 	d *schema.ResourceData,
 	loadBalancer *brightbox.LoadBalancer,
@@ -272,44 +318,21 @@ func setLoadBalancerAttributes(
 	d.Set("ssl_minimum_version", loadBalancer.SslMinimumVersion)
 	d.Set("sslv3", false)
 
-	nodeIds := make([]string, 0, len(loadBalancer.Nodes))
-	for _, node := range loadBalancer.Nodes {
-		nodeIds = append(nodeIds, node.Id)
-	}
-	if err := d.Set("nodes", nodeIds); err != nil {
+	if err := d.Set("nodes", serverIDListFromNodes(loadBalancer.Nodes)); err != nil {
 		return fmt.Errorf("error setting nodes: %s", err)
 	}
 
-	listeners := make([]map[string]interface{}, len(loadBalancer.Listeners))
-	for i, listener := range loadBalancer.Listeners {
-		listeners[i] = map[string]interface{}{
-			"protocol": listener.Protocol,
-			"in":       listener.In,
-			"out":      listener.Out,
-			"timeout":  listener.Timeout,
-		}
-	}
-	if err := d.Set("listener", listeners); err != nil {
+	if err := d.Set("listener", mapFromListeners(loadBalancer.Listeners)); err != nil {
 		return fmt.Errorf("error setting listener: %s", err)
 	}
 
 	log.Printf("[DEBUG] Healthcheck details are %#v", loadBalancer.Healthcheck)
-	healthchecks := make([]map[string]interface{}, 0, 1)
-	chk := map[string]interface{}{
-		"type":           loadBalancer.Healthcheck.Type,
-		"port":           loadBalancer.Healthcheck.Port,
-		"request":        loadBalancer.Healthcheck.Request,
-		"interval":       loadBalancer.Healthcheck.Interval,
-		"timeout":        loadBalancer.Healthcheck.Timeout,
-		"threshold_up":   loadBalancer.Healthcheck.ThresholdUp,
-		"threshold_down": loadBalancer.Healthcheck.ThresholdDown,
-	}
-	healthchecks = append(healthchecks, chk)
-	if err := d.Set("healthcheck", healthchecks); err != nil {
+	if err := d.Set("healthcheck", mapFromHealthcheck(&loadBalancer.Healthcheck)); err != nil {
 		return fmt.Errorf("error setting healthcheck: %s", err)
 	}
 
 	log.Printf("[DEBUG] Certificate details are %#v", loadBalancer.Certificate)
+
 	return nil
 }
 
@@ -457,13 +480,14 @@ func addUpdateableLoadBalancerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.LoadBalancerOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.Policy, "policy")
-	assign_string(d, &opts.CertificatePem, "certificate_pem")
-	assign_string(d, &opts.CertificatePrivateKey, "certificate_private_key")
-	assign_string(d, &opts.SslMinimumVersion, "ssl_minimum_version")
-	assign_int(d, &opts.BufferSize, "buffer_size")
-	assign_bool(d, &opts.HttpsRedirect, "https_redirect")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Policy, "policy")
+	assignString(d, &opts.CertificatePem, "certificate_pem")
+	assignString(d, &opts.CertificatePrivateKey, "certificate_private_key")
+	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
+	assignInt(d, &opts.BufferSize, "buffer_size")
+	assignBool(d, &opts.HttpsRedirect, "https_redirect")
+	assignStringSet(d, &opts.Domains, "domains")
 	assignListeners(d, &opts.Listeners)
 	assignNodes(d, &opts.Nodes)
 	return assignHealthCheck(d, &opts.Healthcheck)
@@ -551,6 +575,9 @@ func outputLoadBalancerOptions(opts *brightbox.LoadBalancerOptions) {
 	}
 	if opts.Healthcheck != nil {
 		log.Printf("[DEBUG] Load Balancer Healthcheck %#v", *opts.Healthcheck)
+	}
+	if opts.Domains != nil {
+		log.Printf("[DEBUG] Load Balancer Domains %#v", opts.Domains)
 	}
 	if opts.CertificatePem != nil {
 		log.Printf("[DEBUG] Load Balancer CertificatePem %v", *opts.CertificatePem)

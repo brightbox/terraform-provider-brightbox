@@ -63,7 +63,7 @@ func resourceBrightboxFirewallPolicyCreate(
 	if err != nil {
 		return err
 	}
-	assign_string(d, &firewallPolicyOpts.ServerGroup, "server_group")
+	assignString(d, &firewallPolicyOpts.ServerGroup, "server_group")
 
 	log.Printf("[INFO] Firewall Policy create configuration: %#v", firewallPolicyOpts)
 
@@ -172,8 +172,8 @@ func addUpdateableFirewallPolicyOptions(
 	d *schema.ResourceData,
 	opts *brightbox.FirewallPolicyOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.Description, "description")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Description, "description")
 	return nil
 }
 

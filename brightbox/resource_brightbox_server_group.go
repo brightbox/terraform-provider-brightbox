@@ -149,8 +149,8 @@ func addUpdateableServerGroupOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerGroupOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.Description, "description")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Description, "description")
 	return nil
 }
 
@@ -165,18 +165,10 @@ func setServerGroupAttributes(
 	return nil
 }
 
-func serverIDList(servers []brightbox.Server) []string {
-	var result []string
-	for _, srv := range servers {
-		result = append(result, srv.Id)
-	}
-	return result
-}
-
 func clearServerList(client *brightbox.Client, iniitialServerGroup *brightbox.ServerGroup, timeout time.Duration) error {
 	serverID := iniitialServerGroup.Id
 	serverList := iniitialServerGroup.Servers
-	serverIds := serverIDList(serverList)
+	serverIds := serverIDListFromNodes(serverList)
 	log.Printf("[INFO] Removing servers %#v from server group %s", serverIds, serverID)
 	_, err := client.RemoveServersFromServerGroup(serverID, serverIds)
 	if err != nil {
@@ -194,7 +186,7 @@ func clearServerList(client *brightbox.Client, iniitialServerGroup *brightbox.Se
 			}
 			if len(serverGroup.Servers) > 0 {
 				return resource.RetryableError(
-					fmt.Errorf("Error: servers %#v still in server group %s", serverIDList(serverGroup.Servers), serverGroup.Id),
+					fmt.Errorf("Error: servers %#v still in server group %s", serverIDListFromNodes(serverGroup.Servers), serverGroup.Id),
 				)
 			}
 			return nil

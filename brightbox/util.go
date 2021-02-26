@@ -67,7 +67,7 @@ func userDataHashSum(userData string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func assign_map(d *schema.ResourceData, target **map[string]interface{}, index string) {
+func assignMap(d *schema.ResourceData, target **map[string]interface{}, index string) {
 	if d.HasChange(index) {
 		if attr, ok := d.GetOk(index); ok {
 			temp := attr.(map[string]interface{})
@@ -79,7 +79,7 @@ func assign_map(d *schema.ResourceData, target **map[string]interface{}, index s
 	}
 }
 
-func assign_string(d *schema.ResourceData, target **string, index string) {
+func assignString(d *schema.ResourceData, target **string, index string) {
 	if d.HasChange(index) {
 		if *target == nil {
 			var temp string
@@ -91,24 +91,22 @@ func assign_string(d *schema.ResourceData, target **string, index string) {
 	}
 }
 
-func assign_string_set(d *schema.ResourceData, target *[]string, index string) {
+func assignStringSet(d *schema.ResourceData, target *[]string, index string) {
 	if d.HasChange(index) {
-		*target = map_from_string_set(d, index)
+		*target = sliceFromStringSet(d, index)
 	}
 }
 
-func map_from_string_set(d *schema.ResourceData, index string) []string {
-	var temp []string
-	if attr := d.Get(index).(*schema.Set); attr.Len() > 0 {
-		temp = make([]string, attr.Len())
-		for i, v := range attr.List() {
-			temp[i] = v.(string)
-		}
+func sliceFromStringSet(d *schema.ResourceData, index string) []string {
+	configured := d.Get(index).(*schema.Set).List()
+	slice := make([]string, 0, len(configured))
+	for _, data := range configured {
+		slice = append(slice, data.(string))
 	}
-	return temp
+	return slice
 }
 
-func flatten_string_slice(list []string) []interface{} {
+func flattenStringSlice(list []string) []interface{} {
 	temp := make([]interface{}, len(list))
 	for i, v := range list {
 		temp[i] = v
@@ -116,7 +114,7 @@ func flatten_string_slice(list []string) []interface{} {
 	return temp
 }
 
-func assign_int(d *schema.ResourceData, target **int, index string) {
+func assignInt(d *schema.ResourceData, target **int, index string) {
 	if d.HasChange(index) {
 		var temp int
 		if attr, ok := d.GetOk(index); ok {
@@ -126,7 +124,7 @@ func assign_int(d *schema.ResourceData, target **int, index string) {
 	}
 }
 
-func assign_bool(d *schema.ResourceData, target **bool, index string) {
+func assignBool(d *schema.ResourceData, target **bool, index string) {
 	if d.HasChange(index) {
 		var temp bool
 		if attr, ok := d.GetOk(index); ok {
@@ -428,4 +426,15 @@ func stringIsValidFirewallTarget() schema.SchemaValidateFunc {
 		validation.IsCIDR,
 		validation.IsIPAddress,
 	)
+}
+
+// Get a list of server IDs from a list of servers
+func serverIDListFromNodes(
+	nodes []brightbox.Server,
+) []string {
+	nodeIds := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		nodeIds = append(nodeIds, node.Id)
+	}
+	return nodeIds
 }

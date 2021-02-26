@@ -149,9 +149,9 @@ func addUpdateableAPIClientOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ApiClientOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.Description, "description")
-	assign_string(d, &opts.PermissionsGroup, "permissions_group")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Description, "description")
+	assignString(d, &opts.PermissionsGroup, "permissions_group")
 	return nil
 }
 

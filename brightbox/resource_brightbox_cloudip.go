@@ -391,8 +391,8 @@ func addUpdateableCloudipOptions(
 	d *schema.ResourceData,
 	opts *brightbox.CloudIPOptions,
 ) error {
-	assign_string(d, &opts.Name, "name")
-	assign_string(d, &opts.ReverseDns, "reverse_dns")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.ReverseDns, "reverse_dns")
 	assignPortTranslators(d, &opts.PortTranslators)
 	return nil
 }
