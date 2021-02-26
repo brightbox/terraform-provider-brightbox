@@ -369,7 +369,7 @@ func setServerAttributes(
 		setPrimaryCloudIP(d, &server.CloudIPs[0])
 	}
 
-	if err := d.Set("server_groups", schema.NewSet(schema.HashString, flattenServerGroups(server.ServerGroups))); err != nil {
+	if err := d.Set("server_groups", serverGroupIDListFromGroups(server.ServerGroups)); err != nil {
 		return fmt.Errorf("error setting server_groups: %s", err)
 	}
 
@@ -379,10 +379,12 @@ func setServerAttributes(
 
 }
 
-func flattenServerGroups(list []brightbox.ServerGroup) []interface{} {
-	srvGrpIds := make([]interface{}, len(list))
-	for i, sg := range list {
-		srvGrpIds[i] = sg.Id
+func serverGroupIDListFromGroups(
+	list []brightbox.ServerGroup,
+) []string {
+	srvGrpIds := make([]string, 0, len(list))
+	for _, sg := range list {
+		srvGrpIds = append(srvGrpIds, sg.Id)
 	}
 	return srvGrpIds
 }

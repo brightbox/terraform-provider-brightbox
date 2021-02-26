@@ -40,6 +40,8 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "listener.#", "2"),
 					resource.TestCheckResourceAttr(
 						resourceName, "nodes.#", "1"),
+					resource.TestCheckResourceAttr(
+						resourceName, "domains.#", "0"),
 				),
 			},
 			{
@@ -106,6 +108,8 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "certificate_private_key", "63158de92c07f5a53ee8bd56c5750deaa654aabf"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_pem", "a5f8997fb16293ae7827f974b9cc120c8c776d02"),
+					resource.TestCheckResourceAttr(
+						resourceName, "domains.#", "0"),
 				),
 			},
 			{
@@ -113,6 +117,22 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"certificate_pem", "certificate_private_key"},
+			},
+			{
+				Config: testAccCheckBrightboxLoadBalancerConfig_changeListener,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					resource.TestCheckResourceAttr(
+						resourceName, "https_redirect", "true"),
+					resource.TestCheckResourceAttr(
+						resourceName, "listener.#", "3"),
+					resource.TestCheckResourceAttr(
+						resourceName, "certificate_private_key", ""),
+					resource.TestCheckResourceAttr(
+						resourceName, "certificate_pem", ""),
+					resource.TestCheckResourceAttr(
+						resourceName, "domains.#", "2"),
+				),
 			},
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_remove_listener,
@@ -126,6 +146,8 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "certificate_private_key", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
 					resource.TestCheckResourceAttr(
 						resourceName, "certificate_pem", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
+					resource.TestCheckResourceAttr(
+						resourceName, "domains.#", "0"),
 				),
 			},
 			{
@@ -148,6 +170,8 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 						resourceName, "listener.#", "2"),
 					resource.TestCheckResourceAttr(
 						resourceName, "nodes.#", "1"),
+					resource.TestCheckResourceAttr(
+						resourceName, "domains.#", "0"),
 				),
 			},
 		},
@@ -468,6 +492,46 @@ resource "brightbox_server" "foobar" {
 %s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
 	TestAccBrightboxDataServerGroupConfig_default)
 
+var testAccCheckBrightboxLoadBalancerConfig_changeListener = fmt.Sprintf(`
+
+resource "brightbox_load_balancer" "default" {
+	name = "foo-20200513"
+	https_redirect = true
+	listener {
+		protocol = "https"
+		in = 443
+		out = 8080
+	}
+	listener {
+		protocol = "http"
+		in = 80
+		out = 8080
+	}
+	listener {
+		protocol = "http+ws"
+		in = 81
+		out = 81
+		timeout = 10000
+	}
+
+	healthcheck {
+		type = "tcp"
+		port = 23
+	}
+	nodes = [brightbox_server.foobar.id]
+	domains = ["first.domain.example.net", "second.domain.example.org"]
+
+}
+
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-20200513"
+	type = "1gb.ssd"
+	server_groups = [data.brightbox_server_group.default.id]
+}
+
+%s%s`, TestAccBrightboxImageDataSourceConfig_blank_disk,
+	TestAccBrightboxDataServerGroupConfig_default)
 var testAccCheckBrightboxLoadBalancerConfig_remove_listener = fmt.Sprintf(`
 
 resource "brightbox_load_balancer" "default" {

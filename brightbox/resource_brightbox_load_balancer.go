@@ -72,6 +72,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 					Type:         schema.TypeString,
 					ValidateFunc: validation.StringMatch(dnsNameRegexp, "must be a valid DNS name"),
 				},
+				ConflictsWith: []string{"certificate_pem", "certificate_private_key"},
 			},
 
 			"healthcheck": {
@@ -270,6 +271,19 @@ func resourceBrightboxLbListenerHash(
 	return HashcodeString(buf.String())
 }
 
+func stringSliceFromAcme(
+	acme *brightbox.LoadBalancerAcme,
+) []string {
+	if acme == nil {
+		return nil
+	}
+	result := make([]string, 0, len(acme.Domains))
+	for _, domain := range acme.Domains {
+		result = append(result, domain.Identifier)
+	}
+	return result
+}
+
 func mapFromListeners(
 	listenerSet []brightbox.LoadBalancerListener,
 ) []map[string]interface{} {
@@ -317,6 +331,10 @@ func setLoadBalancerAttributes(
 	d.Set("https_redirect", loadBalancer.HttpsRedirect)
 	d.Set("ssl_minimum_version", loadBalancer.SslMinimumVersion)
 	d.Set("sslv3", false)
+
+	if err := d.Set("domains", stringSliceFromAcme(loadBalancer.Acme)); err != nil {
+		return fmt.Errorf("error setting domains: %s", err)
+	}
 
 	if err := d.Set("nodes", serverIDListFromNodes(loadBalancer.Nodes)); err != nil {
 		return fmt.Errorf("error setting nodes: %s", err)
@@ -487,7 +505,9 @@ func addUpdateableLoadBalancerOptions(
 	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
 	assignInt(d, &opts.BufferSize, "buffer_size")
 	assignBool(d, &opts.HttpsRedirect, "https_redirect")
-	assignStringSet(d, &opts.Domains, "domains")
+	var domains []string
+	opts.Domains = &domains
+	assignStringSet(d, opts.Domains, "domains")
 	assignListeners(d, &opts.Listeners)
 	assignNodes(d, &opts.Nodes)
 	return assignHealthCheck(d, &opts.Healthcheck)
