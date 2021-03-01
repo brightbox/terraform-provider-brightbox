@@ -1,3 +1,18 @@
+## 2.0.0 (Mar 1, 2021)
+
+IMPROVEMENTS:
+
+- resource/load_balancer: add https_redirect, ssl_minimum_version and domains support
+
+NOTES:
+
+- Added greater levels of attribute validation throughout
+- Upgraded to verions 2 of the Terraform SDK
+- resource/load_balancer: deprecate sslv3 attributedd
+- Build with Go 1.15
+- Ensure provider is lint clean
+- Updated dependencies
+
 ## 1.5.0 (Nov 26, 2020)
 
 IMPROVEMENTS:
