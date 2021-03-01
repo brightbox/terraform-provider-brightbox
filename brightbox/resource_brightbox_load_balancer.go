@@ -238,7 +238,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			},
 
 			"ssl_minimum_version": {
-				Description: "The minimum TLS/SSL version for the load balancer to accept. Supports `TLSv1.0`, TLSv1.1`, `TLSv1.2`, `TLSv1.3` and `SSLv3`",
+				Description: "The minimum TLS/SSL version for the load balancer to accept. Supports `TLSv1.0`, `TLSv1.1`, `TLSv1.2`, `TLSv1.3` and `SSLv3`",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,

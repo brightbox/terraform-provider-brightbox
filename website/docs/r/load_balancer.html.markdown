@@ -43,8 +43,8 @@ resource "brightbox_load_balancer" "lb" {
   }
 
   nodes = [
-    "${brightbox_server.server2.id}",
-    "${brightbox_server.server1.id}",
+    brightbox_server.server2.id,
+    brightbox_server.server1.id
   ]
 
   certificate_pem = <<EOF
@@ -110,8 +110,11 @@ The following arguments are supported:
 * `certificate_pem` - (Optional) A X509 SSL certificate in PEM format. Must be included along with `certificate_key`. If intermediate certificates are required they should be concatenated after the main certificate
 * `certificate_private_key` - (Optional) The RSA private key used to sign the certificate in PEM format. Must be included along with `certificate_pem`
 * `buffer_size` - (Optional) Buffer size in bytes
+* `https_redirect` - (Optional) Redirect any requests on port 80 automatically to port 443
+* `ssl_minimum_version` - (Optional) The minimum TLS/SSL version for the load balancer to accept. Supports `TLSv1.0`, `TLSv1.1`, `TLSv1.2`, `TLSv1.3` and `SSLv3`
 * `locked` - (Optional) Set to true to stop the load balancer from being deleted
 * `nodes` - (Optional) An array of Server IDs
+* `domains` - (Optional) An array of domain names to attempt to register with ACME. Conflicts with `certificate_pem` and `certificate_private_key`
 * `listener` - (Required) An array of listener blocks. The Listener block is described below
 * `healthcheck` - (Required) A healthcheck block. The Healthcheck block is described below
 
