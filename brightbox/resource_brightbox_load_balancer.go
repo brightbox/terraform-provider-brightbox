@@ -229,14 +229,6 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				),
 			},
 
-			"sslv3": {
-				Description: "Allow SSLv3 to be used",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Deprecated:  "No longer supported. Will always return false",
-			},
-
 			"ssl_minimum_version": {
 				Description: "The minimum TLS/SSL version for the load balancer to accept. Supports `TLSv1.0`, `TLSv1.1`, `TLSv1.2`, `TLSv1.3` and `SSLv3`",
 				Type:        schema.TypeString,
@@ -246,6 +238,14 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 					validSSLVersions,
 					false,
 				),
+			},
+
+			"sslv3": {
+				Description: "Allow SSLv3 to be used",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Deprecated:  "No longer supported. Will always return false",
 			},
 
 			"status": {
