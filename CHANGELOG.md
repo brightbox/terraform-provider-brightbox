@@ -1,3 +1,13 @@
+## 2.0.2 (Mar 2, 2021)
+
+BUG FIXES:
+
+- resource/load_balancer: add missing proxy_protocol support to listeners
+
+NOTES:
+
+- Update documentation to v13 HCL format
+
 ## 2.0.0 (Mar 1, 2021)
 
 IMPROVEMENTS:
