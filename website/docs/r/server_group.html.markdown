@@ -25,7 +25,7 @@ resource "brightbox_server" "web" {
   name   = "web-1"
   zone = "gb1-a"
   type = "512mb.ssd"
-  server_groups = ["${brightbox_server_group.default.id}"]
+  server_groups = [ brightbox_server_group.default.id ]
 }
 ```
 

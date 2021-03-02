@@ -16,12 +16,21 @@ Use the navigation to the left to read about the available resources.
 ## Example Usage
 
 ```hcl
+terraform {
+  required_providers {
+    brightbox = {
+      source = "brightbox/brightbox"
+      version = "~> 2.0"
+    }
+  }
+  required_version = ">= 0.12.26"
+}
+
 # Configure the Brightbox Provider
 provider "brightbox" {
-  version = "~> 1.0"
-  username = "${var.user_email_address}"
-  password = "${var.user_secret_password}"
-  account = "${var.account_to_work_on}"
+  username = var.user_email_address
+  password = var.user_secret_password
+  account = var.account_to_work_on
 }
 
 # Create a web server
@@ -50,7 +59,6 @@ Usage:
 
 ```hcl
 provider "brightbox" {
-  version = "~> 1.0"
   username = "someone@example.com"
   password = "secretpassword"
 }
@@ -62,7 +70,6 @@ by adding an `account` argument.
 
 ```hcl
 provider "brightbox" {
-  version = "~> 1.0"
   username = "someone@example.com"
   password = "secretpassword"
   account  = "acc-diffr"
@@ -78,7 +85,6 @@ Usage:
 
 ```hcl
 provider "brightbox" {
-  version = "~> 1.0"
   apiclient = "cli-testy"
   apisecret = "secretcode"
 }
@@ -93,7 +99,6 @@ You can provide your username and password via the `BRIGHTBOX_USER_NAME` and
 
 ```hcl
 provider "brightbox" {
-  version = "~> 1.0"
 }
 ```
 
@@ -114,7 +119,6 @@ the account that issued the client id.
 
 ```hcl
 provider "brightbox" {
-  version = "~> 1.0"
 }
 ```
 

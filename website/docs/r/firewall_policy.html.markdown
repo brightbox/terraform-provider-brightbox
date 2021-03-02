@@ -19,7 +19,7 @@ resource "brightbox_server_group" "default" {
 
 resource "brightbox_firewall_policy" "default" {
   name         = "Terraform"
-  server_group = "${brightbox_server_group.default.id}"
+  server_group = brightbox_server_group.default.id
 }
 ```
 

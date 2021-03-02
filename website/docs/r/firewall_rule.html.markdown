@@ -19,7 +19,7 @@ resource "brightbox_server_group" "default" {
 
 resource "brightbox_firewall_policy" "default" {
   name         = "Terraform"
-  server_group = "${brightbox_server_group.default.id}"
+  server_group = brightbox_server_group.default.id
 }
 
 resource "brightbox_firewall_rule" "default_ssh" {
@@ -27,7 +27,7 @@ resource "brightbox_firewall_rule" "default_ssh" {
   protocol         = "tcp"
   source           = "any"
   description      = "SSH access from anywhere"
-  firewall_policy  = "${brightbox_firewall_policy.default.id}"
+  firewall_policy  = brightbox_firewall_policy.default.id
 }
 
 ```

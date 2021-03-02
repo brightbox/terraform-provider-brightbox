@@ -19,13 +19,13 @@ resource "brightbox_database_server" "default" {
 	description = "Default DB used by servers"
 	database_engine = "mysql"
 	database_version = "8.0"
-	database_type = "${data.brightbox_database_type.4gb.id}"
+	database_type = data.brightbox_database_type.4gb.id
 	maintenance_weekday = 5
 	maintenance_hour = 4
 	snapshots_schedule = "0 5 * * *"
 	allow_access = [
-		"${brightbox_server_group.barfoo.id}",
-		"${brightbox_server.foobar.id}",
+		brightbox_server_group.barfoo.id,
+		brightbox_server.foobar.id,
 		"158.152.1.65/32"
 	]
 }
@@ -37,7 +37,7 @@ data "brightbox_database_type" "4gb" {
 resource "brightbox_server" "foobar" {
 	name = "database access"
 	image = "img-testy"
-	server_groups = [ "${brightbox_server_group.barfoo.id}" ]
+	server_groups = [ brightbox_server_group.barfoo.id ]
 }
 
 resource "brightbox_server_group" "barfoo" {

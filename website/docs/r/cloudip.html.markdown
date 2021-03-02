@@ -14,7 +14,7 @@ Provides a Brightbox CloudIP resource.
 
 ```hcl
 resource "brightbox_cloudip" "web-public" {
-  target = "${brightbox_server.web.interface}"
+  target = brightbox_server.web.interface
   name = "web-1 public address"
   port_translator {
 	  protocol = "tcp"
