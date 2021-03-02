@@ -123,6 +123,7 @@ Listener (`listener`) supports the following:
 * `in` - (Required) Port to listen on
 * `out` - (Required) Port to pass through to
 * `timeout` - (Optional) Timeout of connection in milliseconds. Default is 50000
+* `proxy_protocol` - (Optional) Proxy Protocol version supported by backend server. One of `v1`, `v2`, `v2-ssl`, `v2-ssl-cn`. Default is no Proxy.
 
 Health Check (`healthcheck`) supports the following:
 * `type` - (Required) Type of health check required: `tcp` or `http`
