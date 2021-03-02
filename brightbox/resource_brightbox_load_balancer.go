@@ -277,9 +277,9 @@ func stringSliceFromAcme(
 	if acme == nil {
 		return nil
 	}
-	result := make([]string, 0, len(acme.Domains))
-	for _, domain := range acme.Domains {
-		result = append(result, domain.Identifier)
+	result := make([]string, len(acme.Domains))
+	for i, domain := range acme.Domains {
+		result[i] = domain.Identifier
 	}
 	return result
 }
@@ -287,17 +287,14 @@ func stringSliceFromAcme(
 func mapFromListeners(
 	listenerSet []brightbox.LoadBalancerListener,
 ) []map[string]interface{} {
-	listeners := make([]map[string]interface{}, 0, len(listenerSet))
-	for _, listener := range listenerSet {
-		listeners = append(
-			listeners,
-			map[string]interface{}{
-				"protocol": listener.Protocol,
-				"in":       listener.In,
-				"out":      listener.Out,
-				"timeout":  listener.Timeout,
-			},
-		)
+	listeners := make([]map[string]interface{}, len(listenerSet))
+	for i, listener := range listenerSet {
+		listeners[i] = map[string]interface{}{
+			"protocol": listener.Protocol,
+			"in":       listener.In,
+			"out":      listener.Out,
+			"timeout":  listener.Timeout,
+		}
 	}
 	return listeners
 }

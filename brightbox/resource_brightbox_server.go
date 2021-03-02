@@ -382,9 +382,9 @@ func setServerAttributes(
 func serverGroupIDListFromGroups(
 	list []brightbox.ServerGroup,
 ) []string {
-	srvGrpIds := make([]string, 0, len(list))
-	for _, sg := range list {
-		srvGrpIds = append(srvGrpIds, sg.Id)
+	srvGrpIds := make([]string, len(list))
+	for i, sg := range list {
+		srvGrpIds[i] = sg.Id
 	}
 	return srvGrpIds
 }

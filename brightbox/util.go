@@ -99,9 +99,9 @@ func assignStringSet(d *schema.ResourceData, target *[]string, index string) {
 
 func sliceFromStringSet(d *schema.ResourceData, index string) []string {
 	configured := d.Get(index).(*schema.Set).List()
-	slice := make([]string, 0, len(configured))
-	for _, data := range configured {
-		slice = append(slice, data.(string))
+	slice := make([]string, len(configured))
+	for i, data := range configured {
+		slice[i] = data.(string)
 	}
 	return slice
 }
@@ -432,9 +432,9 @@ func stringIsValidFirewallTarget() schema.SchemaValidateFunc {
 func serverIDListFromNodes(
 	nodes []brightbox.Server,
 ) []string {
-	nodeIds := make([]string, 0, len(nodes))
-	for _, node := range nodes {
-		nodeIds = append(nodeIds, node.Id)
+	nodeIds := make([]string, len(nodes))
+	for i, node := range nodes {
+		nodeIds[i] = node.Id
 	}
 	return nodeIds
 }
