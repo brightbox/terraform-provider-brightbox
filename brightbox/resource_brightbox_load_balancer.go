@@ -17,6 +17,7 @@ var (
 	validListenerProtocols     = []string{"tcp", "http", "https", "http+ws", "https+wss"}
 	validHealthcheckType       = []string{"tcp", "http"}
 	validLoadBalancingPolicies = []string{"least-connections", "round-robin", "source-address"}
+	validProxyProtocols        = []string{"v1", "v2", "v2-ssl", "v2-ssl-cn"}
 )
 
 const (
@@ -180,6 +181,16 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							),
 						},
 
+						"proxy_protocol": {
+							Description: "The version of the Proxy Protocol supported by the backend servers",
+							Type:        schema.TypeString,
+							Optional:    true,
+							ValidateFunc: validation.StringInSlice(
+								validProxyProtocols,
+								false,
+							),
+						},
+
 						"timeout": {
 							Description:  "Connection timeout in milliseconds",
 							Type:         schema.TypeInt,
@@ -265,6 +276,8 @@ func resourceBrightboxLbListenerHash(
 	buf.WriteString(fmt.Sprintf("%d-", m["in"].(int)))
 	buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["protocol"].(string))))
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["proxy_protocol"].(string))))
 	buf.WriteString(fmt.Sprintf("%d-", m["out"].(int)))
 	buf.WriteString(fmt.Sprintf("%d-", m["timeout"].(int)))
 
@@ -290,10 +303,11 @@ func mapFromListeners(
 	listeners := make([]map[string]interface{}, len(listenerSet))
 	for i, listener := range listenerSet {
 		listeners[i] = map[string]interface{}{
-			"protocol": listener.Protocol,
-			"in":       listener.In,
-			"out":      listener.Out,
-			"timeout":  listener.Timeout,
+			"protocol":       listener.Protocol,
+			"in":             listener.In,
+			"out":            listener.Out,
+			"timeout":        listener.Timeout,
+			"proxy_protocol": listener.ProxyProtocol,
 		}
 	}
 	return listeners
@@ -560,6 +574,9 @@ func expandListeners(configured []interface{}) []brightbox.LoadBalancerListener 
 		listeners[i].Out = data["out"].(int)
 		if attr, ok := data["timeout"]; ok {
 			listeners[i].Timeout = attr.(int)
+		}
+		if attr, ok := data["proxy_protocol"]; ok {
+			listeners[i].ProxyProtocol = attr.(string)
 		}
 	}
 	return listeners

@@ -307,6 +307,7 @@ resource "brightbox_load_balancer" "default" {
 		protocol = "http"
 		in = 80
 		out = 8080
+		proxy_protocol = "v1"
 	}
 	listener {
 		protocol = "http+ws"
@@ -512,6 +513,7 @@ resource "brightbox_load_balancer" "default" {
 		in = 81
 		out = 81
 		timeout = 10000
+		proxy_protocol = "v2"
 	}
 
 	healthcheck {
@@ -546,6 +548,7 @@ resource "brightbox_load_balancer" "default" {
 		in = 81
 		out = 81
 		timeout = 10000
+		proxy_protocol = "v1"
 	}
 
 	healthcheck {
@@ -577,6 +580,7 @@ resource "brightbox_load_balancer" "default" {
 		protocol = "http"
 		in = 80
 		out = 8080
+		proxy_protocol = "v1"
 	}
 	listener {
 		protocol = "http+ws"
