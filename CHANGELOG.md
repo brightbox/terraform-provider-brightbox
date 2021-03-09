@@ -1,3 +1,13 @@
+## 2.0.3 (Mar 9, 2021)
+
+BUG FIXES:
+
+- resource/firewall_rule: allow load balancer ids in source/destination
+
+NOTES:
+
+- Fix repeated name in documentation
+
 ## 2.0.2 (Mar 2, 2021)
 
 BUG FIXES:
