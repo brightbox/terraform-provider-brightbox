@@ -422,7 +422,8 @@ func stringIsValidFirewallTarget() schema.SchemaValidateFunc {
 	return validation.Any(
 		validation.StringInSlice([]string{"any"}, false),
 		validation.StringMatch(serverRegexp, "must be a valid server ID"),
-		validation.StringMatch(serverGroupRegexp, "must be a valid server Group ID"),
+		validation.StringMatch(serverGroupRegexp, "must be a valid server group ID"),
+		validation.StringMatch(loadBalancerRegexp, "must be a valid load balancer ID"),
 		validation.IsCIDR,
 		validation.IsIPAddress,
 	)
