@@ -1,3 +1,7 @@
+## 2.0.4 (April 27, 2021)
+
+- Update Terraform SDK to version 2.6.1
+
 ## 2.0.3 (Mar 9, 2021)
 
 BUG FIXES:
