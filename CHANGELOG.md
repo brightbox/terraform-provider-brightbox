@@ -1,3 +1,14 @@
+## 2.0.5 (May 25, 2021)
+
+BUG FIXES:
+
+- resource/orbit_container: stop 'created_at' attribute changing
+
+NOTES:
+
+- container 'created_at' attribute will be an empty string until the
+  Timestamp is added to the underlying Swift driver
+
 ## 2.0.4 (April 27, 2021)
 
 - Update Terraform SDK to version 2.6.1
