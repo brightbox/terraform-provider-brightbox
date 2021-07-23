@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -279,9 +280,9 @@ func setContainerAttributes(
 	if err := d.Set("object_count", attr.ObjectCount); err != nil {
 		return err
 	}
-	// if err := d.Set("created_at", attr.TimeStamp.Format(time.RFC3339)); err != nil {
-	// 	return err
-	// }
+	if err := d.Set("created_at", timeFromFloat(attr.Timestamp).Format(time.RFC3339)); err != nil {
+		return err
+	}
 	if err := d.Set("bytes_used", attr.BytesUsed); err != nil {
 		return err
 	}

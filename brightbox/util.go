@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/crc32"
+	"math"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	brightbox "github.com/brightbox/gobrightbox"
 	"github.com/gophercloud/gophercloud"
@@ -43,6 +45,28 @@ var (
 		"failed":  true,
 	}
 )
+
+func padRight(str, pad string, length int) string {
+	for {
+		if len(str) >= length {
+			return str
+		}
+		str += pad
+	}
+}
+
+func timeFromFloat(timeFloat float64) time.Time {
+	sec, dec := math.Modf(timeFloat)
+	return time.Unix(int64(sec), int64(dec*(1e9)))
+}
+
+// func timeFromFloat(timeFloat float64) time.Time {
+// 	cs := fmt.Sprintf("%.9f", timeFloat)
+// 	v := strings.Split(cs, ".")
+// 	a, _ := strconv.ParseInt(v[0], 10, 64)
+// 	b, _ := strconv.ParseInt(padRight(v[1], "0", 9), 10, 64)
+// 	return time.Unix(a, b)
+// }
 
 func hashString(
 	v interface{},

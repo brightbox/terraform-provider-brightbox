@@ -3,10 +3,23 @@ package brightbox
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+func TestTimeFromFloat(t *testing.T) {
+	ts := "1564670787.9459848"
+	tf, _ := strconv.ParseFloat(ts, 64)
+	checkString := fmt.Sprintf("%.9f", tf)
+	checkTime := timeFromFloat(tf)
+	resultString := fmt.Sprintf("%d.%d", checkTime.Unix(), checkTime.Nanosecond())
+	if checkString != resultString {
+		t.Errorf("Time not converted properly, expected %s, got %s", checkString, resultString)
+	}
+
+}
 
 func TestValidateCron(t *testing.T) {
 	testCases := []StringValidationTestCase{
@@ -18,6 +31,7 @@ func TestValidateCron(t *testing.T) {
 		t.Errorf("Failed to validate cron: %v", es)
 	}
 }
+
 func TestValidateKeys(t *testing.T) {
 	testCases := []StringMapValidationTestCase{
 		{
