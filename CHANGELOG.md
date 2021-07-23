@@ -1,3 +1,13 @@
+## 2.0.6 (July 23, 2021)
+
+BUG FIXES:
+
+- resource/orbit_container: support 'created_at' attribute
+
+NOTES:
+
+- container 'created_at' attribute now supported by Swift drive
+
 ## 2.0.5 (May 25, 2021)
 
 BUG FIXES:
