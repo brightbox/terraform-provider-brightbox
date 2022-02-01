@@ -1,3 +1,9 @@
+## 2.0.7 (February 1, 2022)
+
+NOTES:
+
+- Go version switched to 1.17 to generate darwin/windows arm64 images
+
 ## 2.0.6 (July 23, 2021)
 
 BUG FIXES:
