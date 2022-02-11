@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -111,7 +112,7 @@ func TestAccBrightboxFirewallPolicy_Mapped(t *testing.T) {
 					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &serverGroup),
 					resource.TestCheckResourceAttrPtr(
-						resourceName, "server_group", &serverGroup.Id),
+						resourceName, "server_group", &serverGroup.ID),
 				),
 			},
 			{
@@ -140,7 +141,7 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &serverGroup),
 					resource.TestCheckResourceAttrPtr(
-						resourceName, "server_group", &serverGroup.Id),
+						resourceName, "server_group", &serverGroup.ID),
 				),
 			},
 			{
@@ -149,7 +150,7 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
 					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group2", &serverGroup),
 					resource.TestCheckResourceAttrPtr(
-						resourceName, "server_group", &serverGroup.Id),
+						resourceName, "server_group", &serverGroup.ID),
 				),
 			},
 			{
@@ -186,11 +187,13 @@ func testAccCheckBrightboxFirewallPolicyDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for firewallPolicy %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for firewallPolicy %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -218,7 +221,7 @@ func testAccCheckBrightboxFirewallPolicyExists(n string, firewallPolicy *brightb
 			return err
 		}
 
-		if retrieveFirewallPolicy.Id != rs.Primary.ID {
+		if retrieveFirewallPolicy.ID != rs.Primary.ID {
 			return fmt.Errorf("FirewallPolicy not found")
 		}
 
@@ -341,9 +344,9 @@ func init() {
 					continue
 				}
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := client.APIClient.DestroyFirewallPolicy(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := client.APIClient.DestroyFirewallPolicy(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -112,11 +113,13 @@ func testAccCheckBrightboxServerGroupDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for server_group %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for server_group %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -144,7 +147,7 @@ func testAccCheckBrightboxServerGroupExists(n string, serverGroup *brightbox.Ser
 			return err
 		}
 
-		if retrieveServerGroup.Id != rs.Primary.ID {
+		if retrieveServerGroup.ID != rs.Primary.ID {
 			return fmt.Errorf("ServerGroup not found")
 		}
 
@@ -217,9 +220,9 @@ func init() {
 					continue
 				}
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := client.APIClient.DestroyServerGroup(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := client.APIClient.DestroyServerGroup(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestAccBrightboxAPIClient_Basic(t *testing.T) {
-	var apiClient brightbox.ApiClient
+	var apiClient brightbox.APIClient
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
 	updatedName := fmt.Sprintf("bar-%d", rInt)
@@ -55,7 +56,7 @@ func TestAccBrightboxAPIClient_Basic(t *testing.T) {
 }
 
 func TestAccBrightboxAPIClient_clear_names(t *testing.T) {
-	var apiClient brightbox.ApiClient
+	var apiClient brightbox.APIClient
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
 	resourceName := "brightbox_api_client.foobar"
@@ -98,17 +99,19 @@ func testAccCheckBrightboxAPIClientDestroy(s *terraform.State) error {
 			continue
 		}
 
-		// Try to find the ApiClient
-		_, err := client.ApiClient(rs.Primary.ID)
+		// Try to find the APIClient
+		_, err := client.APIClient(rs.Primary.ID)
 
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for apiClient %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for apiClient %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -116,7 +119,7 @@ func testAccCheckBrightboxAPIClientDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.ApiClient) resource.TestCheckFunc {
+func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.APIClient) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -124,20 +127,20 @@ func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.ApiClie
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ApiClient ID is set")
+			return fmt.Errorf("No APIClient ID is set")
 		}
 
 		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
-		// Try to find the ApiClient
-		retrieveAPIClient, err := client.ApiClient(rs.Primary.ID)
+		// Try to find the APIClient
+		retrieveAPIClient, err := client.APIClient(rs.Primary.ID)
 
 		if err != nil {
 			return err
 		}
 
-		if retrieveAPIClient.Id != rs.Primary.ID {
-			return fmt.Errorf("ApiClient not found")
+		if retrieveAPIClient.ID != rs.Primary.ID {
+			return fmt.Errorf("APIClient not found")
 		}
 
 		*apiClient = *retrieveAPIClient
@@ -146,7 +149,7 @@ func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.ApiClie
 	}
 }
 
-func testAccCheckBrightboxAPIClientAttributes(apiClient *brightbox.ApiClient, name string) resource.TestCheckFunc {
+func testAccCheckBrightboxAPIClientAttributes(apiClient *brightbox.APIClient, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		if apiClient.Name != name {
@@ -199,7 +202,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			apiClients, err := client.APIClient.ApiClients()
+			apiClients, err := client.APIClient.APIClients()
 			if err != nil {
 				return err
 			}
@@ -208,9 +211,9 @@ func init() {
 					continue
 				}
 				if isTestName(apiClient.Name) {
-					log.Printf("[INFO] removing %s named %s", apiClient.Id, apiClient.Name)
-					if err := client.APIClient.DestroyApiClient(apiClient.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", apiClient.Id, err)
+					log.Printf("[INFO] removing %s named %s", apiClient.ID, apiClient.Name)
+					if err := client.APIClient.DestroyAPIClient(apiClient.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", apiClient.ID, err)
 					}
 				}
 			}

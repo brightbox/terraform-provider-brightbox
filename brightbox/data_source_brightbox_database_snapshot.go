@@ -107,7 +107,7 @@ func dataSourceBrightboxDatabaseSnapshotRead(
 		return err
 	}
 
-	log.Printf("[DEBUG] Single Snapshot found: %s", image.Id)
+	log.Printf("[DEBUG] Single Snapshot found: %s", image.ID)
 	return dataSourceBrightboxDatabaseSnapshotsImageAttributes(d, image)
 }
 
@@ -117,7 +117,7 @@ func dataSourceBrightboxDatabaseSnapshotsImageAttributes(
 ) error {
 	log.Printf("[DEBUG] Database Snapshot details: %#v", image)
 
-	d.SetId(image.Id)
+	d.SetId(image.ID)
 	d.Set("name", image.Name)
 	d.Set("description", image.Description)
 	d.Set("status", image.Status)

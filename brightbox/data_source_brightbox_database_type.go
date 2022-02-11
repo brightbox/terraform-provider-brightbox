@@ -64,7 +64,7 @@ func dataSourceBrightboxDatabaseTypeRead(
 		return err
 	}
 
-	log.Printf("[DEBUG] Single DatabaseType found: %s", databaseType.Id)
+	log.Printf("[DEBUG] Single DatabaseType found: %s", databaseType.ID)
 	return dataSourceBrightboxDatabaseTypesAttributes(d, databaseType)
 }
 
@@ -74,7 +74,7 @@ func dataSourceBrightboxDatabaseTypesAttributes(
 ) error {
 	log.Printf("[DEBUG] databaseType details: %#v", databaseType)
 
-	d.SetId(databaseType.Id)
+	d.SetId(databaseType.ID)
 	d.Set("name", databaseType.Name)
 	d.Set("description", databaseType.Description)
 	d.Set("disk_size", databaseType.DiskSize)

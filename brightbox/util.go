@@ -459,7 +459,7 @@ func serverIDListFromNodes(
 ) []string {
 	nodeIds := make([]string, len(nodes))
 	for i, node := range nodes {
-		nodeIds[i] = node.Id
+		nodeIds[i] = node.ID
 	}
 	return nodeIds
 }

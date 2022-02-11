@@ -339,7 +339,7 @@ func setLoadBalancerAttributes(
 	d.Set("locked", loadBalancer.Locked)
 	d.Set("policy", loadBalancer.Policy)
 	d.Set("buffer_size", loadBalancer.BufferSize)
-	d.Set("https_redirect", loadBalancer.HttpsRedirect)
+	d.Set("https_redirect", loadBalancer.HTTPSRedirect)
 	d.Set("ssl_minimum_version", loadBalancer.SslMinimumVersion)
 	d.Set("sslv3", false)
 
@@ -398,7 +398,7 @@ func resourceBrightboxLoadBalancerCreate(
 		return fmt.Errorf("Error creating server: %s", err)
 	}
 
-	d.SetId(loadBalancer.Id)
+	d.SetId(loadBalancer.ID)
 
 	locked := d.Get("locked").(bool)
 	log.Printf("[INFO] Setting lock state to %v", locked)
@@ -411,7 +411,7 @@ func resourceBrightboxLoadBalancerCreate(
 	stateConf := resource.StateChangeConf{
 		Pending:    []string{"creating"},
 		Target:     []string{"active"},
-		Refresh:    loadBalancerStateRefresh(client, loadBalancer.Id),
+		Refresh:    loadBalancerStateRefresh(client, loadBalancer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
@@ -452,7 +452,7 @@ func resourceBrightboxLoadBalancerUpdate(
 
 	log.Printf("[DEBUG] Load Balancer update called for %s", d.Id())
 	loadBalancerOpts := &brightbox.LoadBalancerOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 
 	err := addUpdateableLoadBalancerOptions(d, loadBalancerOpts)
@@ -515,7 +515,7 @@ func addUpdateableLoadBalancerOptions(
 	assignString(d, &opts.CertificatePrivateKey, "certificate_private_key")
 	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
 	assignInt(d, &opts.BufferSize, "buffer_size")
-	assignBool(d, &opts.HttpsRedirect, "https_redirect")
+	assignBool(d, &opts.HTTPSRedirect, "https_redirect")
 	var domains []string
 	opts.Domains = &domains
 	assignStringSet(d, opts.Domains, "domains")

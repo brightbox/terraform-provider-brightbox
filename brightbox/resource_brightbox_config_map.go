@@ -73,7 +73,7 @@ func resourceBrightboxConfigMapCreate(
 		return diag.FromErr(fmt.Errorf("Error creating Config Map: %s", err))
 	}
 
-	d.SetId(configMap.Id)
+	d.SetId(configMap.ID)
 
 	return setConfigMapAttributes(d, configMap)
 }
@@ -121,7 +121,7 @@ func resourceBrightboxConfigMapUpdate(
 	client := meta.(*CompositeClient).APIClient
 
 	configMapOpts := &brightbox.ConfigMapOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 	err := addUpdateableConfigMapOptions(d, configMapOpts)
 	if err != nil {
@@ -131,7 +131,7 @@ func resourceBrightboxConfigMapUpdate(
 
 	configMap, err := client.UpdateConfigMap(configMapOpts)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error updating Config Map (%s): %s", configMapOpts.Id, err))
+		return diag.FromErr(fmt.Errorf("Error updating Config Map (%s): %s", configMapOpts.ID, err))
 	}
 
 	return setConfigMapAttributes(d, configMap)

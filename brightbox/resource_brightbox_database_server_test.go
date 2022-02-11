@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -198,11 +199,13 @@ func testAccCheckBrightboxDatabaseServerDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for database_server %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for database_server %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -230,7 +233,7 @@ func testAccCheckBrightboxDatabaseServerExists(n string, databaseServer *brightb
 			return err
 		}
 
-		if retrieveDatabaseServer.Id != rs.Primary.ID {
+		if retrieveDatabaseServer.ID != rs.Primary.ID {
 			return fmt.Errorf("DatabaseServer not found")
 		}
 
@@ -265,7 +268,7 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if databaseServer.DatabaseVersion != "8.0" {
 			return fmt.Errorf("Bad database version: %s", databaseServer.DatabaseVersion)
 		}
-		if databaseServer.DatabaseServerType.Id != databaseTypeRs.Primary.Attributes["id"] {
+		if databaseServer.DatabaseServerType.ID != databaseTypeRs.Primary.Attributes["id"] {
 			return fmt.Errorf("Bad database server type: %v", databaseServer.DatabaseServerType)
 		}
 		if databaseServer.MaintenanceWeekday != 6 {
@@ -437,12 +440,12 @@ func init() {
 					continue
 				}
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := setLockState(client.APIClient, false, brightbox.DatabaseServer{Id: object.Id}); err != nil {
-						log.Printf("error unlocking %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := setLockState(client.APIClient, false, brightbox.DatabaseServer{ID: object.ID}); err != nil {
+						log.Printf("error unlocking %s during sweep: %s", object.ID, err)
 					}
-					if err := client.APIClient.DestroyDatabaseServer(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					if err := client.APIClient.DestroyDatabaseServer(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

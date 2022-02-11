@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -33,7 +34,7 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "description", name),
 					resource.TestCheckResourceAttrPtr(
-						resourceName, "firewall_policy", &firewallPolicy.Id),
+						resourceName, "firewall_policy", &firewallPolicy.ID),
 				),
 			},
 			{
@@ -106,7 +107,7 @@ func TestAccBrightboxFirewallRule_mappings(t *testing.T) {
 					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.policy1", &firewallPolicy),
 					resource.TestCheckResourceAttrPtr(
-						resourceName, "firewall_policy", &firewallPolicy.Id),
+						resourceName, "firewall_policy", &firewallPolicy.ID),
 				),
 			},
 			{
@@ -115,7 +116,7 @@ func TestAccBrightboxFirewallRule_mappings(t *testing.T) {
 					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
 					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.policy2", &firewallPolicy),
 					resource.TestCheckResourceAttrPtr(
-						resourceName, "firewall_policy", &firewallPolicy.Id),
+						resourceName, "firewall_policy", &firewallPolicy.ID),
 				),
 			},
 		},
@@ -144,11 +145,13 @@ func testAccCheckBrightboxFirewallRuleDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for firewall_rule %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for firewall_rule %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -176,7 +179,7 @@ func testAccCheckBrightboxFirewallRuleExists(n string, firewall_policy *brightbo
 			return err
 		}
 
-		if retrieveFirewallRule.Id != rs.Primary.ID {
+		if retrieveFirewallRule.ID != rs.Primary.ID {
 			return fmt.Errorf("FirewallRule not found")
 		}
 

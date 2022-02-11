@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -159,11 +160,13 @@ func testAccCheckBrightboxConfigMapDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for config_map %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for config_map %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -191,7 +194,7 @@ func testAccCheckBrightboxConfigMapExists(n string, configMap *brightbox.ConfigM
 			return err
 		}
 
-		if retrieveConfigMap.Id != rs.Primary.ID {
+		if retrieveConfigMap.ID != rs.Primary.ID {
 			return fmt.Errorf("ConfigMap not found")
 		}
 
@@ -281,9 +284,9 @@ func init() {
 			}
 			for _, object := range objects {
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := client.APIClient.DestroyConfigMap(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := client.APIClient.DestroyConfigMap(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

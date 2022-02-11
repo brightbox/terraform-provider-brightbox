@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -225,11 +226,13 @@ func testAccCheckBrightboxCloudipDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for cloudip %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for cloudip %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -257,7 +260,7 @@ func testAccCheckBrightboxCloudipExists(n string, cloudip *brightbox.CloudIP) re
 			return err
 		}
 
-		if retrieveCloudip.Id != rs.Primary.ID {
+		if retrieveCloudip.ID != rs.Primary.ID {
 			return fmt.Errorf("CloudIP not found")
 		}
 
@@ -433,9 +436,9 @@ func init() {
 					continue
 				}
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := client.APIClient.DestroyCloudIP(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := client.APIClient.DestroyCloudIP(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -200,11 +201,13 @@ func testAccCheckBrightboxLoadBalancerDestroy(s *terraform.State) error {
 		// Wait
 
 		if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for load_balancer %s to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for load_balancer %s to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -232,7 +235,7 @@ func testAccCheckBrightboxLoadBalancerExists(n string, loadBalancer *brightbox.L
 			return err
 		}
 
-		if retrieveLoadBalancer.Id != rs.Primary.ID {
+		if retrieveLoadBalancer.ID != rs.Primary.ID {
 			return fmt.Errorf("LoadBalancer not found")
 		}
 
@@ -631,12 +634,12 @@ func init() {
 					continue
 				}
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := setLockState(client.APIClient, false, brightbox.LoadBalancer{Id: object.Id}); err != nil {
-						log.Printf("error unlocking %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := setLockState(client.APIClient, false, brightbox.LoadBalancer{ID: object.ID}); err != nil {
+						log.Printf("error unlocking %s during sweep: %s", object.ID, err)
 					}
-					if err := client.APIClient.DestroyLoadBalancer(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					if err := client.APIClient.DestroyLoadBalancer(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

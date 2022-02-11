@@ -72,18 +72,18 @@ func resourceBrightboxAPIClientCreate(
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Creating Api Client")
-	apiClientOpts := &brightbox.ApiClientOptions{}
+	apiClientOpts := &brightbox.APIClientOptions{}
 	err := addUpdateableAPIClientOptions(d, apiClientOpts)
 	if err != nil {
 		return err
 	}
 	log.Printf("[INFO] Api Client create configuration: %#v", apiClientOpts)
-	apiClient, err := client.CreateApiClient(apiClientOpts)
+	apiClient, err := client.CreateAPIClient(apiClientOpts)
 	if err != nil {
 		return fmt.Errorf("Error creating Api Client: %s", err)
 	}
 
-	d.SetId(apiClient.Id)
+	d.SetId(apiClient.ID)
 
 	return setAPIClientAttributes(d, apiClient)
 }
@@ -94,7 +94,7 @@ func resourceBrightboxAPIClientRead(
 ) error {
 	client := meta.(*CompositeClient).APIClient
 
-	apiClient, err := client.ApiClient(d.Id())
+	apiClient, err := client.APIClient(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving Api Client details: %s", err)
 	}
@@ -115,7 +115,7 @@ func resourceBrightboxAPIClientDelete(
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Deleting Api Client %s", d.Id())
-	err := client.DestroyApiClient(d.Id())
+	err := client.DestroyAPIClient(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting Api Client (%s): %s", d.Id(), err)
 	}
@@ -128,8 +128,8 @@ func resourceBrightboxAPIClientUpdate(
 ) error {
 	client := meta.(*CompositeClient).APIClient
 
-	apiClientOpts := &brightbox.ApiClientOptions{
-		Id: d.Id(),
+	apiClientOpts := &brightbox.APIClientOptions{
+		ID: d.Id(),
 	}
 	err := addUpdateableAPIClientOptions(d, apiClientOpts)
 	if err != nil {
@@ -137,9 +137,9 @@ func resourceBrightboxAPIClientUpdate(
 	}
 	log.Printf("[DEBUG] Api Client update configuration: %#v", apiClientOpts)
 
-	apiClient, err := client.UpdateApiClient(apiClientOpts)
+	apiClient, err := client.UpdateAPIClient(apiClientOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Api Client (%s): %s", apiClientOpts.Id, err)
+		return fmt.Errorf("Error updating Api Client (%s): %s", apiClientOpts.ID, err)
 	}
 
 	return setAPIClientAttributes(d, apiClient)
@@ -147,7 +147,7 @@ func resourceBrightboxAPIClientUpdate(
 
 func addUpdateableAPIClientOptions(
 	d *schema.ResourceData,
-	opts *brightbox.ApiClientOptions,
+	opts *brightbox.APIClientOptions,
 ) error {
 	assignString(d, &opts.Name, "name")
 	assignString(d, &opts.Description, "description")
@@ -157,12 +157,12 @@ func addUpdateableAPIClientOptions(
 
 func setAPIClientAttributes(
 	d *schema.ResourceData,
-	apiClient *brightbox.ApiClient,
+	apiClient *brightbox.APIClient,
 ) error {
 	d.Set("name", apiClient.Name)
 	d.Set("description", apiClient.Description)
 	d.Set("permissions_group", apiClient.PermissionsGroup)
-	d.Set("account", apiClient.Account.Id)
+	d.Set("account", apiClient.Account.ID)
 
 	// Only update the secret if it is set
 	if apiClient.Secret != "" {

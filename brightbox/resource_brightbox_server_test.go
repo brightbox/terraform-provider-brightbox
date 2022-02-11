@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -289,11 +290,13 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 			return fmt.Errorf(
 				"Server %s not in deleted state. Status is %s", rs.Primary.ID, server.Status)
 		} else if err != nil {
-			apierror := err.(brightbox.ApiError)
-			if apierror.StatusCode != 404 {
-				return fmt.Errorf(
-					"Error waiting for server (%s) to be destroyed: %s",
-					rs.Primary.ID, err)
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode != 404 {
+					return fmt.Errorf(
+						"Error waiting for server (%s) to be destroyed: %s",
+						rs.Primary.ID, err)
+				}
 			}
 		}
 	}
@@ -321,7 +324,7 @@ func testAccCheckBrightboxServerExists(n string, server *brightbox.Server) resou
 			return err
 		}
 
-		if retrieveServer.Id != rs.Primary.ID {
+		if retrieveServer.ID != rs.Primary.ID {
 			return fmt.Errorf("Server not found")
 		}
 
@@ -334,8 +337,8 @@ func testAccCheckBrightboxServerExists(n string, server *brightbox.Server) resou
 func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if !imageRe.MatchString(server.Image.Id) {
-			return fmt.Errorf("Bad image id: %s", server.Image.Id)
+		if !imageRe.MatchString(server.Image.ID) {
+			return fmt.Errorf("Bad image id: %s", server.Image.ID)
 		}
 
 		if server.ServerType.Handle != "1gb.ssd" {
@@ -422,8 +425,8 @@ func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 func testAccCheckBrightboxServerRecreated(t *testing.T,
 	before, after *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if before.Id != after.Id {
-			t.Fatalf("ID changed to %v, but expected in place update", after.Id)
+		if before.ID != after.ID {
+			t.Fatalf("ID changed to %v, but expected in place update", after.ID)
 		}
 		return nil
 	}
@@ -597,12 +600,12 @@ func init() {
 					continue
 				}
 				if isTestName(object.Name) {
-					log.Printf("[INFO] removing %s named %s", object.Id, object.Name)
-					if err := setLockState(client.APIClient, false, brightbox.Server{Id: object.Id}); err != nil {
-						log.Printf("error unlocking %s during sweep: %s", object.Id, err)
+					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
+					if err := setLockState(client.APIClient, false, brightbox.Server{ID: object.ID}); err != nil {
+						log.Printf("error unlocking %s during sweep: %s", object.ID, err)
 					}
-					if err := client.APIClient.DestroyServer(object.Id); err != nil {
-						log.Printf("error destroying %s during sweep: %s", object.Id, err)
+					if err := client.APIClient.DestroyServer(object.ID); err != nil {
+						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
 			}

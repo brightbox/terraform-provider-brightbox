@@ -38,7 +38,7 @@ func (authd *authdetails) authenticatedClient() (*brightbox.Client, *gophercloud
 				return nil, nil, err
 			}
 		default:
-			authd.getApiClientTokenSource(authContext)
+			authd.getAPIClientTokenSource(authContext)
 		}
 	}
 	log.Printf("[DEBUG] Fetching API Client")
@@ -47,14 +47,14 @@ func (authd *authdetails) authenticatedClient() (*brightbox.Client, *gophercloud
 	if err != nil {
 		return nil, nil, err
 	}
-	if apiclient.AccountId == "" {
+	if apiclient.AccountID == "" {
 		log.Printf("[INFO] Obtaining default account")
-		authedAPIClient, err := apiclient.ApiClient(authd.APIClient)
+		authedAPIClient, err := apiclient.APIClient(authd.APIClient)
 		if err != nil {
 			return nil, nil, err
 		}
-		apiclient.AccountId = authedAPIClient.Account.Id
-		authd.Account = apiclient.AccountId
+		apiclient.AccountID = authedAPIClient.Account.ID
+		authd.Account = apiclient.AccountID
 	}
 
 	log.Printf("[DEBUG] Fetching Orbit Service Client")
@@ -93,7 +93,7 @@ func (authd *authdetails) getUserTokenSource(ctx context.Context) error {
 	return nil
 }
 
-func (authd *authdetails) getApiClientTokenSource(ctx context.Context) {
+func (authd *authdetails) getAPIClientTokenSource(ctx context.Context) {
 	conf := clientcredentials.Config{
 		ClientID:     authd.APIClient,
 		ClientSecret: authd.APISecret,

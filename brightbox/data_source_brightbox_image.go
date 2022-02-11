@@ -182,7 +182,7 @@ func dataSourceBrightboxImageRead(
 		return err
 	}
 
-	log.Printf("[DEBUG] Single Image found: %s", image.Id)
+	log.Printf("[DEBUG] Single Image found: %s", image.ID)
 	return dataSourceBrightboxImagesImageAttributes(d, image)
 }
 
@@ -192,7 +192,7 @@ func dataSourceBrightboxImagesImageAttributes(
 ) error {
 	log.Printf("[DEBUG] Image details: %#v", image)
 
-	d.SetId(image.Id)
+	d.SetId(image.ID)
 	d.Set("name", image.Name)
 	d.Set("username", image.Username)
 	d.Set("status", image.Status)
@@ -207,7 +207,7 @@ func dataSourceBrightboxImagesImageAttributes(
 	d.Set("virtual_size", image.VirtualSize)
 	d.Set("disk_size", image.DiskSize)
 	d.Set("compatibility_mode", image.CompatibilityMode)
-	d.Set("ancestor_id", image.AncestorId)
+	d.Set("ancestor_id", image.AncestorID)
 	d.Set("licence_name", image.LicenceName)
 
 	return nil

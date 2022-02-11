@@ -160,10 +160,10 @@ func resourceBrightboxCloudipCreate(
 		return fmt.Errorf("Error creating Cloud IP: %s", err)
 	}
 
-	d.SetId(cloudip.Id)
+	d.SetId(cloudip.ID)
 
 	if targetID, ok := d.GetOk("target"); ok {
-		cloudip, err = assignCloudIP(client, cloudip.Id, targetID.(string), d.Timeout(schema.TimeoutCreate))
+		cloudip, err = assignCloudIP(client, cloudip.ID, targetID.(string), d.Timeout(schema.TimeoutCreate))
 		if err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ func resourceBrightboxCloudipUpdate(
 	}
 
 	cloudipOpts := &brightbox.CloudIPOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 	err := addUpdateableCloudipOptions(d, cloudipOpts)
 	if err != nil {
@@ -229,7 +229,7 @@ func resourceBrightboxCloudipUpdate(
 
 	cloudip, err := client.UpdateCloudIP(cloudipOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Cloud IP (%s): %s", cloudipOpts.Id, err)
+		return fmt.Errorf("Error updating Cloud IP (%s): %s", cloudipOpts.ID, err)
 	}
 
 	return setCloudipAttributes(d, cloudip)
@@ -338,24 +338,24 @@ func setCloudipAttributes(
 	d.Set("public_ipv4", cloudip.PublicIPv4)
 	d.Set("public_ipv6", cloudip.PublicIPv6)
 	d.Set("status", cloudip.Status)
-	d.Set("reverse_dns", cloudip.ReverseDns)
+	d.Set("reverse_dns", cloudip.ReverseDNS)
 	d.Set("fqdn", cloudip.Fqdn)
 	// Set the server id first and let interface override it
 	// Server and interface should appear together, but catch at least one
 	if cloudip.Server != nil {
-		d.Set("target", cloudip.Server.Id)
+		d.Set("target", cloudip.Server.ID)
 	}
 	if cloudip.Interface != nil {
-		d.Set("target", cloudip.Interface.Id)
+		d.Set("target", cloudip.Interface.ID)
 	}
 	if cloudip.LoadBalancer != nil {
-		d.Set("target", cloudip.LoadBalancer.Id)
+		d.Set("target", cloudip.LoadBalancer.ID)
 	}
 	if cloudip.DatabaseServer != nil {
-		d.Set("target", cloudip.DatabaseServer.Id)
+		d.Set("target", cloudip.DatabaseServer.ID)
 	}
 	if cloudip.ServerGroup != nil {
-		d.Set("target", cloudip.ServerGroup.Id)
+		d.Set("target", cloudip.ServerGroup.ID)
 	}
 	log.Printf("[DEBUG] PortTranslator details are %#v", cloudip.PortTranslators)
 	portTranslators := make([]map[string]interface{}, len(cloudip.PortTranslators))
@@ -392,7 +392,7 @@ func addUpdateableCloudipOptions(
 	opts *brightbox.CloudIPOptions,
 ) error {
 	assignString(d, &opts.Name, "name")
-	assignString(d, &opts.ReverseDns, "reverse_dns")
+	assignString(d, &opts.ReverseDNS, "reverse_dns")
 	assignPortTranslators(d, &opts.PortTranslators)
 	return nil
 }

@@ -62,8 +62,8 @@ func dataSourceBrightboxServerGroupRead(
 		return err
 	}
 
-	log.Printf("[DEBUG] Single Server Group found: %s", group.Id)
-	d.SetId(group.Id)
+	log.Printf("[DEBUG] Single Server Group found: %s", group.ID)
+	d.SetId(group.ID)
 	return setServerGroupAttributes(d, group)
 }
 

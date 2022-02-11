@@ -175,7 +175,7 @@ func setDatabaseServerAttributes(
 	d.Set("locked", databaseServer.Locked)
 	d.Set("database_engine", databaseServer.DatabaseEngine)
 	d.Set("database_version", databaseServer.DatabaseVersion)
-	d.Set("database_type", databaseServer.DatabaseServerType.Id)
+	d.Set("database_type", databaseServer.DatabaseServerType.ID)
 	d.Set("admin_username", databaseServer.AdminUsername)
 	d.Set("maintenance_weekday", databaseServer.MaintenanceWeekday)
 	d.Set("maintenance_hour", databaseServer.MaintenanceHour)
@@ -245,10 +245,10 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 		return fmt.Errorf("Error creating server: %s", err)
 	}
 
-	d.SetId(databaseServer.Id)
+	d.SetId(databaseServer.ID)
 
 	if databaseServer.AdminPassword == "" {
-		log.Printf("[WARN] No password returned for Cloud SQL server %s", databaseServer.Id)
+		log.Printf("[WARN] No password returned for Cloud SQL server %s", databaseServer.ID)
 	} else {
 		d.Set("admin_password", databaseServer.AdminPassword)
 	}
@@ -263,7 +263,7 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 	stateConf := resource.StateChangeConf{
 		Pending:    []string{"creating"},
 		Target:     []string{"active"},
-		Refresh:    databaseServerStateRefresh(client, databaseServer.Id),
+		Refresh:    databaseServerStateRefresh(client, databaseServer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
@@ -321,7 +321,7 @@ func updateDatabaseServerAttributes(
 	if cmp.Equal(*databaseServerOpts, blankDatabaseServerOpts) && !d.HasChange("locked") {
 		return fmt.Errorf("[ERROR] No database update changes detected for %s", d.Id())
 	}
-	databaseServerOpts.Id = d.Id()
+	databaseServerOpts.ID = d.Id()
 	databaseServer, err := updateDatabaseServer(client, databaseServerOpts)
 	if err != nil {
 		return err

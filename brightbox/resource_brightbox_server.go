@@ -204,7 +204,7 @@ func resourceBrightboxServerCreate(
 		return fmt.Errorf("Error creating server: %s", err)
 	}
 
-	d.SetId(server.Id)
+	d.SetId(server.ID)
 
 	locked := d.Get("locked").(bool)
 	log.Printf("[INFO] Setting lock state to %v", locked)
@@ -217,7 +217,7 @@ func resourceBrightboxServerCreate(
 	stateConf := resource.StateChangeConf{
 		Pending:    []string{"creating"},
 		Target:     []string{"active", "inactive"},
-		Refresh:    serverStateRefresh(client, server.Id),
+		Refresh:    serverStateRefresh(client, server.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
@@ -285,7 +285,7 @@ func resourceBrightboxServerUpdate(
 
 	log.Printf("[DEBUG] Server update called for %s", d.Id())
 	serverOpts := &brightbox.ServerOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 
 	err := addUpdateableServerOptions(d, serverOpts)
@@ -346,7 +346,7 @@ func setServerAttributes(
 	d *schema.ResourceData,
 	server *brightbox.Server,
 ) error {
-	d.Set("image", server.Image.Id)
+	d.Set("image", server.Image.ID)
 	d.Set("name", server.Name)
 	d.Set("type", server.ServerType.Handle)
 	d.Set("zone", server.Zone.Handle)
@@ -358,7 +358,7 @@ func setServerAttributes(
 
 	if len(server.Interfaces) > 0 {
 		serverInterface := server.Interfaces[0]
-		d.Set("interface", serverInterface.Id)
+		d.Set("interface", serverInterface.ID)
 		d.Set("ipv4_address_private", serverInterface.IPv4Address)
 		d.Set("fqdn", server.Fqdn)
 		d.Set("ipv6_address", serverInterface.IPv6Address)
@@ -384,7 +384,7 @@ func serverGroupIDListFromGroups(
 ) []string {
 	srvGrpIds := make([]string, len(list))
 	for i, sg := range list {
-		srvGrpIds[i] = sg.Id
+		srvGrpIds[i] = sg.ID
 	}
 	return srvGrpIds
 }

@@ -73,7 +73,7 @@ func resourceBrightboxServerGroupCreate(
 		return fmt.Errorf("Error creating Server Group: %s", err)
 	}
 
-	d.SetId(serverGroup.Id)
+	d.SetId(serverGroup.ID)
 
 	return setServerGroupAttributes(d, serverGroup)
 }
@@ -129,7 +129,7 @@ func resourceBrightboxServerGroupUpdate(
 	client := meta.(*CompositeClient).APIClient
 
 	serverGroupOpts := &brightbox.ServerGroupOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 	err := addUpdateableServerGroupOptions(d, serverGroupOpts)
 	if err != nil {
@@ -139,7 +139,7 @@ func resourceBrightboxServerGroupUpdate(
 
 	serverGroup, err := client.UpdateServerGroup(serverGroupOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Server Group (%s): %s", serverGroupOpts.Id, err)
+		return fmt.Errorf("Error updating Server Group (%s): %s", serverGroupOpts.ID, err)
 	}
 
 	return setServerGroupAttributes(d, serverGroup)
@@ -166,7 +166,7 @@ func setServerGroupAttributes(
 }
 
 func clearServerList(client *brightbox.Client, iniitialServerGroup *brightbox.ServerGroup, timeout time.Duration) error {
-	serverID := iniitialServerGroup.Id
+	serverID := iniitialServerGroup.ID
 	serverList := iniitialServerGroup.Servers
 	serverIds := serverIDListFromNodes(serverList)
 	log.Printf("[INFO] Removing servers %#v from server group %s", serverIds, serverID)
@@ -186,7 +186,7 @@ func clearServerList(client *brightbox.Client, iniitialServerGroup *brightbox.Se
 			}
 			if len(serverGroup.Servers) > 0 {
 				return resource.RetryableError(
-					fmt.Errorf("Error: servers %#v still in server group %s", serverIDListFromNodes(serverGroup.Servers), serverGroup.Id),
+					fmt.Errorf("Error: servers %#v still in server group %s", serverIDListFromNodes(serverGroup.Servers), serverGroup.ID),
 				)
 			}
 			return nil

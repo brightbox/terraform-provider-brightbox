@@ -44,7 +44,7 @@ func obtainCloudClient() (*CompositeClient, error) {
 		password: os.Getenv(passwordEnvVar),
 		Account:  os.Getenv(accountEnvVar),
 		APIURL: getenvWithDefault(apiURLEnvVar,
-			brightbox.DefaultRegionApiURL),
+			brightbox.DefaultRegionAPIURL),
 		OrbitURL: getenvWithDefault(orbitURLEnvVar,
 			brightbox.DefaultOrbitAuthURL),
 	}).Client()
@@ -81,7 +81,7 @@ func (authd *authdetails) Client() (*CompositeClient, error) {
 	}
 
 	log.Printf("[INFO] Brightbox Client configured for URL: %s", apiclient.BaseURL.String())
-	log.Printf("[INFO] Provisioning to account %s", apiclient.AccountId)
+	log.Printf("[INFO] Provisioning to account %s", apiclient.AccountID)
 	log.Printf("[INFO] Orbit Client configured for URL: %s", orbitclient.ResourceBaseURL())
 
 	composite := &CompositeClient{

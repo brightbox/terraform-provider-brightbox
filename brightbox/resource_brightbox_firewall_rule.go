@@ -142,7 +142,7 @@ func resourceBrightboxFirewallRuleCreate(
 		return fmt.Errorf("Error creating Firewall Rule: %s", err)
 	}
 
-	d.SetId(firewallRule.Id)
+	d.SetId(firewallRule.ID)
 
 	return setFirewallRuleAttributes(d, firewallRule)
 }
@@ -202,7 +202,7 @@ func resourceBrightboxFirewallRuleUpdate(
 
 	}
 	firewallRuleOpts := &brightbox.FirewallRuleOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 	err := addUpdateableFirewallRuleOptions(d, firewallRuleOpts)
 	if err != nil {
@@ -211,7 +211,7 @@ func resourceBrightboxFirewallRuleUpdate(
 	log.Printf("[DEBUG] Firewall Rule update configuration: %#v", firewallRuleOpts)
 	firewallRule, err := client.UpdateFirewallRule(firewallRuleOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Firewall Rule (%s): %s", firewallRuleOpts.Id, err)
+		return fmt.Errorf("Error updating Firewall Rule (%s): %s", firewallRuleOpts.ID, err)
 	}
 
 	return setFirewallRuleAttributes(d, firewallRule)
@@ -235,7 +235,7 @@ func setFirewallRuleAttributes(
 	d *schema.ResourceData,
 	firewallRule *brightbox.FirewallRule,
 ) error {
-	d.Set("firewall_policy", firewallRule.FirewallPolicy.Id)
+	d.Set("firewall_policy", firewallRule.FirewallPolicy.ID)
 	d.Set("protocol", firewallRule.Protocol)
 	d.Set("source", firewallRule.Source)
 	d.Set("source_port", firewallRule.SourcePort)

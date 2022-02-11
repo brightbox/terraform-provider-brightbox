@@ -1,6 +1,7 @@
 package brightbox
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -72,7 +73,7 @@ func resourceBrightboxFirewallPolicyCreate(
 		return fmt.Errorf("Error creating Firewall Policy: %s", err)
 	}
 
-	d.SetId(firewallPolicy.Id)
+	d.SetId(firewallPolicy.ID)
 
 	return setFirewallPolicyAttributes(d, firewallPolicy)
 }
@@ -117,7 +118,7 @@ func resourceBrightboxFirewallPolicyUpdate(
 	client := meta.(*CompositeClient).APIClient
 
 	firewallPolicyOpts := &brightbox.FirewallPolicyOptions{
-		Id: d.Id(),
+		ID: d.Id(),
 	}
 	err := addUpdateableFirewallPolicyOptions(d, firewallPolicyOpts)
 	if err != nil {
@@ -127,7 +128,7 @@ func resourceBrightboxFirewallPolicyUpdate(
 	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewallPolicyOpts)
 	firewallPolicy, err := client.UpdateFirewallPolicy(firewallPolicyOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.ID, err)
 	}
 
 	if d.HasChange("server_group") {
@@ -137,29 +138,29 @@ func resourceBrightboxFirewallPolicyUpdate(
 		newServerGroupID := n.(string)
 		oldServerGroupID := o.(string)
 		if firewallPolicy.ServerGroup != nil {
-			log.Printf("[INFO] Detaching %s from Server Group %s", firewallPolicyOpts.Id, oldServerGroupID)
+			log.Printf("[INFO] Detaching %s from Server Group %s", firewallPolicyOpts.ID, oldServerGroupID)
 			err = retryServerGroupChange(
 				func() error {
-					_, err := client.RemoveFirewallPolicy(firewallPolicyOpts.Id, oldServerGroupID)
+					_, err := client.RemoveFirewallPolicy(firewallPolicyOpts.ID, oldServerGroupID)
 					return err
 				},
 				d.Timeout(schema.TimeoutUpdate),
 			)
 			if err != nil {
-				return fmt.Errorf("Error removing group from Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+				return fmt.Errorf("Error removing group from Firewall Policy (%s): %s", firewallPolicyOpts.ID, err)
 			}
 		}
 		if newServerGroupID != "" {
-			log.Printf("[INFO] Attaching %s to Server Group %s", firewallPolicyOpts.Id, newServerGroupID)
+			log.Printf("[INFO] Attaching %s to Server Group %s", firewallPolicyOpts.ID, newServerGroupID)
 			err = retryServerGroupChange(
 				func() error {
-					_, err := client.ApplyFirewallPolicy(firewallPolicyOpts.Id, newServerGroupID)
+					_, err := client.ApplyFirewallPolicy(firewallPolicyOpts.ID, newServerGroupID)
 					return err
 				},
 				d.Timeout(schema.TimeoutUpdate),
 			)
 			if err != nil {
-				return fmt.Errorf("Error adding group to Firewall Policy (%s): %s", firewallPolicyOpts.Id, err)
+				return fmt.Errorf("Error adding group to Firewall Policy (%s): %s", firewallPolicyOpts.ID, err)
 			}
 		}
 
@@ -186,7 +187,7 @@ func setFirewallPolicyAttributes(
 	if firewallPolicy.ServerGroup == nil {
 		d.Set("server_group", "")
 	} else {
-		d.Set("server_group", firewallPolicy.ServerGroup.Id)
+		d.Set("server_group", firewallPolicy.ServerGroup.ID)
 	}
 	return nil
 }
@@ -197,9 +198,11 @@ func retryServerGroupChange(changeFunc func() error, timeout time.Duration) erro
 		timeout,
 		func() *resource.RetryError {
 			if err := changeFunc(); err != nil {
-				apierror := err.(brightbox.ApiError)
-				if apierror.StatusCode == 409 {
-					return resource.RetryableError(err)
+				var apierror *brightbox.APIError
+				if errors.As(err, &apierror) {
+					if apierror.StatusCode == 409 {
+						return resource.RetryableError(err)
+					}
 				}
 				return resource.NonRetryableError(err)
 			}

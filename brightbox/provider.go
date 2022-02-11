@@ -30,7 +30,7 @@ func Provider() *schema.Provider {
 			"apiurl": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(apiURLEnvVar, brightbox.DefaultRegionApiURL),
+				DefaultFunc: schema.EnvDefaultFunc(apiURLEnvVar, brightbox.DefaultRegionAPIURL),
 				Description: "Brightbox Cloud Api URL for selected Region",
 			},
 			"orbit_url": {
