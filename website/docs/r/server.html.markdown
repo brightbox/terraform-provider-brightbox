@@ -33,11 +33,13 @@ The following arguments are supported:
 * `server_groups` (Required) - An array of server group ids the server
 should be added to. At least one server group must be specified.
 * `name` - (Optional) The Server name
-* `type` - (Optional) The handle of the server type required (`1gb.ssd`, etc)
+* `type` - (Optional) The handle the server type required (`1gb.ssd`, etc), or a Server Type ID. 
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
 * `locked` - (Optional) Set to true to stop the server from being deleted
 * `disk_encrypted` - (Optional) Create a server where the data on disk is
 'encrypted as rest' by the cloud.
+* `disk_size` - (Optional) The desired size of the disk storage for the
+Server. Only usable with types using network block storage.
 * `user_data` (Optional) - A string of the desired User Data for the Server.
 * `user_data_base64` (Optional) - Already encrypted User Data - for use
 with the template provider.

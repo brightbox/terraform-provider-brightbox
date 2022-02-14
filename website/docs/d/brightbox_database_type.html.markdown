@@ -28,12 +28,11 @@ by Brightbox Cloud.
 returned by Brightbox Cloud.
 
 ~> **NOTE:** arguments form a conjunction. All arguments must match to
-select an image.
+select a type.
 
 ~> **NOTE:** If more or less than a single match is returned by the
 search, Terraform will fail. Ensure that your search is specific enough
-to return a single image only, or use `most_recent` to choose the most
-recent one.
+to return a single type.
 
 ## Attributes Reference
 
