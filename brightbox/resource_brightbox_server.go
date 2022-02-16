@@ -41,10 +41,11 @@ func resourceBrightboxServer() *schema.Resource {
 			},
 
 			"disk_size": {
-				Description: "Disk size in megabytes for server types with variable block storage",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
+				Description:  "Disk size in megabytes for server types with variable block storage",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntAtLeast(0),
 			},
 
 			"fqdn": {
@@ -317,8 +318,20 @@ func resourceBrightboxServerUpdate(
 	if d.HasChange("disk_size") {
 		volumeID := server.Volumes[0].ID
 		oldSize, newSize := d.GetChange("disk_size")
-		log.Printf("[INFO] Resizing volume %v from %v to %v", oldSize, newSize, volumeID)
-		if err := client.ResizeVolume(volumeID, &brightbox.VolumeResizeOptions{From: oldSize.(int), To: newSize.(int)}); err != nil {
+		oldSizeInt, ok := oldSize.(int)
+		if !ok {
+			return fmt.Errorf("expected type of old disk size to be Integer")
+		}
+		newSizeInt, ok := newSize.(int)
+		if !ok {
+			return fmt.Errorf("expected type of new disk size to be Integer")
+		}
+		if oldSizeInt > newSizeInt {
+			return fmt.Errorf("expected new disk size (%v) to be bigger than old disk size (%v)", newSizeInt, oldSizeInt)
+
+		}
+		log.Printf("[INFO] Resizing volume %v from %v to %v", volumeID, oldSizeInt, newSizeInt)
+		if err := client.ResizeVolume(volumeID, &brightbox.VolumeResizeOptions{From: oldSizeInt, To: newSizeInt}); err != nil {
 			return err
 		}
 		reRead = true

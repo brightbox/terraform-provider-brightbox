@@ -1,3 +1,8 @@
+## 2.1.1 (February 16, 2022)
+
+BUG FIXES:
+- resource/server: Ensure disk resizing only allows an increase in the disk size
+
 ## 2.1.0 (February 14, 2022)
 
 IMPROVEMENTS:
