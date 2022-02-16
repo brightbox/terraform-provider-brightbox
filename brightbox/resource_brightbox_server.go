@@ -40,6 +40,13 @@ func resourceBrightboxServer() *schema.Resource {
 				ForceNew:    true,
 			},
 
+			"disk_size": {
+				Description: "Disk size in megabytes for server types with variable block storage",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+			},
+
 			"fqdn": {
 				Description: "Fully qualified domain name",
 				Type:        schema.TypeString,
@@ -132,7 +139,6 @@ func resourceBrightboxServer() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
 				ValidateFunc: validation.Any(
 					validation.StringMatch(serverTypeRegexp, "must be a valid server type"),
 					validation.StringIsNotWhiteSpace,
@@ -181,9 +187,7 @@ func resourceBrightboxServerCreate(
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Server create called")
-	serverOpts := &brightbox.ServerOptions{
-		Image: d.Get("image").(string),
-	}
+	serverOpts := &brightbox.ServerOptions{}
 
 	err := addUpdateableServerOptions(d, serverOpts)
 	if err != nil {
@@ -196,6 +200,7 @@ func resourceBrightboxServerCreate(
 	assignString(d, &zone, "zone")
 	encrypted := &serverOpts.DiskEncrypted
 	assignBool(d, encrypted, "disk_encrypted")
+	addBlockStorageOptions(d, serverOpts)
 
 	log.Printf("[DEBUG] Server create configuration: %#v", serverOpts)
 
@@ -287,17 +292,36 @@ func resourceBrightboxServerUpdate(
 	serverOpts := &brightbox.ServerOptions{
 		ID: d.Id(),
 	}
+	var server *brightbox.Server
+	var err error
 
-	err := addUpdateableServerOptions(d, serverOpts)
-	if err != nil {
-		return err
+	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64") {
+		err = addUpdateableServerOptions(d, serverOpts)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("[DEBUG] Server update configuration: %#v", serverOpts)
+
+		server, err = client.UpdateServer(serverOpts)
+		if err != nil {
+			return fmt.Errorf("Error updating server: %s", err)
+		}
+	} else {
+		server, err = client.Server(d.Id())
+		if err != nil {
+			return err
+		}
 	}
-
-	log.Printf("[DEBUG] Server update configuration: %#v", serverOpts)
-
-	server, err := client.UpdateServer(serverOpts)
-	if err != nil {
-		return fmt.Errorf("Error updating server: %s", err)
+	var reRead bool
+	if d.HasChange("disk_size") {
+		volumeID := server.Volumes[0].ID
+		oldSize, newSize := d.GetChange("disk_size")
+		log.Printf("[INFO] Resizing volume %v from %v to %v", oldSize, newSize, volumeID)
+		if err := client.ResizeVolume(volumeID, &brightbox.VolumeResizeOptions{From: oldSize.(int), To: newSize.(int)}); err != nil {
+			return err
+		}
+		reRead = true
 	}
 	if d.HasChange("locked") {
 		locked := d.Get("locked").(bool)
@@ -305,9 +329,34 @@ func resourceBrightboxServerUpdate(
 		if err := setLockState(client, locked, server); err != nil {
 			return err
 		}
-		return resourceBrightboxServerRead(d, meta)
+		reRead = true
+	}
+	if reRead {
+		server, err = client.Server(d.Id())
+		if err != nil {
+			return err
+		}
 	}
 	return setServerAttributes(d, server)
+}
+
+func addBlockStorageOptions(
+	d *schema.ResourceData,
+	opts *brightbox.ServerOptions,
+) {
+	var diskSize *int
+	image := d.Get("image").(string)
+	assignInt(d, &diskSize, "disk_size")
+	if diskSize == nil {
+		opts.Image = image
+	} else {
+		opts.Volumes = []brightbox.VolumeOptions{
+			brightbox.VolumeOptions{
+				Image: &image,
+				Size:  diskSize,
+			},
+		}
+	}
 }
 
 func addUpdateableServerOptions(
@@ -348,13 +397,17 @@ func setServerAttributes(
 ) error {
 	d.Set("image", server.Image.ID)
 	d.Set("name", server.Name)
-	d.Set("type", server.ServerType.Handle)
 	d.Set("zone", server.Zone.Handle)
 	d.Set("status", server.Status)
 	d.Set("locked", server.Locked)
 	d.Set("disk_encrypted", server.DiskEncrypted)
 	d.Set("hostname", server.Hostname)
 	d.Set("username", server.Image.Username)
+	if server.ServerType.DiskSize != 0 {
+		d.Set("disk_size", server.ServerType.DiskSize)
+	} else {
+		d.Set("disk_size", server.Volumes[0].Size)
+	}
 
 	if len(server.Interfaces) > 0 {
 		serverInterface := server.Interfaces[0]
@@ -375,6 +428,7 @@ func setServerAttributes(
 
 	setUserDataDetails(d, server.UserData)
 	setConnectionDetails(d)
+	setServerTypeDetails(d, &server.ServerType)
 	return nil
 
 }
@@ -424,6 +478,16 @@ func setConnectionDetails(d *schema.ResourceData) {
 		}
 		d.SetConnInfo(connectionDetails)
 	}
+}
+
+func setServerTypeDetails(d *schema.ResourceData, serverType *brightbox.ServerType) {
+	if currentType, ok := d.GetOk("type"); ok {
+		if !serverTypeRegexp.MatchString(currentType.(string)) {
+			d.Set("type", serverType.Handle)
+			return
+		}
+	}
+	d.Set("type", serverType.ID)
 }
 
 func serverStateRefresh(client *brightbox.Client, serverID string) resource.StateRefreshFunc {

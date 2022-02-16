@@ -16,6 +16,7 @@ import (
 
 var imageRe = regexp.MustCompile("^img-.....$")
 var zoneRe = regexp.MustCompile("^gb1s?-[ab]$")
+var typeRe = regexp.MustCompile("^typ-.....$")
 
 func TestAccBrightboxServer_Basic(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
@@ -76,9 +77,10 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"type"},
 			},
 			{
 				Config: testAccCheckBrightboxServerConfig_locked(rInt),
@@ -341,8 +343,8 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 			return fmt.Errorf("Bad image id: %s", server.Image.ID)
 		}
 
-		if server.ServerType.Handle != "1gb.ssd" {
-			return fmt.Errorf("Bad server type: %s", server.ServerType.Handle)
+		if server.ServerType.ID != "typ-8985i" {
+			return fmt.Errorf("Bad server type: %s", server.ServerType.ID)
 		}
 
 		if !zoneRe.MatchString(server.Zone.Handle) {
@@ -422,6 +424,60 @@ func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServer_DiskResize(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
+	var server brightbox.Server
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxServerConfig_networkdisk40G(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists(resourceName, &server),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "false"),
+					resource.TestMatchResourceAttr(
+						resourceName, "image", imageRe),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
+					resource.TestMatchResourceAttr(
+						resourceName, "type", typeRe),
+					resource.TestMatchResourceAttr(
+						resourceName, "zone", zoneRe),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_size", "40960"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_networkdisk60G(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists(resourceName, &server),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_encrypted", "false"),
+					resource.TestMatchResourceAttr(
+						resourceName, "image", imageRe),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
+					resource.TestMatchResourceAttr(
+						resourceName, "type", typeRe),
+					resource.TestMatchResourceAttr(
+						resourceName, "zone", zoneRe),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_size", "61440"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckBrightboxServerRecreated(t *testing.T,
 	before, after *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -430,6 +486,44 @@ func testAccCheckBrightboxServerRecreated(t *testing.T,
 		}
 		return nil
 	}
+}
+
+const TestAccBrightboxDataServerTypeConfig_network_disk = `
+data "brightbox_server_type" "foobar" {
+	handle = "^4gb.nbs$"
+}
+`
+
+func testAccCheckBrightboxServerConfig_networkdisk40G(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-%d"
+	type = data.brightbox_server_type.foobar.id
+	server_groups = [data.brightbox_server_group.default.id]
+	disk_size = 40960
+}
+
+%s%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default,
+		TestAccBrightboxDataServerTypeConfig_network_disk,
+	)
+}
+
+func testAccCheckBrightboxServerConfig_networkdisk60G(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-%d"
+	type = data.brightbox_server_type.foobar.id
+	server_groups = [data.brightbox_server_group.default.id]
+	disk_size = 61440
+}
+
+%s%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default,
+		TestAccBrightboxDataServerTypeConfig_network_disk,
+	)
 }
 
 func testAccCheckBrightboxServerConfig_basic(rInt int) string {
@@ -548,7 +642,7 @@ resource "brightbox_server" "foobar" {
 	name = "foo-%d"
 	image = data.brightbox_image.foobar.id
 	server_groups = [brightbox_server_group.barfoo.id]
-	type = "512mb.ssd"
+	type = "typ-n0977"
 }
 
 resource "brightbox_server_group" "barfoo" {
@@ -567,7 +661,7 @@ resource "brightbox_server" "foobar" {
 	  brightbox_server_group.barfoo.id,
 	  brightbox_server_group.barfoo2.id
 	  ]
-	type = "512mb.ssd"
+	type = "typ-n0977"
 }
 
 resource "brightbox_server_group" "barfoo" {

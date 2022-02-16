@@ -1,7 +1,9 @@
 module github.com/terraform-providers/terraform-provider-brightbox
 
+go 1.17
+
 require (
-	github.com/brightbox/gobrightbox v0.8.2-beta.3
+	github.com/brightbox/gobrightbox v0.8.2
 	github.com/google/go-cmp v0.5.6
 	github.com/gophercloud/gophercloud v0.19.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
@@ -51,10 +53,9 @@ require (
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897 // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.5 // indirect
+	golang.org/x/tools v0.1.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.32.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 )
-
-go 1.17

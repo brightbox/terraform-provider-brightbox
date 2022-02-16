@@ -1,3 +1,19 @@
+## 2.1.0 (February 14, 2022)
+
+IMPROVEMENTS:
+
+- data/server_type: Add server type as a data source
+- resource/server: Add disk size attribute, for use with network block server types
+- resource/server: Servers can be created by reference to a server type data resource
+- resource/server: Remove force new restriction for server type
+- resource/server: Allow dynamic resizing of disk size for network block server types
+
+NOTES:
+
+- Update to gobrightbox 0.8.2
+- Update Terraform SDK to 2.10.1
+- Fix errors in database type documentation
+
 ## 2.0.7 (February 1, 2022)
 
 NOTES:
