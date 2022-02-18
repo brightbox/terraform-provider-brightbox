@@ -331,7 +331,15 @@ func resourceBrightboxServerUpdate(
 
 		}
 		log.Printf("[INFO] Resizing volume %v from %v to %v", volumeID, oldSizeInt, newSizeInt)
-		if err := client.ResizeVolume(volumeID, &brightbox.VolumeResizeOptions{From: oldSizeInt, To: newSizeInt}); err != nil {
+		if err := client.ResizeVolume(volumeID, oldSizeInt, newSizeInt); err != nil {
+			return err
+		}
+		reRead = true
+	}
+	if d.HasChange("type") {
+		newServerType := d.Get("type").(string)
+		log.Printf("[INFO] Changing server type to %v", newServerType)
+		if err := client.ResizeServer(d.Id(), newServerType); err != nil {
 			return err
 		}
 		reRead = true
@@ -343,6 +351,9 @@ func resourceBrightboxServerUpdate(
 			return err
 		}
 		reRead = true
+	}
+	if d.HasChange("type") {
+
 	}
 	if reRead {
 		server, err = client.Server(d.Id())

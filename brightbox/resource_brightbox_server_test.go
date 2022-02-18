@@ -478,6 +478,55 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServer_ServerResize(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
+	var server brightbox.Server
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxServerConfig_networkdisk40G(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxServerType(&server.ServerType, 2, 4096),
+					resource.TestCheckResourceAttrPtr(
+						resourceName, "type", &server.ServerType.ID),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_size", "40960"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_typechange40G(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxServerType(&server.ServerType, 6, 16384),
+					resource.TestCheckResourceAttrPtr(
+						resourceName, "type", &server.ServerType.ID),
+					resource.TestCheckResourceAttr(
+						resourceName, "disk_size", "40960"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckBrightboxServerType(serverType *brightbox.ServerType, cores int, ram int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if serverType.Cores != cores {
+			return fmt.Errorf("Expected %v cores, got %v", cores, serverType.Cores)
+		}
+
+		if serverType.RAM != ram {
+			return fmt.Errorf("Expected ram size of %v , got %v", ram, serverType.RAM)
+		}
+		return nil
+	}
+}
+
 func testAccCheckBrightboxServerRecreated(t *testing.T,
 	before, after *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -494,6 +543,12 @@ data "brightbox_server_type" "foobar" {
 }
 `
 
+const TestAccBrightboxDataServerTypeConfig_16gbserver = `
+data "brightbox_server_type" "barfoo" {
+	handle = "^16gb.nbs$"
+}
+`
+
 func testAccCheckBrightboxServerConfig_networkdisk40G(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
@@ -507,6 +562,22 @@ resource "brightbox_server" "foobar" {
 %s%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
 		TestAccBrightboxDataServerGroupConfig_default,
 		TestAccBrightboxDataServerTypeConfig_network_disk,
+	)
+}
+
+func testAccCheckBrightboxServerConfig_typechange40G(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-%d"
+	type = data.brightbox_server_type.barfoo.id
+	server_groups = [data.brightbox_server_group.default.id]
+	disk_size = 40960
+}
+
+%s%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default,
+		TestAccBrightboxDataServerTypeConfig_16gbserver,
 	)
 }
 
