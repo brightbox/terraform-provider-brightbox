@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gorhill/cronexpr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -380,12 +380,12 @@ func getenvWithDefault(key string, defaultValue string) string {
 }
 
 // set the lock state of a resource based upon a boolean
-func setLockState(client *brightbox.Client, isLocked bool, resource interface{}) error {
-	if isLocked {
-		return client.LockResource(resource)
-	}
-	return client.UnLockResource(resource)
-}
+// func setLockState(client *brightbox.Client, isLocked bool, resource interface{}) error {
+// 	if isLocked {
+// 		return client.LockResource(resource)
+// 	}
+// 	return client.UnLockResource(resource)
+// }
 
 // strSliceContains checks if a given string is contained in a slice
 // When anybody asks why Go needs generics, here you go.

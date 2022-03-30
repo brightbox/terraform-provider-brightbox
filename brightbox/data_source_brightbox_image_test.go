@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const latest = "bionic-18.04"
+const latest = "focal-20.04"
 
 var accountRe = regexp.MustCompile("acc-.....")
 var disktypeRe = regexp.MustCompile("disk1.img")
@@ -24,35 +24,43 @@ func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "source_type", "upload"),
-					resource.TestMatchResourceAttr(
-						"data.brightbox_image.foobar", "owner", accountRe),
+						"data.brightbox_image.foobar", "name", "Blank Disk Image"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "status", "available"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "locked", "false"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "arch", "x86_64"),
-					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "name", "Blank Disk Image"),
-					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "description", ""),
-					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "username", ""),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "virtual_size", "0"),
+						"data.brightbox_image.foobar", "description", ""),
+					resource.TestCheckResourceAttrSet(
+						"data.brightbox_image.foobar", "source"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "disk_size", "0"),
+						"data.brightbox_image.foobar", "arch", "x86_64"),
+					resource.TestCheckResourceAttrSet(
+						"data.brightbox_image.foobar", "created_at"),
+					resource.TestCheckResourceAttr(
+						"data.brightbox_image.foobar", "official", "true"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "public", "true"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "compatibility_mode", "false"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "official", "true"),
+						"data.brightbox_image.foobar", "source_type", "upload"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "ancestor_id", ""),
+						"data.brightbox_image.foobar", "source_trigger", "manual"),
+					resource.TestCheckResourceAttr(
+						"data.brightbox_image.foobar", "virtual_size", "0"),
+					resource.TestCheckResourceAttr(
+						"data.brightbox_image.foobar", "disk_size", "0"),
+					resource.TestCheckNoResourceAttr(
+						"data.brightbox_image.foobar", "min_ram"),
+					resource.TestMatchResourceAttr(
+						"data.brightbox_image.foobar", "owner", accountRe),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "licence_name", ""),
+					resource.TestCheckNoResourceAttr(
+						"data.brightbox_image.foobar", "ancestor_id"),
 				),
 			},
 		},
@@ -69,35 +77,43 @@ func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "source_type", "upload"),
-					resource.TestMatchResourceAttr(
-						"data.brightbox_image.foobar", "owner", accountRe),
+						"data.brightbox_image.foobar", "name", fmt.Sprintf("ubuntu-%s-amd64-server", latest)),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "status", "available"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "locked", "false"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "arch", "x86_64"),
-					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "name", fmt.Sprintf("ubuntu-%s-amd64-server", latest)),
+						"data.brightbox_image.foobar", "username", "ubuntu"),
 					resource.TestMatchResourceAttr(
 						"data.brightbox_image.foobar", "description", disktypeRe),
+					resource.TestCheckResourceAttrSet(
+						"data.brightbox_image.foobar", "source"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "username", "ubuntu"),
+						"data.brightbox_image.foobar", "arch", "x86_64"),
 					resource.TestCheckResourceAttrSet(
-						"data.brightbox_image.foobar", "virtual_size"),
-					resource.TestCheckResourceAttrSet(
-						"data.brightbox_image.foobar", "disk_size"),
+						"data.brightbox_image.foobar", "created_at"),
+					resource.TestCheckResourceAttr(
+						"data.brightbox_image.foobar", "official", "true"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "public", "true"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "compatibility_mode", "false"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "official", "true"),
+						"data.brightbox_image.foobar", "source_type", "upload"),
 					resource.TestCheckResourceAttr(
-						"data.brightbox_image.foobar", "ancestor_id", ""),
+						"data.brightbox_image.foobar", "source_trigger", "manual"),
+					resource.TestCheckResourceAttrSet(
+						"data.brightbox_image.foobar", "disk_size"),
+					resource.TestCheckResourceAttrSet(
+						"data.brightbox_image.foobar", "virtual_size"),
+					resource.TestCheckNoResourceAttr(
+						"data.brightbox_image.foobar", "min_ram"),
+					resource.TestMatchResourceAttr(
+						"data.brightbox_image.foobar", "owner", accountRe),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "licence_name", ""),
+					resource.TestCheckNoResourceAttr(
+						"data.brightbox_image.foobar", "ancestor_id"),
 				),
 			},
 		},

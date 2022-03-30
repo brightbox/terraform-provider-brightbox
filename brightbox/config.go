@@ -1,13 +1,14 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"os"
 	"strings"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/gophercloud/gophercloud"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 const (
@@ -31,58 +32,73 @@ type CompositeClient struct {
 	OrbitClient *gophercloud.ServiceClient
 }
 
+type authdetails struct {
+	APIClient string
+	APISecret string
+	UserName  string
+	password  string
+	Account   string
+	APIURL    string
+	OrbitURL  string
+}
+
 // obtainCloudClient creates a new Composite client using details from
 // the environment
-func obtainCloudClient() (*CompositeClient, error) {
+func obtainCloudClient() (*CompositeClient, diag.Diagnostics) {
 	log.Printf("[DEBUG] obtainCloudClient")
-	return (&authdetails{
-		APIClient: getenvWithDefault(clientEnvVar,
-			defaultClientID),
-		APISecret: getenvWithDefault(clientSecretEnvVar,
-			defaultClientSecret),
-		UserName: os.Getenv(usernameEnvVar),
-		password: os.Getenv(passwordEnvVar),
-		Account:  os.Getenv(accountEnvVar),
-		APIURL: getenvWithDefault(apiURLEnvVar,
-			brightbox.DefaultRegionAPIURL),
-		OrbitURL: getenvWithDefault(orbitURLEnvVar,
-			brightbox.DefaultOrbitAuthURL),
-	}).Client()
+	return configureClient(
+		context.Background(),
+		authdetails{
+			APIClient: getenvWithDefault(clientEnvVar,
+				defaultClientID),
+			APISecret: getenvWithDefault(clientSecretEnvVar,
+				defaultClientSecret),
+			UserName: os.Getenv(usernameEnvVar),
+			password: os.Getenv(passwordEnvVar),
+			Account:  os.Getenv(accountEnvVar),
+			APIURL:   getenvWithDefault(apiURLEnvVar, ""),
+			OrbitURL: getenvWithDefault(orbitURLEnvVar, ""),
+		},
+	)
 }
 
 // Validate account config entries
-func (authd *authdetails) validateConfig() error {
+func validateConfig(authd authdetails) diag.Diagnostics {
+	var result []diag.Diagnostic
 	log.Printf("[DEBUG] validateConfig")
 	if strings.HasPrefix(authd.APIClient, appPrefix) {
 		log.Printf("[DEBUG] Detected OAuth Application. Validating User details.")
 		if authd.UserName == "" || authd.password == "" {
-			return fmt.Errorf("user Credentials are missing. Please supply a Username and One Time Authentication code")
+			result = append(result, diag.Diagnostic{Severity: diag.Error, Summary: "validateConfig", Detail: "User Credentials are missing. Please supply a Username and One Time Authentication code"})
 		}
 		if authd.Account == "" {
-			return fmt.Errorf("must specify Account with User Credentials")
+			result = append(result, diag.Diagnostic{Severity: diag.Error, Summary: "validateConfig", Detail: "Must specify Account with User Credentials"})
 		}
 	} else {
 		log.Printf("[DEBUG] Detected API Client.")
 		if authd.UserName != "" || authd.password != "" {
-			return fmt.Errorf("user Credentials should be blank with an API Client")
+			result = append(result, diag.Diagnostic{Severity: diag.Error, Summary: "validateConfig", Detail: "User Credentials should be blank with an API Client"})
 		}
 	}
-	return nil
+	return result
 }
 
-func (authd *authdetails) Client() (*CompositeClient, error) {
-	if err := authd.validateConfig(); err != nil {
+func configureClient(ctx context.Context, authd authdetails) (*CompositeClient, diag.Diagnostics) {
+	if err := validateConfig(authd); err.HasError() {
 		return nil, err
 	}
 
-	apiclient, orbitclient, err := authd.authenticatedClient()
-	if err != nil {
+	apiclient, orbitclient, err := authenticatedClients(ctx, authd)
+	if err.HasError() {
 		return nil, err
 	}
 
-	log.Printf("[INFO] Brightbox Client configured for URL: %s", apiclient.BaseURL.String())
-	log.Printf("[INFO] Provisioning to account %s", apiclient.AccountID)
-	log.Printf("[INFO] Orbit Client configured for URL: %s", orbitclient.ResourceBaseURL())
+	if apiclient != nil {
+		log.Printf("[INFO] Brightbox Client configured for URL: %s", apiclient.ResourceBaseURL())
+	}
+	if orbitclient != nil {
+		log.Printf("[INFO] Orbit Client configured for URL: %s", orbitclient.ResourceBaseURL())
+	}
 
 	composite := &CompositeClient{
 		APIClient:   apiclient,

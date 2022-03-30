@@ -42,7 +42,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"username": "fred",
 				"password": "fred",
 			},
-			err: "must specify Account with User Credentials",
+			err: "Must specify Account with User Credentials",
 		},
 		{
 			name: "Apiclient with User Credentials",
@@ -53,7 +53,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"password":  "fred",
 				"account":   "acc-12345",
 			},
-			err: "user Credentials should be blank with an API Client",
+			err: "User Credentials should be blank with an API Client",
 		},
 		{
 			name: "Apiclient with User",
@@ -62,7 +62,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"username":  "fred",
 			},
-			err: "user Credentials should be blank with an API Client",
+			err: "User Credentials should be blank with an API Client",
 		},
 		{
 			name: "Apiclient with password",
@@ -71,7 +71,7 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apisecret": "mysecret",
 				"password":  "fred",
 			},
-			err: "user Credentials should be blank with an API Client",
+			err: "User Credentials should be blank with an API Client",
 		},
 		{
 			name: "Specific app id with missing user",
@@ -79,17 +79,17 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apiclient": "app-12345",
 				"apisecret": "mysecret",
 				"password":  "fred",
+				"account":   "acc-12345",
 			},
-			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 		{
 			name: "Default app id with missing user",
 			raw: map[string]interface{}{
-				"apiclient": "app-12345",
-				"apisecret": "mysecret",
-				"password":  "fred",
+				"password": "fred",
+				"account":  "acc-12345",
 			},
-			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 		{
 			name: "Specific app id with missing password",
@@ -97,15 +97,17 @@ func TestProvider_badConfigs(t *testing.T) {
 				"apiclient": "app-12345",
 				"apisecret": "mysecret",
 				"user":      "fred",
+				"account":   "acc-12345",
 			},
-			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 		{
 			name: "Default app id with missing password",
 			raw: map[string]interface{}{
-				"user": "fred",
+				"user":    "fred",
+				"account": "acc-12345",
 			},
-			err: "user Credentials are missing. Please supply a Username and One Time Authentication code",
+			err: "User Credentials are missing. Please supply a Username and One Time Authentication code",
 		},
 	}
 
@@ -118,9 +120,9 @@ func TestProvider_badConfigs(t *testing.T) {
 				if !err.HasError() {
 					t.Errorf("Expected %q, but no error was returned", example.err)
 				} else {
-					for i := range err {
-						if err[i].Summary != example.err {
-							t.Errorf("Got error %q, expected %q", err[i].Summary, example.err)
+					for _, v := range err {
+						if v.Detail != example.err {
+							t.Errorf("Got error %q, expected %q", v.Detail, example.err)
 						}
 					}
 				}
@@ -141,9 +143,9 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
 	}
 
-	err := testAccProvider.Configure(context.Background(), terraform.NewResourceConfigRaw(nil))
-	if err != nil {
-		t.Fatal(err)
+	diags := testAccProvider.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
+	if diags.HasError() {
+		t.Fatal(diags[0].Summary)
 	}
 }
 

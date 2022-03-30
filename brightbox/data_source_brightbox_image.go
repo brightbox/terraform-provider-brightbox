@@ -1,31 +1,34 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"regexp"
 	"sort"
 	"time"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	imageConst "github.com/brightbox/gobrightbox/v2/status/image"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
-	validImageStatusMap = map[string]bool{
-		"available":  true,
-		"deprecated": true,
+	validImageStatusMap = map[imageConst.Status]bool{
+		imageConst.Available:  true,
+		imageConst.Deprecated: true,
 	}
-	validImageStatus        = []string{"available", "deprecated"}
-	validImageArchitectures = []string{"x86_64", "i686"}
-	validImageSourceTypes   = []string{"upload", "snapshot"}
+	validImageStatus         = []string{"available", "deprecated"}
+	validImageArchitectures  = []string{"x86_64", "i686"}
+	validImageSourceTypes    = []string{"upload", "snapshot"}
+	validImageSourceTriggers = []string{"manual", "schedule"}
 )
 
 func dataSourceBrightboxImage() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Image",
-		Read:        dataSourceBrightboxImageRead,
+		ReadContext: dataSourceBrightboxImageRead,
 
 		Schema: map[string]*schema.Schema{
 
@@ -87,6 +90,13 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Computed:    true,
 			},
 
+			"min_ram": {
+				Description: "The actual size of the data within this image in Megabytes",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+			},
+
 			"most_recent": {
 				Description: "Select the most recent image",
 				Type:        schema.TypeBool,
@@ -120,6 +130,24 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
+			},
+
+			"source": {
+				Description: "Name of theSource for this image",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"source_trigger": {
+				Description: "Source trigger for this image (manual or schedule)",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ValidateFunc: validation.StringInSlice(
+					validImageSourceTriggers,
+					false,
+				),
 			},
 
 			"source_type": {
@@ -162,53 +190,62 @@ func dataSourceBrightboxImage() *schema.Resource {
 }
 
 func dataSourceBrightboxImageRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Image data read called. Retrieving image list")
 
-	images, err := client.Images()
+	images, err := client.Images(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving image list: %s", err)
+		return diag.FromErr(err)
 	}
 
-	image, err := findImageByFilter(images, d)
+	image, errs := findImageByFilter(images, d)
 
-	if err != nil {
+	if errs.HasError() {
 		// Remove any existing image id on error
 		d.SetId("")
-		return err
+		return errs
 	}
 
 	log.Printf("[DEBUG] Single Image found: %s", image.ID)
+
 	return dataSourceBrightboxImagesImageAttributes(d, image)
 }
 
 func dataSourceBrightboxImagesImageAttributes(
 	d *schema.ResourceData,
 	image *brightbox.Image,
-) error {
+) diag.Diagnostics {
 	log.Printf("[DEBUG] Image details: %#v", image)
 
 	d.SetId(image.ID)
 	d.Set("name", image.Name)
 	d.Set("username", image.Username)
-	d.Set("status", image.Status)
+	d.Set("status", image.Status.String())
 	d.Set("locked", image.Locked)
 	d.Set("description", image.Description)
-	d.Set("arch", image.Arch)
+	d.Set("arch", image.Arch.String())
 	d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
 	d.Set("official", image.Official)
 	d.Set("public", image.Public)
 	d.Set("owner", image.Owner)
+	d.Set("source", image.Source)
+	d.Set("source_trigger", image.SourceTrigger)
 	d.Set("source_type", image.SourceType)
 	d.Set("virtual_size", image.VirtualSize)
 	d.Set("disk_size", image.DiskSize)
 	d.Set("compatibility_mode", image.CompatibilityMode)
-	d.Set("ancestor_id", image.AncestorID)
 	d.Set("licence_name", image.LicenceName)
+	if image.MinRAM != nil {
+		d.Set("min_ram", image.MinRAM)
+	}
+	if image.Ancestor != nil {
+		d.Set("ancestor_id", image.Ancestor.ID)
+	}
 
 	return nil
 }
@@ -216,15 +253,20 @@ func dataSourceBrightboxImagesImageAttributes(
 func findImageByFilter(
 	images []brightbox.Image,
 	d *schema.ResourceData,
-) (*brightbox.Image, error) {
+) (*brightbox.Image, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	nameRe, err := regexp.Compile(d.Get("name").(string))
 	if err != nil {
-		return nil, err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 
 	descRe, err := regexp.Compile(d.Get("description").(string))
 	if err != nil {
-		return nil, err
+		diags = append(diags, diag.FromErr(err)...)
+	}
+
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	var results []brightbox.Image
@@ -241,11 +283,11 @@ func findImageByFilter(
 		if recent {
 			return mostRecentImage(results), nil
 		} else {
-			return nil, fmt.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+			return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
 				"specific search criteria, or set `most_recent` attribute to true.", len(results))
 		}
 	} else {
-		return nil, fmt.Errorf("Your query returned no results. " +
+		return nil, diag.Errorf("Your query returned no results. " +
 			"Please change your search criteria and try again.")
 	}
 }
@@ -269,21 +311,49 @@ func imageMatch(
 	if ok && !descRe.MatchString(image.Description) {
 		return false
 	}
-	source_type, ok := d.GetOk("source_type")
-	if ok && source_type.(string) != image.SourceType {
+	source, ok := d.GetOk("source")
+	if ok && source.(string) != image.Source {
+		return false
+	}
+	sourceTrigger, ok := d.GetOk("source_trigger")
+	if ok && sourceTrigger.(string) != image.SourceTrigger {
+		return false
+	}
+	sourceType, ok := d.GetOk("source_type")
+	if ok && sourceType.(string) != image.SourceType {
 		return false
 	}
 	status, ok := d.GetOk("status")
-	if ok && status.(string) != image.Status {
+	if ok && status.(string) != image.Status.String() {
 		return false
 	}
 	owner, ok := d.GetOk("owner")
 	if ok && owner.(string) != image.Owner {
 		return false
 	}
-	arch, ok := d.GetOk("arch")
-	if ok && arch.(string) != image.Arch {
+	username, ok := d.GetOk("username")
+	if ok && username.(string) != image.Username {
 		return false
+	}
+	licenceName, ok := d.GetOk("licence_name")
+	if ok && licenceName.(string) != image.LicenceName {
+		return false
+	}
+	arch, ok := d.GetOk("arch")
+	if ok && arch.(string) != image.Arch.String() {
+		return false
+	}
+	if image.Ancestor != nil {
+		ancestorID, ok := d.GetOk("ancestor_id")
+		if ok && ancestorID.(string) != image.Ancestor.ID {
+			return false
+		}
+	}
+	if image.MinRAM != nil {
+		minRAM, ok := d.GetOk("min_ram")
+		if ok && minRAM.(int) != *image.MinRAM {
+			return false
+		}
 	}
 	// Binary choices are treated as Yes/Not bothered
 	// due to false being treated by Terraform as null

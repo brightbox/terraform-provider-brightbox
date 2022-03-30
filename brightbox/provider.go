@@ -1,7 +1,10 @@
 package brightbox
 
 import (
-	brightbox "github.com/brightbox/gobrightbox"
+	"context"
+
+	"github.com/brightbox/gobrightbox/v2/endpoint"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -30,13 +33,13 @@ func Provider() *schema.Provider {
 			"apiurl": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(apiURLEnvVar, brightbox.DefaultRegionAPIURL),
+				DefaultFunc: schema.EnvDefaultFunc(apiURLEnvVar, endpoint.DefaultBaseURL),
 				Description: "Brightbox Cloud Api URL for selected Region",
 			},
 			"orbit_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(orbitURLEnvVar, brightbox.DefaultOrbitAuthURL),
+				DefaultFunc: schema.EnvDefaultFunc(orbitURLEnvVar, endpoint.DefaultOrbitURL),
 				Description: "Brightbox Cloud Orbit URL for selected Region",
 			},
 			"password": {
@@ -54,35 +57,38 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"brightbox_image":         dataSourceBrightboxImage(),
-			"brightbox_database_type": dataSourceBrightboxDatabaseType(),
-			"brightbox_server_group":  dataSourceBrightboxServerGroup(),
-			"brightbox_server_type":   dataSourceBrightboxServerType(),
+			"brightbox_image": dataSourceBrightboxImage(),
+			// "brightbox_database_type": dataSourceBrightboxDatabaseType(),
+			// "brightbox_server_group":  dataSourceBrightboxServerGroup(),
+			// "brightbox_server_type":   dataSourceBrightboxServerType(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"brightbox_server":          resourceBrightboxServer(),
-			"brightbox_cloudip":         resourceBrightboxCloudip(),
-			"brightbox_server_group":    resourceBrightboxServerGroup(),
-			"brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
-			"brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
-			"brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
-			"brightbox_database_server": resourceBrightboxDatabaseServer(),
-			"brightbox_orbit_container": resourceBrightboxContainer(),
-			"brightbox_api_client":      resourceBrightboxAPIClient(),
-			"brightbox_config_map":      resourceBrightboxConfigMap(),
+			// "brightbox_server":          resourceBrightboxServer(),
+			// "brightbox_cloudip":         resourceBrightboxCloudip(),
+			// "brightbox_server_group":    resourceBrightboxServerGroup(),
+			// "brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
+			// "brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
+			// "brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
+			// "brightbox_database_server": resourceBrightboxDatabaseServer(),
+			// "brightbox_orbit_container": resourceBrightboxContainer(),
+			// "brightbox_api_client":      resourceBrightboxAPIClient(),
+			// "brightbox_config_map":      resourceBrightboxConfigMap(),
 		},
-		ConfigureFunc: providerConfigure,
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	return (&authdetails{
-		APIClient: d.Get("apiclient").(string),
-		APISecret: d.Get("apisecret").(string),
-		UserName:  d.Get("username").(string),
-		password:  d.Get("password").(string),
-		Account:   d.Get("account").(string),
-		APIURL:    d.Get("apiurl").(string),
-		OrbitURL:  d.Get("orbit_url").(string),
-	}).Client()
+func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	return configureClient(
+		ctx,
+		authdetails{
+			APIClient: d.Get("apiclient").(string),
+			APISecret: d.Get("apisecret").(string),
+			UserName:  d.Get("username").(string),
+			password:  d.Get("password").(string),
+			Account:   d.Get("account").(string),
+			APIURL:    d.Get("apiurl").(string),
+			OrbitURL:  d.Get("orbit_url").(string),
+		},
+	)
 }
