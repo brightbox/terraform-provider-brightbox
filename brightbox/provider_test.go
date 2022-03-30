@@ -121,8 +121,8 @@ func TestProvider_badConfigs(t *testing.T) {
 					t.Errorf("Expected %q, but no error was returned", example.err)
 				} else {
 					for _, v := range err {
-						if v.Detail != example.err {
-							t.Errorf("Got error %q, expected %q", v.Detail, example.err)
+						if v.Summary != example.err {
+							t.Errorf("Got error %q, expected %q", v.Summary, example.err)
 						}
 					}
 				}
@@ -143,10 +143,10 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
 	}
 
-	diags := testAccProvider.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
-	if diags.HasError() {
-		t.Fatal(diags[0].Summary)
-	}
+	// diags := testAccProvider.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
+	// if diags.HasError() {
+	// 	t.Fatal(diags[0].Summary)
+	// }
 }
 
 // This delegation activates the sweepers

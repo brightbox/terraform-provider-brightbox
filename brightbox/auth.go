@@ -45,7 +45,7 @@ func authenticatedClients(ctx context.Context, authd authdetails) (*brightbox.Cl
 		log.Printf("[DEBUG] Enabling HTTP requests/responses tracing")
 		authContext = contextWithLoggedHTTPClient(authContext)
 	}
-	log.Printf("[DEBUG] Fetching API Client")
+	log.Printf("[DEBUG] Fetching Infrastructure Client")
 	client, err := brightbox.Connect(authContext, conf)
 	if err != nil {
 		return nil, nil, diag.FromErr(err)

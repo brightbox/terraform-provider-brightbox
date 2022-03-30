@@ -65,25 +65,26 @@ func obtainCloudClient() (*CompositeClient, diag.Diagnostics) {
 // Validate account config entries
 func validateConfig(authd authdetails) diag.Diagnostics {
 	var result []diag.Diagnostic
-	log.Printf("[DEBUG] validateConfig")
+	log.Printf("[DEBUG] Validating Config")
 	if strings.HasPrefix(authd.APIClient, appPrefix) {
 		log.Printf("[DEBUG] Detected OAuth Application. Validating User details.")
 		if authd.UserName == "" || authd.password == "" {
-			result = append(result, diag.Diagnostic{Severity: diag.Error, Summary: "validateConfig", Detail: "User Credentials are missing. Please supply a Username and One Time Authentication code"})
+			result = append(result, diag.Errorf("User Credentials are missing. Please supply a Username and One Time Authentication code")...)
 		}
 		if authd.Account == "" {
-			result = append(result, diag.Diagnostic{Severity: diag.Error, Summary: "validateConfig", Detail: "Must specify Account with User Credentials"})
+			result = append(result, diag.Errorf("Must specify Account with User Credentials")...)
 		}
 	} else {
 		log.Printf("[DEBUG] Detected API Client.")
 		if authd.UserName != "" || authd.password != "" {
-			result = append(result, diag.Diagnostic{Severity: diag.Error, Summary: "validateConfig", Detail: "User Credentials should be blank with an API Client"})
+			result = append(result, diag.Errorf("User Credentials should be blank with an API Client")...)
 		}
 	}
 	return result
 }
 
 func configureClient(ctx context.Context, authd authdetails) (*CompositeClient, diag.Diagnostics) {
+	log.Printf("[DEBUG] Configuring Brightbox Clients")
 	if err := validateConfig(authd); err.HasError() {
 		return nil, err
 	}
