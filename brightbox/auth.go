@@ -3,6 +3,7 @@ package brightbox
 import (
 	"context"
 	"log"
+	"net/http"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/brightbox/gobrightbox/v2/clientcredentials"
@@ -16,9 +17,56 @@ import (
 )
 
 func authenticatedClients(ctx context.Context, authd authdetails) (*brightbox.Client, *gophercloud.ServiceClient, diag.Diagnostics) {
-	var conf brightbox.Oauth2
+	authContext := context.Background()
+	if logging.IsDebugOrHigher() {
+		log.Printf("[DEBUG] Enabling HTTP requests/responses tracing")
+		authContext = contextWithLoggedHTTPClient(authContext)
+	}
+
+	log.Printf("[DEBUG] Fetching Infrastructure Client")
+	client, err := brightbox.Connect(authContext, confFromAuthd(authd))
+	if err != nil {
+		return nil, nil, diag.FromErr(err)
+	}
+
+	log.Printf("[DEBUG] Building Orbit Client")
+	oe, err := orbitEndpointFromAuthd(authd)
+	if err != nil {
+		return nil, nil, diag.FromErr(err)
+	}
+
+	token, err := client.AuthToken()
+	if err != nil {
+		return nil, nil, diag.FromErr(err)
+	}
+
+	return client, orbitServiceClient(token, oe, client.HTTPClient()), nil
+}
+
+func orbitServiceClient(token, endpoint string, httpClient *http.Client) *gophercloud.ServiceClient {
+	result := &gophercloud.ServiceClient{
+		ProviderClient: &gophercloud.ProviderClient{
+			TokenID: token,
+		},
+		Endpoint: endpoint,
+	}
+	if httpClient != nil {
+		result.ProviderClient.HTTPClient = *httpClient
+	}
+	return result
+}
+
+func orbitEndpointFromAuthd(authd authdetails) (string, error) {
+	conf := &endpoint.Config{
+		BaseURL: authd.OrbitURL,
+		Account: authd.Account,
+	}
+	return conf.StorageURL()
+}
+
+func confFromAuthd(authd authdetails) brightbox.Oauth2 {
 	if authd.UserName != "" || authd.password != "" {
-		conf = &passwordcredentials.Config{
+		return &passwordcredentials.Config{
 			UserName: authd.UserName,
 			Password: authd.password,
 			ID:       authd.APIClient,
@@ -26,31 +74,18 @@ func authenticatedClients(ctx context.Context, authd authdetails) (*brightbox.Cl
 			Config: endpoint.Config{
 				BaseURL: authd.APIURL,
 				Account: authd.Account,
-				Scopes:  endpoint.InfrastructureScope,
-			},
-		}
-	} else {
-		conf = &clientcredentials.Config{
-			ID:     authd.APIClient,
-			Secret: authd.APISecret,
-			Config: endpoint.Config{
-				BaseURL: authd.APIURL,
-				Scopes:  endpoint.InfrastructureScope,
+				Scopes:  endpoint.FullScope,
 			},
 		}
 	}
-
-	authContext := context.Background()
-	if logging.IsDebugOrHigher() {
-		log.Printf("[DEBUG] Enabling HTTP requests/responses tracing")
-		authContext = contextWithLoggedHTTPClient(authContext)
+	return &clientcredentials.Config{
+		ID:     authd.APIClient,
+		Secret: authd.APISecret,
+		Config: endpoint.Config{
+			BaseURL: authd.APIURL,
+			Scopes:  endpoint.FullScope,
+		},
 	}
-	log.Printf("[DEBUG] Fetching Infrastructure Client")
-	client, err := brightbox.Connect(authContext, conf)
-	if err != nil {
-		return nil, nil, diag.FromErr(err)
-	}
-	return client, nil, nil
 }
 
 func contextWithLoggedHTTPClient(ctx context.Context) context.Context {

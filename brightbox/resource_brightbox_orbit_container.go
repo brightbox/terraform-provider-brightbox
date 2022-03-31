@@ -293,8 +293,14 @@ func getUpdateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.UpdateOpts {
 	opts := &containers.UpdateOpts{}
-	opts.ContainerRead = strings.Join(escapedStringList(sliceFromStringSet(d, "container_read")), ",")
-	opts.ContainerWrite = strings.Join(escapedStringList(sliceFromStringSet(d, "container_write")), ",")
+	if d.HasChange("container_read") {
+		temp := strings.Join(escapedStringList(sliceFromStringSet(d, "container_read")), ",")
+		opts.ContainerRead = &temp
+	}
+	if d.HasChange("container_write") {
+		temp := strings.Join(escapedStringList(sliceFromStringSet(d, "container_write")), ",")
+		opts.ContainerWrite = &temp
+	}
 	if attr, ok := d.GetOk("metadata"); ok {
 		opts.Metadata = escapedStringMetadata(attr)
 	}
@@ -303,10 +309,12 @@ func getUpdateContainerOptions(
 		opts.RemoveMetadata = removedMetadataKeys(old, new)
 	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
-		opts.ContainerSyncTo = escapedString(attr)
+		temp := escapedString(attr)
+		opts.ContainerSyncTo = &temp
 	}
 	if attr, ok := d.GetOk("container_sync_key"); ok {
-		opts.ContainerSyncKey = escapedString(attr)
+		temp := escapedString(attr)
+		opts.ContainerSyncKey = &temp
 	}
 	if attr, ok := d.GetOk("versions_location"); ok {
 		if attr == "" {

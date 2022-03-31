@@ -2,11 +2,14 @@ package brightbox
 
 import (
 	"context"
+	"time"
 
 	"github.com/brightbox/gobrightbox/v2/endpoint"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+const defaultTimeout = 5 * time.Minute
 
 // Provider is the Brightbox Terraform driver root
 func Provider() *schema.Provider {
@@ -39,7 +42,7 @@ func Provider() *schema.Provider {
 			"orbit_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(orbitURLEnvVar, endpoint.DefaultOrbitURL),
+				DefaultFunc: schema.EnvDefaultFunc(orbitURLEnvVar, endpoint.DefaultOrbitBaseURL),
 				Description: "Brightbox Cloud Orbit URL for selected Region",
 			},
 			"password": {
@@ -70,7 +73,7 @@ func Provider() *schema.Provider {
 			// "brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
 			// "brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
 			// "brightbox_database_server": resourceBrightboxDatabaseServer(),
-			// "brightbox_orbit_container": resourceBrightboxContainer(),
+			"brightbox_orbit_container": resourceBrightboxContainer(),
 			// "brightbox_api_client":      resourceBrightboxAPIClient(),
 			// "brightbox_config_map":      resourceBrightboxConfigMap(),
 		},

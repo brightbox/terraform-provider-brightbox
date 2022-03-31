@@ -185,9 +185,9 @@ func init() {
 	resource.AddTestSweepers("orbit_containers", &resource.Sweeper{
 		Name: "orbit_containers",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			client, errs := obtainCloudClient()
+			if errs.HasError() {
+				return fmt.Errorf("error obtaining cloud client")
 			}
 			result, err := containers.Delete(client.OrbitClient, containerName).Extract()
 			if err != nil {
