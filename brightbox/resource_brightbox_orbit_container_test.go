@@ -1,8 +1,10 @@
 package brightbox
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"strings"
 	"testing"
 
 	"github.com/gophercloud/gophercloud"
@@ -97,6 +99,9 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 
 func testAccCheckBrightboxOrbitContainerDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*CompositeClient).OrbitClient
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	client.ProviderClient.Context = ctx
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "brightbox_orbit_container" {
@@ -109,7 +114,7 @@ func testAccCheckBrightboxOrbitContainerDestroy(s *terraform.State) error {
 		// Wait
 
 		err := getresult.Err
-		if err != nil && err.Error() != "Resource not found" {
+		if err != nil && !strings.HasPrefix(err.Error(), "Resource not found") {
 			return fmt.Errorf(
 				"Error waiting for container %s to be destroyed: %s",
 				rs.Primary.ID, getresult.Err)

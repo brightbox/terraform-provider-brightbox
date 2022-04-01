@@ -1,12 +1,14 @@
 package brightbox
 
 import (
+	"context"
 	"log"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -17,11 +19,11 @@ const (
 
 func resourceBrightboxContainer() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Orbit Container resource",
-		Create:      resourceBrightboxContainerCreate,
-		Read:        resourceBrightboxContainerRead,
-		Update:      resourceBrightboxContainerUpdate,
-		Delete:      resourceBrightboxContainerDelete,
+		Description:   "Provides a Brightbox Orbit Container resource",
+		CreateContext: resourceBrightboxContainerCreate,
+		ReadContext:   resourceBrightboxContainerRead,
+		UpdateContext: resourceBrightboxContainerUpdate,
+		DeleteContext: resourceBrightboxContainerDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -125,10 +127,12 @@ func resourceBrightboxContainer() *schema.Resource {
 }
 
 func resourceBrightboxContainerCreate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).OrbitClient
+	client.ProviderClient.Context = ctx
 
 	log.Printf("[INFO] Creating Container")
 	createOpts := getCreateContainerOptions(d)
@@ -137,73 +141,68 @@ func resourceBrightboxContainerCreate(
 	log.Printf("[DEBUG] Create path is: %s", currentContainerPath)
 	container, err := containers.Create(client, currentContainerPath, createOpts).Extract()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[INFO] Container created with TransID %s", container.TransID)
 	d.SetId(currentContainerPath)
-	return resourceBrightboxContainerRead(d, meta)
+	return resourceBrightboxContainerRead(ctx, d, meta)
 }
 
 func resourceBrightboxContainerDelete(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).OrbitClient
+	client.ProviderClient.Context = ctx
 
 	log.Printf("[INFO] Deleting Container")
 	container, err := containers.Delete(client, d.Id()).Extract()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[INFO] Container deleted with TransID %s", container.TransID)
 	return nil
 }
 
 func resourceBrightboxContainerUpdate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).OrbitClient
+	client.ProviderClient.Context = ctx
 
 	log.Printf("[INFO] Updating Container")
 	updateOpts := getUpdateContainerOptions(d)
 	log.Printf("[INFO] Container update configuration: %#v", updateOpts)
 	container, err := containers.Update(client, d.Id(), updateOpts).Extract()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	log.Printf("[INFO] Container updated with TransID %s", container.TransID)
-	return resourceBrightboxContainerRead(d, meta)
+	return resourceBrightboxContainerRead(ctx, d, meta)
 }
 
 func resourceBrightboxContainerRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).OrbitClient
+	client.ProviderClient.Context = ctx
 
 	log.Printf("[DEBUG] Reading container: %s", d.Id())
 	result := containers.Get(client, d.Id(), nil)
 	getresult, err := result.Extract()
 	if err != nil {
 		log.Printf("[DEBUG] Checking if container is deleted")
-		return CheckDeleted(d, result.Err, "container")
+		return diag.FromErr(CheckDeleted(d, result.Err, "container"))
 	}
 	log.Printf("[INFO] Container read with TransID %s", getresult.TransID)
 	metadata, _ := result.ExtractMetadata()
 	return setContainerAttributes(d, getresult, metadata)
 }
-
-//func resourceBrightboxContainerExists(
-//	d *schema.ResourceData,
-//	meta interface{},
-//) (bool, error) {
-//	client := meta.(*CompositeClient).OrbitClient
-//
-//	log.Printf("[DEBUG] Checking if container exists: %s", d.Id())
-//	getresult := containers.Get(client, d.Id(), nil)
-//	return getresult.Err == nil, getresult.Err
-//}
 
 func containerPath(
 	d *schema.ResourceData,
@@ -253,40 +252,41 @@ func setContainerAttributes(
 	d *schema.ResourceData,
 	attr *containers.GetHeader,
 	metadata map[string]string,
-) error {
+) diag.Diagnostics {
+	var diags diag.Diagnostics
 	log.Printf("[DEBUG] Setting Container details from %#v", attr)
 	if err := setUnescapedString(d, "name", d.Id()); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := setUnescapedStringSet(d, "container_read", attr.Read); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := setUnescapedStringSet(d, "container_write", attr.Write); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := setUnescapedString(d, "versions_location", attr.VersionsLocation); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := setUnescapedString(d, "history_location", attr.HistoryLocation); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := setUnescapedStringMap(d, "metadata", metadata); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	//Computed
 	if err := setUnescapedString(d, "storage_policy", attr.StoragePolicy); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := d.Set("object_count", attr.ObjectCount); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := d.Set("created_at", timeFromFloat(attr.Timestamp).Format(time.RFC3339)); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := d.Set("bytes_used", attr.BytesUsed); err != nil {
-		return err
+		diags = append(diags, diag.FromErr(err)...)
 	}
-	return nil
+	return diags
 }
 
 func getUpdateContainerOptions(

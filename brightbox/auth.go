@@ -16,17 +16,26 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func authenticatedClients(ctx context.Context, authd authdetails) (*brightbox.Client, *gophercloud.ServiceClient, diag.Diagnostics) {
-	authContext := context.Background()
-	if logging.IsDebugOrHigher() {
-		log.Printf("[DEBUG] Enabling HTTP requests/responses tracing")
-		authContext = contextWithLoggedHTTPClient(authContext)
-	}
+func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbox.Client, *gophercloud.ServiceClient, diag.Diagnostics) {
+	apiContext, apiCancel := context.WithCancel(context.Background())
+	defer apiCancel()
+	apiContext = contextWithLoggedHTTPClient(apiContext)
 
 	log.Printf("[DEBUG] Fetching Infrastructure Client")
-	client, err := brightbox.Connect(authContext, confFromAuthd(authd))
+	client, err := brightbox.Connect(apiContext, confFromAuthd(authd))
 	if err != nil {
 		return nil, nil, diag.FromErr(err)
+	}
+
+	if authd.Account == "" {
+		log.Printf("[INFO] Obtaining default account")
+
+		accounts, err := client.Accounts(authCtx)
+		if err != nil {
+			return nil, nil, diag.FromErr(err)
+		}
+		authd.Account = accounts[0].ID
+		log.Printf("[DEBUG] default account is %v", authd.Account)
 	}
 
 	log.Printf("[DEBUG] Building Orbit Client")
@@ -35,25 +44,30 @@ func authenticatedClients(ctx context.Context, authd authdetails) (*brightbox.Cl
 		return nil, nil, diag.FromErr(err)
 	}
 
-	token, err := client.AuthToken()
-	if err != nil {
-		return nil, nil, diag.FromErr(err)
-	}
-
-	return client, orbitServiceClient(token, oe, client.HTTPClient()), nil
+	storageContext, storageCancel := context.WithCancel(context.Background())
+	defer storageCancel()
+	storageContext = contextWithLoggedHTTPClient(storageContext)
+	orbit, err := orbitServiceClient(storageContext, client, oe)
+	return client, orbit, diag.FromErr(err)
 }
 
-func orbitServiceClient(token, endpoint string, httpClient *http.Client) *gophercloud.ServiceClient {
-	result := &gophercloud.ServiceClient{
-		ProviderClient: &gophercloud.ProviderClient{
-			TokenID: token,
-		},
-		Endpoint: endpoint,
+func orbitServiceClient(serviceContext context.Context, client *brightbox.Client, endpoint string) (*gophercloud.ServiceClient, error) {
+	pc := &gophercloud.ProviderClient{}
+	if httpClient, ok := serviceContext.Value(oauth2.HTTPClient).(*http.Client); ok {
+		pc.HTTPClient = *httpClient
 	}
-	if httpClient != nil {
-		result.ProviderClient.HTTPClient = *httpClient
+	err := pc.SetTokenAndAuthResult(client)
+	if err != nil {
+		return nil, err
 	}
-	return result
+	pc.ReauthFunc = func() error {
+		return pc.SetTokenAndAuthResult(pc.GetAuthResult())
+	}
+
+	return &gophercloud.ServiceClient{
+		ProviderClient: pc,
+		Endpoint:       endpoint,
+	}, nil
 }
 
 func orbitEndpointFromAuthd(authd authdetails) (string, error) {
@@ -90,6 +104,9 @@ func confFromAuthd(authd authdetails) brightbox.Oauth2 {
 
 func contextWithLoggedHTTPClient(ctx context.Context) context.Context {
 	client := cleanhttp.DefaultClient()
-	client.Transport = logging.NewTransport("Brightbox", client.Transport)
+	if logging.IsDebugOrHigher() {
+		log.Printf("[DEBUG] Enabling HTTP requests/responses tracing")
+		client.Transport = logging.NewTransport("Brightbox", client.Transport)
+	}
 	return context.WithValue(ctx, oauth2.HTTPClient, client)
 }

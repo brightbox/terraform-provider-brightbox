@@ -46,8 +46,10 @@ type authdetails struct {
 // the environment
 func obtainCloudClient() (*CompositeClient, diag.Diagnostics) {
 	log.Printf("[DEBUG] obtainCloudClient")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	return configureClient(
-		context.Background(),
+		ctx,
 		authdetails{
 			APIClient: getenvWithDefault(clientEnvVar,
 				defaultClientID),
@@ -107,5 +109,4 @@ func configureClient(ctx context.Context, authd authdetails) (*CompositeClient, 
 	}
 
 	return composite, nil
-
 }
