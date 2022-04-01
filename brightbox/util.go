@@ -463,3 +463,14 @@ func serverIDListFromNodes(
 	}
 	return nodeIds
 }
+
+// Create a ServerGroupMemberList from a list of servers
+func serverGroupMemberListFromNodes(
+	nodes []brightbox.Server,
+) brightbox.ServerGroupMemberList {
+	groupList := make([]brightbox.ServerGroupMember, len(nodes))
+	for i, node := range nodes {
+		groupList[i] = brightbox.ServerGroupMember{node.ID}
+	}
+	return brightbox.ServerGroupMemberList{groupList}
+}

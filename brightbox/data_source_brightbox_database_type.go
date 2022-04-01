@@ -1,20 +1,28 @@
 package brightbox
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceBrightboxDatabaseType() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Cloud SQL Database Type",
-		Read:        dataSourceBrightboxDatabaseTypeRead,
+		ReadContext: dataSourceBrightboxDatabaseTypeRead,
 
 		Schema: map[string]*schema.Schema{
+
+			"default": {
+				Description: "Is this the default database type",
+				Type:        schema.TypeBool,
+				Computed:    true,
+			},
 
 			"description": {
 				Description: "Description of this database type",
@@ -46,22 +54,23 @@ func dataSourceBrightboxDatabaseType() *schema.Resource {
 }
 
 func dataSourceBrightboxDatabaseTypeRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] DatabaseType data read called. Retrieving database type list")
 
-	databaseTypes, err := client.DatabaseServerTypes()
+	databaseTypes, err := client.DatabaseServerTypes(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving database type list: %s", err)
+		return diag.Errorf("Error retrieving database type list: %s", err)
 	}
 
 	databaseType, err := findDatabaseTypeByFilter(databaseTypes, d)
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[DEBUG] Single DatabaseType found: %s", databaseType.ID)
@@ -71,12 +80,13 @@ func dataSourceBrightboxDatabaseTypeRead(
 func dataSourceBrightboxDatabaseTypesAttributes(
 	d *schema.ResourceData,
 	databaseType *brightbox.DatabaseServerType,
-) error {
+) diag.Diagnostics {
 	log.Printf("[DEBUG] databaseType details: %#v", databaseType)
 
 	d.SetId(databaseType.ID)
 	d.Set("name", databaseType.Name)
 	d.Set("description", databaseType.Description)
+	d.Set("default", databaseType.Default)
 	d.Set("disk_size", databaseType.DiskSize)
 	d.Set("ram", databaseType.RAM)
 

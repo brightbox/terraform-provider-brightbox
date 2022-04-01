@@ -1,18 +1,20 @@
 package brightbox
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceBrightboxServerGroup() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Server Group",
-		Read:        dataSourceBrightboxServerGroupRead,
+		ReadContext: dataSourceBrightboxServerGroupRead,
 
 		Schema: map[string]*schema.Schema{
 			"default": {
@@ -45,21 +47,22 @@ func dataSourceBrightboxServerGroup() *schema.Resource {
 }
 
 func dataSourceBrightboxServerGroupRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Server Group data read called. Retrieving server group list")
 
-	groups, err := client.ServerGroups()
+	groups, err := client.ServerGroups(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving server group list: %s", err)
+		return diag.Errorf("Error retrieving server group list: %s", err)
 	}
 
 	group, err := findGroupByFilter(groups, d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[DEBUG] Single Server Group found: %s", group.ID)

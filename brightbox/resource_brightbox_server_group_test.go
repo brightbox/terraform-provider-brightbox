@@ -1,12 +1,13 @@
 package brightbox
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -108,7 +109,7 @@ func testAccCheckBrightboxServerGroupDestroy(s *terraform.State) error {
 		}
 
 		// Try to find the ServerGroup
-		_, err := client.ServerGroup(rs.Primary.ID)
+		_, err := client.ServerGroup(context.Background(), rs.Primary.ID)
 
 		// Wait
 
@@ -141,7 +142,7 @@ func testAccCheckBrightboxServerGroupExists(n string, serverGroup *brightbox.Ser
 		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 		// Try to find the ServerGroup
-		retrieveServerGroup, err := client.ServerGroup(rs.Primary.ID)
+		retrieveServerGroup, err := client.ServerGroup(context.Background(), rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -207,11 +208,13 @@ func init() {
 	resource.AddTestSweepers("server_group", &resource.Sweeper{
 		Name: "server_group",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.ServerGroups()
+			objects, err := client.APIClient.ServerGroups(ctx)
 			if err != nil {
 				return err
 			}
@@ -221,7 +224,7 @@ func init() {
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := client.APIClient.DestroyServerGroup(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyServerGroup(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}

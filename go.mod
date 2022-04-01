@@ -15,6 +15,7 @@ replace github.com/brightbox/gobrightbox/v2 => /home/neil/Dev/gobrightbox/v2
 
 require (
 	github.com/agext/levenshtein v1.2.2 // indirect
+	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.7.0 // indirect
