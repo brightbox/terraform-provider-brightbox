@@ -63,7 +63,7 @@ func Provider() *schema.Provider {
 			"brightbox_image": dataSourceBrightboxImage(),
 			// "brightbox_database_type": dataSourceBrightboxDatabaseType(),
 			// "brightbox_server_group":  dataSourceBrightboxServerGroup(),
-			// "brightbox_server_type":   dataSourceBrightboxServerType(),
+			"brightbox_server_type": dataSourceBrightboxServerType(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			// "brightbox_server":          resourceBrightboxServer(),

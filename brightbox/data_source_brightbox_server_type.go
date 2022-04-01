@@ -1,18 +1,20 @@
 package brightbox
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceBrightboxServerType() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Cloud SQL server type",
-		Read:        dataSourceBrightboxServerTypeRead,
+		ReadContext: dataSourceBrightboxServerTypeRead,
 
 		Schema: map[string]*schema.Schema{
 
@@ -64,22 +66,23 @@ func dataSourceBrightboxServerType() *schema.Resource {
 }
 
 func dataSourceBrightboxServerTypeRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] ServerType data read called. Retrieving server type list")
 
-	serverTypes, err := client.ServerTypes()
+	serverTypes, err := client.ServerTypes(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving server type list: %s", err)
+		return diag.Errorf("Error retrieving server type list: %s", err)
 	}
 
 	serverType, err := findServerTypeByFilter(serverTypes, d)
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Printf("[DEBUG] Single ServerType found: %s", serverType.ID)
@@ -89,17 +92,17 @@ func dataSourceBrightboxServerTypeRead(
 func dataSourceBrightboxServerTypesAttributes(
 	d *schema.ResourceData,
 	serverType *brightbox.ServerType,
-) error {
+) diag.Diagnostics {
 	log.Printf("[DEBUG] serverType details: %#v", serverType)
 
 	d.SetId(serverType.ID)
 	d.Set("name", serverType.Name)
-	d.Set("status", serverType.Status)
+	d.Set("status", serverType.Status.String())
 	d.Set("handle", serverType.Handle)
 	d.Set("cores", serverType.Cores)
 	d.Set("ram", serverType.RAM)
 	d.Set("disk_size", serverType.DiskSize)
-	d.Set("storage_type", serverType.StorageType)
+	d.Set("storage_type", serverType.StorageType.String())
 
 	return nil
 }
