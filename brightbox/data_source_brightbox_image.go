@@ -234,8 +234,8 @@ func dataSourceBrightboxImagesImageAttributes(
 	d.Set("public", image.Public)
 	d.Set("owner", image.Owner)
 	d.Set("source", image.Source)
-	d.Set("source_trigger", image.SourceTrigger)
-	d.Set("source_type", image.SourceType)
+	d.Set("source_trigger", image.SourceTrigger.String())
+	d.Set("source_type", image.SourceType.String())
 	d.Set("virtual_size", image.VirtualSize)
 	d.Set("disk_size", image.DiskSize)
 	d.Set("compatibility_mode", image.CompatibilityMode)
@@ -282,14 +282,12 @@ func findImageByFilter(
 		log.Printf("[DEBUG] Multiple results found and `most_recent` is set to: %t", recent)
 		if recent {
 			return mostRecentImage(results), nil
-		} else {
-			return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-				"specific search criteria, or set `most_recent` attribute to true.", len(results))
 		}
-	} else {
-		return nil, diag.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
+		return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+			"specific search criteria, or set `most_recent` attribute to true.", len(results))
 	}
+	return nil, diag.Errorf("Your query returned no results. " +
+		"Please change your search criteria and try again.")
 }
 
 //Match on the search filter - if the elements exist
@@ -316,11 +314,11 @@ func imageMatch(
 		return false
 	}
 	sourceTrigger, ok := d.GetOk("source_trigger")
-	if ok && sourceTrigger.(string) != image.SourceTrigger {
+	if ok && sourceTrigger.(string) != image.SourceTrigger.String() {
 		return false
 	}
 	sourceType, ok := d.GetOk("source_type")
-	if ok && sourceType.(string) != image.SourceType {
+	if ok && sourceType.(string) != image.SourceType.String() {
 		return false
 	}
 	status, ok := d.GetOk("status")
@@ -372,19 +370,13 @@ func imageMatch(
 	return true
 }
 
-type imageSort []brightbox.Image
-
-func (a imageSort) Len() int      { return len(a) }
-func (a imageSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a imageSort) Less(i, j int) bool {
-	itime := a[i].CreatedAt
-	jtime := a[j].CreatedAt
-	return itime.Unix() < jtime.Unix()
-}
-
 // Returns the most recent Image out of a slice of images
 func mostRecentImage(images []brightbox.Image) *brightbox.Image {
 	sortedImages := images
-	sort.Sort(imageSort(sortedImages))
-	return &sortedImages[len(sortedImages)-1]
+	sort.Slice(sortedImages, func(i, j int) bool {
+		itime := sortedImages[i].CreatedAt
+		jtime := sortedImages[j].CreatedAt
+		return itime.Unix() > jtime.Unix()
+	})
+	return &sortedImages[0]
 }
