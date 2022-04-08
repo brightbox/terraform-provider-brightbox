@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 	"regexp"
-	"sort"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/brightbox/gobrightbox/v2/status/arch"
 	imageConst "github.com/brightbox/gobrightbox/v2/status/image"
+	"github.com/brightbox/gobrightbox/v2/status/sourcetrigger"
+	"github.com/brightbox/gobrightbox/v2/status/sourcetype"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -19,10 +21,6 @@ var (
 		imageConst.Available:  true,
 		imageConst.Deprecated: true,
 	}
-	validImageStatus         = []string{"available", "deprecated"}
-	validImageArchitectures  = []string{"x86_64", "i686"}
-	validImageSourceTypes    = []string{"upload", "snapshot"}
-	validImageSourceTriggers = []string{"manual", "schedule"}
 )
 
 func dataSourceBrightboxImage() *schema.Resource {
@@ -45,7 +43,7 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ValidateFunc: validation.StringInSlice(
-					validImageArchitectures,
+					arch.ValidStrings,
 					false,
 				),
 			},
@@ -145,7 +143,7 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ValidateFunc: validation.StringInSlice(
-					validImageSourceTriggers,
+					sourcetrigger.ValidStrings,
 					false,
 				),
 			},
@@ -156,7 +154,7 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ValidateFunc: validation.StringInSlice(
-					validImageSourceTypes,
+					sourcetype.ValidStrings,
 					false,
 				),
 			},
@@ -167,7 +165,7 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ValidateFunc: validation.StringInSlice(
-					validImageStatus,
+					imageConst.ValidStrings,
 					false,
 				),
 			},
@@ -281,7 +279,7 @@ func findImageByFilter(
 		recent := d.Get("most_recent").(bool)
 		log.Printf("[DEBUG] Multiple results found and `most_recent` is set to: %t", recent)
 		if recent {
-			return mostRecentImage(results), nil
+			return mostRecent(results), nil
 		}
 		return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
 			"specific search criteria, or set `most_recent` attribute to true.", len(results))
@@ -368,15 +366,4 @@ func imageMatch(
 		return false
 	}
 	return true
-}
-
-// Returns the most recent Image out of a slice of images
-func mostRecentImage(images []brightbox.Image) *brightbox.Image {
-	sortedImages := images
-	sort.Slice(sortedImages, func(i, j int) bool {
-		itime := sortedImages[i].CreatedAt
-		jtime := sortedImages[j].CreatedAt
-		return itime.Unix() > jtime.Unix()
-	})
-	return &sortedImages[0]
 }

@@ -1,13 +1,14 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"regexp"
-	"sort"
 	"time"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/brightbox/gobrightbox/v2/status/databasesnapshot"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -15,7 +16,7 @@ import (
 func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Database Snapshot",
-		Read:        dataSourceBrightboxDatabaseSnapshotRead,
+		ReadContext: dataSourceBrightboxDatabaseSnapshotRead,
 
 		Schema: map[string]*schema.Schema{
 
@@ -88,23 +89,24 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 }
 
 func dataSourceBrightboxDatabaseSnapshotRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Snapshot data read called. Retrieving snapshot list")
-	images, err := client.DatabaseSnapshots()
+	images, err := client.DatabaseSnapshots(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving snapshot list: %s", err)
+		return diag.FromErr(err)
 	}
 
-	image, err := findSnapshotByFilter(images, d)
+	image, errs := findSnapshotByFilter(images, d)
 
-	if err != nil {
+	if errs.HasError() {
 		// Remove any existing image on error
 		d.SetId("")
-		return err
+		return errs
 	}
 
 	log.Printf("[DEBUG] Single Snapshot found: %s", image.ID)
@@ -114,13 +116,13 @@ func dataSourceBrightboxDatabaseSnapshotRead(
 func dataSourceBrightboxDatabaseSnapshotsImageAttributes(
 	d *schema.ResourceData,
 	image *brightbox.DatabaseSnapshot,
-) error {
+) diag.Diagnostics {
 	log.Printf("[DEBUG] Database Snapshot details: %#v", image)
 
 	d.SetId(image.ID)
 	d.Set("name", image.Name)
 	d.Set("description", image.Description)
-	d.Set("status", image.Status)
+	d.Set("status", image.Status.String())
 	d.Set("database_engine", image.DatabaseEngine)
 	d.Set("database_version", image.DatabaseVersion)
 	d.Set("size", image.Size)
@@ -133,15 +135,20 @@ func dataSourceBrightboxDatabaseSnapshotsImageAttributes(
 func findSnapshotByFilter(
 	images []brightbox.DatabaseSnapshot,
 	d *schema.ResourceData,
-) (*brightbox.DatabaseSnapshot, error) {
+) (*brightbox.DatabaseSnapshot, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	nameRe, err := regexp.Compile(d.Get("name").(string))
 	if err != nil {
-		return nil, err
+		diags = append(diags, diag.FromErr(err)...)
 	}
 
 	descRe, err := regexp.Compile(d.Get("description").(string))
 	if err != nil {
-		return nil, err
+		diags = append(diags, diag.FromErr(err)...)
+	}
+
+	if diags.HasError() {
+		return nil, diags
 	}
 
 	var results []brightbox.DatabaseSnapshot
@@ -156,12 +163,12 @@ func findSnapshotByFilter(
 		recent := d.Get("most_recent").(bool)
 		log.Printf("[DEBUG] Multiple results found and `most_recent` is set to: %t", recent)
 		if recent {
-			return mostRecentSnapshot(results), nil
+			return mostRecent(results), nil
 		}
-		return nil, fmt.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+		return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
 			"specific search criteria, or set `most_recent` attribute to true.", len(results))
 	} else {
-		return nil, fmt.Errorf("Your query returned no results. " +
+		return nil, diag.Errorf("Your query returned no results. " +
 			"Please change your search criteria and try again.")
 	}
 }
@@ -174,7 +181,7 @@ func snapshotMatch(
 	descRe *regexp.Regexp,
 ) bool {
 	// Only check available snapshots
-	if !validImageStatusMap[image.Status] {
+	if image.Status != databasesnapshot.Available {
 		return false
 	}
 	_, ok := d.GetOk("name")
@@ -194,21 +201,4 @@ func snapshotMatch(
 		return false
 	}
 	return true
-}
-
-type snapshotSort []brightbox.DatabaseSnapshot
-
-func (a snapshotSort) Len() int      { return len(a) }
-func (a snapshotSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a snapshotSort) Less(i, j int) bool {
-	itime := a[i].CreatedAt
-	jtime := a[j].CreatedAt
-	return itime.Unix() < jtime.Unix()
-}
-
-// Returns the most recent snapshot out of a slice of snapshots
-func mostRecentSnapshot(images []brightbox.DatabaseSnapshot) *brightbox.DatabaseSnapshot {
-	sortedImages := images
-	sort.Sort(snapshotSort(sortedImages))
-	return &sortedImages[len(sortedImages)-1]
 }

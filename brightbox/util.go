@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -44,6 +45,7 @@ var (
 		"deleted": true,
 		"failed":  true,
 	}
+	validDatabaseEngines = []string{"mysql", "postgresql"}
 )
 
 func padRight(str, pad string, length int) string {
@@ -473,4 +475,13 @@ func serverGroupMemberListFromNodes(
 		groupList[i] = brightbox.ServerGroupMember{node.ID}
 	}
 	return brightbox.ServerGroupMemberList{groupList}
+}
+
+// Returns the most recent item out of a slice of items with Dates
+func mostRecent[I brightbox.CreateDated](items []I) *I {
+	sortedItems := items
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].CreatedAtUnix() > items[j].CreatedAtUnix()
+	})
+	return &sortedItems[0]
 }
