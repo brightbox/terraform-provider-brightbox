@@ -1,10 +1,11 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
 	"log"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -13,11 +14,11 @@ var validPermissionsGroups = []string{"full", "storage"}
 
 func resourceBrightboxAPIClient() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox API Client resource",
-		Create:      resourceBrightboxAPIClientCreate,
-		Read:        resourceBrightboxAPIClientRead,
-		Update:      resourceBrightboxAPIClientUpdate,
-		Delete:      resourceBrightboxAPIClientDelete,
+		Description:   "Provides a Brightbox API Client resource",
+		CreateContext: resourceBrightboxAPIClientCreate,
+		ReadContext:   resourceBrightboxAPIClientRead,
+		UpdateContext: resourceBrightboxAPIClientUpdate,
+		DeleteContext: resourceBrightboxAPIClientDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -66,21 +67,22 @@ func resourceBrightboxAPIClient() *schema.Resource {
 }
 
 func resourceBrightboxAPIClientCreate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Creating Api Client")
-	apiClientOpts := &brightbox.APIClientOptions{}
-	err := addUpdateableAPIClientOptions(d, apiClientOpts)
-	if err != nil {
-		return err
+	apiClientOpts := brightbox.APIClientOptions{}
+	errs := addUpdateableAPIClientOptions(d, &apiClientOpts)
+	if errs.HasError() {
+		return errs
 	}
-	log.Printf("[INFO] Api Client create configuration: %#v", apiClientOpts)
-	apiClient, err := client.CreateAPIClient(apiClientOpts)
+	log.Printf("[INFO] Api Client create configuration: %v", apiClientOpts)
+	apiClient, err := client.CreateAPIClient(ctx, apiClientOpts)
 	if err != nil {
-		return fmt.Errorf("Error creating Api Client: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(apiClient.ID)
@@ -89,14 +91,15 @@ func resourceBrightboxAPIClientCreate(
 }
 
 func resourceBrightboxAPIClientRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
-	apiClient, err := client.APIClient(d.Id())
+	apiClient, err := client.APIClient(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("Error retrieving Api Client details: %s", err)
+		return diag.FromErr(err)
 	}
 	if apiClient.RevokedAt != nil {
 		log.Printf("[WARN] Api Client revoked, removing from state: %s", d.Id())
@@ -109,37 +112,39 @@ func resourceBrightboxAPIClientRead(
 }
 
 func resourceBrightboxAPIClientDelete(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[INFO] Deleting Api Client %s", d.Id())
-	err := client.DestroyAPIClient(d.Id())
+	_, err := client.DestroyAPIClient(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("Error deleting Api Client (%s): %s", d.Id(), err)
+		return diag.FromErr(err)
 	}
 	return nil
 }
 
 func resourceBrightboxAPIClientUpdate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
-	apiClientOpts := &brightbox.APIClientOptions{
+	apiClientOpts := brightbox.APIClientOptions{
 		ID: d.Id(),
 	}
-	err := addUpdateableAPIClientOptions(d, apiClientOpts)
-	if err != nil {
-		return err
+	errs := addUpdateableAPIClientOptions(d, &apiClientOpts)
+	if errs.HasError() {
+		return errs
 	}
-	log.Printf("[DEBUG] Api Client update configuration: %#v", apiClientOpts)
+	log.Printf("[DEBUG] Api Client update configuration: %v", apiClientOpts)
 
-	apiClient, err := client.UpdateAPIClient(apiClientOpts)
+	apiClient, err := client.UpdateAPIClient(ctx, apiClientOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating Api Client (%s): %s", apiClientOpts.ID, err)
+		return diag.FromErr(err)
 	}
 
 	return setAPIClientAttributes(d, apiClient)
@@ -148,7 +153,7 @@ func resourceBrightboxAPIClientUpdate(
 func addUpdateableAPIClientOptions(
 	d *schema.ResourceData,
 	opts *brightbox.APIClientOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignString(d, &opts.Description, "description")
 	assignString(d, &opts.PermissionsGroup, "permissions_group")
@@ -158,7 +163,7 @@ func addUpdateableAPIClientOptions(
 func setAPIClientAttributes(
 	d *schema.ResourceData,
 	apiClient *brightbox.APIClient,
-) error {
+) diag.Diagnostics {
 	d.Set("name", apiClient.Name)
 	d.Set("description", apiClient.Description)
 	d.Set("permissions_group", apiClient.PermissionsGroup)

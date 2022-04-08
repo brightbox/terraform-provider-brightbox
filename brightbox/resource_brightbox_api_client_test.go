@@ -1,12 +1,13 @@
 package brightbox
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -100,7 +101,7 @@ func testAccCheckBrightboxAPIClientDestroy(s *terraform.State) error {
 		}
 
 		// Try to find the APIClient
-		_, err := client.APIClient(rs.Primary.ID)
+		_, err := client.APIClient(context.Background(), rs.Primary.ID)
 
 		// Wait
 
@@ -133,7 +134,7 @@ func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.APIClie
 		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 		// Try to find the APIClient
-		retrieveAPIClient, err := client.APIClient(rs.Primary.ID)
+		retrieveAPIClient, err := client.APIClient(context.Background(), rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -198,11 +199,13 @@ func init() {
 	resource.AddTestSweepers("api_client", &resource.Sweeper{
 		Name: "api_client",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			apiClients, err := client.APIClient.APIClients()
+			apiClients, err := client.APIClient.APIClients(ctx)
 			if err != nil {
 				return err
 			}
@@ -212,7 +215,7 @@ func init() {
 				}
 				if isTestName(apiClient.Name) {
 					log.Printf("[INFO] removing %s named %s", apiClient.ID, apiClient.Name)
-					if err := client.APIClient.DestroyAPIClient(apiClient.ID); err != nil {
+					if _, err := client.APIClient.DestroyAPIClient(ctx, apiClient.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", apiClient.ID, err)
 					}
 				}
