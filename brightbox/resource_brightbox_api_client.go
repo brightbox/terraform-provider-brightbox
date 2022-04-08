@@ -5,12 +5,11 @@ import (
 	"log"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/brightbox/gobrightbox/v2/status/permissionsgroup"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
-
-var validPermissionsGroups = []string{"full", "storage"}
 
 func resourceBrightboxAPIClient() *schema.Resource {
 	return &schema.Resource{
@@ -49,11 +48,13 @@ func resourceBrightboxAPIClient() *schema.Resource {
 			},
 
 			"permissions_group": {
-				Description:  "Summary of the permissions granted to the client (full, storage)",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      validPermissionsGroups[0],
-				ValidateFunc: validation.StringInSlice(validPermissionsGroups, false),
+				Description: "Summary of the permissions granted to the client (full, storage)",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     permissionsgroup.Full.String(),
+				ValidateFunc: validation.StringInSlice(
+					permissionsgroup.ValidStrings,
+					false),
 			},
 
 			"secret": {
@@ -156,7 +157,7 @@ func addUpdateableAPIClientOptions(
 ) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignString(d, &opts.Description, "description")
-	assignString(d, &opts.PermissionsGroup, "permissions_group")
+	assignEnum(d, &opts.PermissionsGroup, "permissions_group")
 	return nil
 }
 
@@ -166,7 +167,7 @@ func setAPIClientAttributes(
 ) diag.Diagnostics {
 	d.Set("name", apiClient.Name)
 	d.Set("description", apiClient.Description)
-	d.Set("permissions_group", apiClient.PermissionsGroup)
+	d.Set("permissions_group", apiClient.PermissionsGroup.String())
 	d.Set("account", apiClient.Account.ID)
 
 	// Only update the secret if it is set

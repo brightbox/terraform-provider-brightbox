@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"crypto/sha1"
+	"encoding"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -157,6 +158,14 @@ func assignBool(d *schema.ResourceData, target **bool, index string) {
 			temp = attr.(bool)
 		}
 		*target = &temp
+	}
+}
+
+func assignEnum(d *schema.ResourceData, target encoding.TextUnmarshaler, index string) {
+	if d.HasChange(index) {
+		if attr, ok := d.GetOk(index); ok {
+			target.UnmarshalText([]byte(attr.(string)))
+		}
 	}
 }
 
