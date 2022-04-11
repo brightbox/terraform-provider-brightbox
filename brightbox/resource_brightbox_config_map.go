@@ -1,12 +1,7 @@
 package brightbox
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"strings"
-
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
@@ -14,11 +9,29 @@ import (
 
 func resourceBrightboxConfigMap() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Provides a Brightbox Config Map resource",
-		CreateContext: resourceBrightboxConfigMapCreate,
-		ReadContext:   resourceBrightboxConfigMapRead,
-		UpdateContext: resourceBrightboxConfigMapUpdate,
-		DeleteContext: resourceBrightboxConfigMapDelete,
+		Description: "Provides a Brightbox Config Map resource",
+		CreateContext: resourceBrightboxCreate(
+			(*brightbox.Client).CreateConfigMap,
+			"Config Map",
+			addUpdateableConfigMapOptions,
+			setConfigMapAttributes,
+		),
+		ReadContext: resourceBrightboxRead(
+			(*brightbox.Client).ConfigMap,
+			"Config Map",
+			setConfigMapAttributes,
+		),
+		UpdateContext: resourceBrightboxUpdate(
+			(*brightbox.Client).UpdateConfigMap,
+			"Config Map",
+			configMapFromID,
+			addUpdateableConfigMapOptions,
+			setConfigMapAttributes,
+		),
+		DeleteContext: resourceBrightboxDelete(
+			(*brightbox.Client).DestroyConfigMap,
+			"Config Map",
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -53,94 +66,18 @@ func resourceBrightboxConfigMap() *schema.Resource {
 	}
 }
 
-func resourceBrightboxConfigMapCreate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Creating Config Map")
-	configMapOpts := &brightbox.ConfigMapOptions{}
-	err := addUpdateableConfigMapOptions(d, configMapOpts)
-	if err != nil {
-		return diag.FromErr(err)
+func configMapFromID(
+	id string,
+) *brightbox.ConfigMapOptions {
+	return &brightbox.ConfigMapOptions{
+		ID: id,
 	}
-
-	log.Printf("[DEBUG] Config Map create configuration %#v", configMapOpts)
-	configMap, err := client.CreateConfigMap(configMapOpts)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error creating Config Map: %s", err))
-	}
-
-	d.SetId(configMap.ID)
-
-	return setConfigMapAttributes(d, configMap)
-}
-
-func resourceBrightboxConfigMapRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	configMap, err := client.ConfigMap(d.Id())
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Config Map not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return diag.FromErr(fmt.Errorf("Error retrieving Config Map details: %s", err))
-	}
-
-	return setConfigMapAttributes(d, configMap)
-}
-
-func resourceBrightboxConfigMapDelete(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Deleting Config Map %s", d.Id())
-	err := client.DestroyConfigMap(d.Id())
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error deleting Config Map (%s): %s", d.Id(), err))
-	}
-	return nil
-}
-
-func resourceBrightboxConfigMapUpdate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	configMapOpts := &brightbox.ConfigMapOptions{
-		ID: d.Id(),
-	}
-	err := addUpdateableConfigMapOptions(d, configMapOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	log.Printf("[DEBUG] Config Map update configuration: %#v", configMapOpts)
-
-	configMap, err := client.UpdateConfigMap(configMapOpts)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error updating Config Map (%s): %s", configMapOpts.ID, err))
-	}
-
-	return setConfigMapAttributes(d, configMap)
 }
 
 func addUpdateableConfigMapOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ConfigMapOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignMap(d, &opts.Data, "data")
 	return nil
@@ -151,6 +88,7 @@ func setConfigMapAttributes(
 	configMap *brightbox.ConfigMap,
 ) diag.Diagnostics {
 	var diags diag.Diagnostics
+	d.SetId(configMap.ID)
 	err := d.Set("name", configMap.Name)
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)

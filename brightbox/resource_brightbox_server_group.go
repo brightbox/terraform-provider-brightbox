@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -15,10 +14,25 @@ import (
 
 func resourceBrightboxServerGroup() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Provides a Brightbox Server Group resource",
-		CreateContext: resourceBrightboxServerGroupCreate,
-		ReadContext:   resourceBrightboxServerGroupRead,
-		UpdateContext: resourceBrightboxServerGroupUpdate,
+		Description: "Provides a Brightbox Server Group resource",
+		CreateContext: resourceBrightboxCreate(
+			(*brightbox.Client).CreateServerGroup,
+			"Server Group",
+			addUpdateableServerGroupOptions,
+			setServerGroupAttributes,
+		),
+		ReadContext: resourceBrightboxRead(
+			(*brightbox.Client).ServerGroup,
+			"Server Group",
+			setServerGroupAttributes,
+		),
+		UpdateContext: resourceBrightboxUpdate(
+			(*brightbox.Client).UpdateServerGroup,
+			"Server Group",
+			serverGroupFromID,
+			addUpdateableServerGroupOptions,
+			setServerGroupAttributes,
+		),
 		DeleteContext: resourceBrightboxServerGroupDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -57,50 +71,6 @@ func resourceBrightboxServerGroup() *schema.Resource {
 	}
 }
 
-func resourceBrightboxServerGroupCreate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Creating Server Group")
-	serverGroupOpts := brightbox.ServerGroupOptions{}
-	err := addUpdateableServerGroupOptions(d, &serverGroupOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	serverGroup, err := client.CreateServerGroup(ctx, serverGroupOpts)
-	if err != nil {
-		return diag.Errorf("Error creating Server Group: %s", err)
-	}
-
-	d.SetId(serverGroup.ID)
-
-	return setServerGroupAttributes(d, serverGroup)
-}
-
-func resourceBrightboxServerGroupRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	serverGroup, err := client.ServerGroup(ctx, d.Id())
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Server Group not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return diag.Errorf("Error retrieving Server Group details: %s", err)
-	}
-
-	return setServerGroupAttributes(d, serverGroup)
-}
-
 func resourceBrightboxServerGroupDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -127,34 +97,18 @@ func resourceBrightboxServerGroupDelete(
 	return nil
 }
 
-func resourceBrightboxServerGroupUpdate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	serverGroupOpts := brightbox.ServerGroupOptions{
-		ID: d.Id(),
+func serverGroupFromID(
+	id string,
+) *brightbox.ServerGroupOptions {
+	return &brightbox.ServerGroupOptions{
+		ID: id,
 	}
-	err := addUpdateableServerGroupOptions(d, &serverGroupOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	log.Printf("[DEBUG] Server Group update configuration: %v", serverGroupOpts)
-
-	serverGroup, err := client.UpdateServerGroup(ctx, serverGroupOpts)
-	if err != nil {
-		return diag.Errorf("Error updating Server Group (%s): %s", serverGroupOpts.ID, err)
-	}
-
-	return setServerGroupAttributes(d, serverGroup)
 }
 
 func addUpdateableServerGroupOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerGroupOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignString(d, &opts.Description, "description")
 	return nil
@@ -164,11 +118,27 @@ func setServerGroupAttributes(
 	d *schema.ResourceData,
 	serverGroup *brightbox.ServerGroup,
 ) diag.Diagnostics {
-	d.Set("name", serverGroup.Name)
-	d.Set("description", serverGroup.Description)
-	d.Set("default", serverGroup.Default)
-	d.Set("fqdn", serverGroup.Fqdn)
-	return nil
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(serverGroup.ID)
+	err = d.Set("name", serverGroup.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("description", serverGroup.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("default", serverGroup.Default)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("fqdn", serverGroup.Fqdn)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	return diags
 }
 
 func clearServerList(ctx context.Context, client *brightbox.Client, iniitialServerGroup *brightbox.ServerGroup, timeout time.Duration) error {

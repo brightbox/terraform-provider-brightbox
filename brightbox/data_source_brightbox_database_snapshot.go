@@ -1,13 +1,10 @@
 package brightbox
 
 import (
-	"context"
-	"log"
 	"regexp"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/databasesnapshot"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -16,7 +13,12 @@ import (
 func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Database Snapshot",
-		ReadContext: dataSourceBrightboxDatabaseSnapshotRead,
+		ReadContext: datasourceBrightboxRecentRead(
+			(*brightbox.Client).DatabaseSnapshots,
+			"Database Snapshot",
+			dataSourceBrightboxDatabaseSnapshotsImageAttributes,
+			findDatabaseSnapshotFunc,
+		),
 
 		Schema: map[string]*schema.Schema{
 
@@ -88,117 +90,75 @@ func dataSourceBrightboxDatabaseSnapshot() *schema.Resource {
 	}
 }
 
-func dataSourceBrightboxDatabaseSnapshotRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Snapshot data read called. Retrieving snapshot list")
-	images, err := client.DatabaseSnapshots(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	image, errs := findSnapshotByFilter(images, d)
-
-	if errs.HasError() {
-		// Remove any existing image on error
-		d.SetId("")
-		return errs
-	}
-
-	log.Printf("[DEBUG] Single Snapshot found: %s", image.ID)
-	return dataSourceBrightboxDatabaseSnapshotsImageAttributes(d, image)
-}
-
 func dataSourceBrightboxDatabaseSnapshotsImageAttributes(
 	d *schema.ResourceData,
 	image *brightbox.DatabaseSnapshot,
 ) diag.Diagnostics {
-	log.Printf("[DEBUG] Database Snapshot details: %#v", image)
+	var diags diag.Diagnostics
+	var err error
 
 	d.SetId(image.ID)
-	d.Set("name", image.Name)
-	d.Set("description", image.Description)
-	d.Set("status", image.Status.String())
-	d.Set("database_engine", image.DatabaseEngine)
-	d.Set("database_version", image.DatabaseVersion)
-	d.Set("size", image.Size)
-	d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
-	d.Set("locked", image.Locked)
+	err = d.Set("name", image.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("description", image.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("status", image.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("database_engine", image.DatabaseEngine)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("database_version", image.DatabaseVersion)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("size", image.Size)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("locked", image.Locked)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
 
-	return nil
+	return diags
 }
 
-func findSnapshotByFilter(
-	images []brightbox.DatabaseSnapshot,
+func findDatabaseSnapshotFunc(
 	d *schema.ResourceData,
-) (*brightbox.DatabaseSnapshot, diag.Diagnostics) {
+) (func(brightbox.DatabaseSnapshot) bool, diag.Diagnostics) {
+	var nameRe, descRe *regexp.Regexp
+	var err error
 	var diags diag.Diagnostics
-	nameRe, err := regexp.Compile(d.Get("name").(string))
-	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-
-	descRe, err := regexp.Compile(d.Get("description").(string))
-	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	var results []brightbox.DatabaseSnapshot
-	for _, image := range images {
-		if snapshotMatch(&image, d, nameRe, descRe) {
-			results = append(results, image)
+	if temp, ok := d.GetOk("name"); ok {
+		if nameRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
-	if len(results) == 1 {
-		return &results[0], nil
-	} else if len(results) > 1 {
-		recent := d.Get("most_recent").(bool)
-		log.Printf("[DEBUG] Multiple results found and `most_recent` is set to: %t", recent)
-		if recent {
-			return mostRecent(results), nil
-		}
-		return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-			"specific search criteria, or set `most_recent` attribute to true.", len(results))
-	} else {
-		return nil, diag.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
-	}
-}
 
-//Match on the search filter - if the elements exist
-func snapshotMatch(
-	image *brightbox.DatabaseSnapshot,
-	d *schema.ResourceData,
-	nameRe *regexp.Regexp,
-	descRe *regexp.Regexp,
-) bool {
-	// Only check available snapshots
-	if image.Status != databasesnapshot.Available {
-		return false
+	if temp, ok := d.GetOk("description"); ok {
+		if descRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
 	}
-	_, ok := d.GetOk("name")
-	if ok && !nameRe.MatchString(image.Name) {
-		return false
-	}
-	_, ok = d.GetOk("description")
-	if ok && !descRe.MatchString(image.Description) {
-		return false
-	}
-	engine, ok := d.GetOk("database_engine")
-	if ok && engine.(string) != image.DatabaseEngine {
-		return false
-	}
-	version, ok := d.GetOk("database_version")
-	if ok && version.(string) != image.DatabaseVersion {
-		return false
-	}
-	return true
+
+	return func(object brightbox.DatabaseSnapshot) bool {
+		if nameRe != nil && !nameRe.MatchString(object.Name) {
+			return false
+		}
+		if descRe != nil && !descRe.MatchString(object.Description) {
+			return false
+		}
+		return true
+	}, diags
 }

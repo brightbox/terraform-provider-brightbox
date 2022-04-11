@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"gotest.tools/v3/assert"
 )
 
 func TestTimeFromFloat(t *testing.T) {
@@ -118,4 +119,17 @@ var testNameRe = regexp.MustCompile(`^foo-\d+|^bar-\d+|^baz-\d+|^initial$`)
 
 func isTestName(name string) bool {
 	return testNameRe.MatchString(name)
+}
+
+func TestFilter(t *testing.T) {
+	var testData []int
+	for i := 1; i < 100; i++ {
+		testData = append(testData, i)
+	}
+
+	output := filter(testData, func(v int) bool {
+		return v >= 30 && v <= 33
+	})
+
+	assert.DeepEqual(t, []int{30, 31, 32, 33}, output)
 }

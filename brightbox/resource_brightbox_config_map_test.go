@@ -1,12 +1,12 @@
 package brightbox
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"log"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -146,33 +146,10 @@ func TestAccBrightboxConfigMap_blank(t *testing.T) {
 	})
 }
 
-func testAccCheckBrightboxConfigMapDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_config_map" {
-			continue
-		}
-
-		// Try to find the ConfigMap
-		_, err := client.ConfigMap(rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for config_map %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
+var testAccCheckBrightboxConfigMapDestroy = testAccCheckBrightboxDestroyBuilder(
+	"brightbox_config_map",
+	(*brightbox.Client).ConfigMap,
+)
 
 func testAccCheckBrightboxConfigMapExists(n string, configMap *brightbox.ConfigMap) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -188,7 +165,7 @@ func testAccCheckBrightboxConfigMapExists(n string, configMap *brightbox.ConfigM
 		client := testAccProvider.Meta().(*CompositeClient).APIClient
 
 		// Try to find the ConfigMap
-		retrieveConfigMap, err := client.ConfigMap(rs.Primary.ID)
+		retrieveConfigMap, err := client.ConfigMap(context.Background(), rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -274,18 +251,20 @@ func init() {
 	resource.AddTestSweepers("config_map", &resource.Sweeper{
 		Name: "config_map",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.ConfigMaps()
+			objects, err := client.APIClient.ConfigMaps(ctx)
 			if err != nil {
 				return err
 			}
 			for _, object := range objects {
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := client.APIClient.DestroyConfigMap(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyConfigMap(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}

@@ -1,9 +1,6 @@
 package brightbox
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"regexp"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -14,7 +11,12 @@ import (
 func dataSourceBrightboxServerGroup() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Server Group",
-		ReadContext: dataSourceBrightboxServerGroupRead,
+		ReadContext: datasourceBrightboxRead(
+			(*brightbox.Client).ServerGroups,
+			"Server Group",
+			setServerGroupAttributes,
+			findServerGroupFunc,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"default": {
@@ -46,75 +48,31 @@ func dataSourceBrightboxServerGroup() *schema.Resource {
 	}
 }
 
-func dataSourceBrightboxServerGroupRead(
-	ctx context.Context,
+func findServerGroupFunc(
 	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Server Group data read called. Retrieving server group list")
-
-	groups, err := client.ServerGroups(ctx)
-	if err != nil {
-		return diag.Errorf("Error retrieving server group list: %s", err)
-	}
-
-	group, err := findGroupByFilter(groups, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	log.Printf("[DEBUG] Single Server Group found: %s", group.ID)
-	d.SetId(group.ID)
-	return setServerGroupAttributes(d, group)
-}
-
-func findGroupByFilter(
-	serverGroups []brightbox.ServerGroup,
-	d *schema.ResourceData,
-) (*brightbox.ServerGroup, error) {
-	nameRe, err := regexp.Compile(d.Get("name").(string))
-	if err != nil {
-		return nil, err
-	}
-
-	descRe, err := regexp.Compile(d.Get("description").(string))
-	if err != nil {
-		return nil, err
-	}
-
-	var results []brightbox.ServerGroup
-	for _, serverGroup := range serverGroups {
-		if serverGroupMatch(&serverGroup, d, nameRe, descRe) {
-			results = append(results, serverGroup)
+) (func(brightbox.ServerGroup) bool, diag.Diagnostics) {
+	var nameRe, descRe *regexp.Regexp
+	var err error
+	var diags diag.Diagnostics
+	if temp, ok := d.GetOk("name"); ok {
+		if nameRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
-	if len(results) == 1 {
-		return &results[0], nil
-	} else if len(results) > 1 {
-		return nil, fmt.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-			"specific search criteria.", len(results))
-	} else {
-		return nil, fmt.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
-	}
-}
 
-//Match on the search filter - if the elements exist
-func serverGroupMatch(
-	serverGroup *brightbox.ServerGroup,
-	d *schema.ResourceData,
-	nameRe *regexp.Regexp,
-	descRe *regexp.Regexp,
-) bool {
-	_, ok := d.GetOk("name")
-	if ok && !nameRe.MatchString(serverGroup.Name) {
-		return false
+	if temp, ok := d.GetOk("description"); ok {
+		if descRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
 	}
-	_, ok = d.GetOk("description")
-	if ok && !descRe.MatchString(serverGroup.Description) {
-		return false
-	}
-	return true
+
+	return func(object brightbox.ServerGroup) bool {
+		if nameRe != nil && !nameRe.MatchString(object.Name) {
+			return false
+		}
+		if descRe != nil && !descRe.MatchString(object.Description) {
+			return false
+		}
+		return true
+	}, diags
 }

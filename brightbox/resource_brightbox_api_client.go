@@ -1,7 +1,6 @@
 package brightbox
 
 import (
-	"context"
 	"log"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -13,11 +12,29 @@ import (
 
 func resourceBrightboxAPIClient() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Provides a Brightbox API Client resource",
-		CreateContext: resourceBrightboxAPIClientCreate,
-		ReadContext:   resourceBrightboxAPIClientRead,
-		UpdateContext: resourceBrightboxAPIClientUpdate,
-		DeleteContext: resourceBrightboxAPIClientDelete,
+		Description: "Provides a Brightbox API Client resource",
+		CreateContext: resourceBrightboxCreate(
+			(*brightbox.Client).CreateAPIClient,
+			"API Client",
+			addUpdateableAPIClientOptions,
+			setAPIClientAttributes,
+		),
+		ReadContext: resourceBrightboxRead(
+			(*brightbox.Client).APIClient,
+			"API Client",
+			setAPIClientAttributes,
+		),
+		UpdateContext: resourceBrightboxUpdate(
+			(*brightbox.Client).UpdateAPIClient,
+			"API Client",
+			apiClientFromID,
+			addUpdateableAPIClientOptions,
+			setAPIClientAttributes,
+		),
+		DeleteContext: resourceBrightboxDelete(
+			(*brightbox.Client).DestroyAPIClient,
+			"API Client",
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -67,88 +84,12 @@ func resourceBrightboxAPIClient() *schema.Resource {
 	}
 }
 
-func resourceBrightboxAPIClientCreate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Creating Api Client")
-	apiClientOpts := brightbox.APIClientOptions{}
-	errs := addUpdateableAPIClientOptions(d, &apiClientOpts)
-	if errs.HasError() {
-		return errs
+func apiClientFromID(
+	id string,
+) *brightbox.APIClientOptions {
+	return &brightbox.APIClientOptions{
+		ID: id,
 	}
-	log.Printf("[INFO] Api Client create configuration: %v", apiClientOpts)
-	apiClient, err := client.CreateAPIClient(ctx, apiClientOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(apiClient.ID)
-
-	return setAPIClientAttributes(d, apiClient)
-}
-
-func resourceBrightboxAPIClientRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	apiClient, err := client.APIClient(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if apiClient.RevokedAt != nil {
-		log.Printf("[WARN] Api Client revoked, removing from state: %s", d.Id())
-		d.SetId("")
-		return nil
-	}
-
-	log.Printf("[DEBUG] Api Client read: %#v", apiClient)
-	return setAPIClientAttributes(d, apiClient)
-}
-
-func resourceBrightboxAPIClientDelete(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Deleting Api Client %s", d.Id())
-	_, err := client.DestroyAPIClient(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
-}
-
-func resourceBrightboxAPIClientUpdate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	apiClientOpts := brightbox.APIClientOptions{
-		ID: d.Id(),
-	}
-	errs := addUpdateableAPIClientOptions(d, &apiClientOpts)
-	if errs.HasError() {
-		return errs
-	}
-	log.Printf("[DEBUG] Api Client update configuration: %v", apiClientOpts)
-
-	apiClient, err := client.UpdateAPIClient(ctx, apiClientOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return setAPIClientAttributes(d, apiClient)
 }
 
 func addUpdateableAPIClientOptions(
@@ -165,14 +106,36 @@ func setAPIClientAttributes(
 	d *schema.ResourceData,
 	apiClient *brightbox.APIClient,
 ) diag.Diagnostics {
-	d.Set("name", apiClient.Name)
-	d.Set("description", apiClient.Description)
-	d.Set("permissions_group", apiClient.PermissionsGroup.String())
-	d.Set("account", apiClient.Account.ID)
+	if apiClient.RevokedAt != nil {
+		log.Printf("[WARN] API Client revoked, removing from state: %s", d.Id())
+		d.SetId("")
+		return nil
+	}
+	var diags diag.Diagnostics
+	d.SetId(apiClient.ID)
+	err := d.Set("name", apiClient.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("description", apiClient.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("permissions_group", apiClient.PermissionsGroup.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("account", apiClient.Account.ID)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
 
 	// Only update the secret if it is set
 	if apiClient.Secret != "" {
-		d.Set("secret", apiClient.Secret)
+		err := d.Set("secret", apiClient.Secret)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
 	}
-	return nil
+	return diags
 }

@@ -1,9 +1,6 @@
 package brightbox
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"regexp"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -14,7 +11,12 @@ import (
 func dataSourceBrightboxServerType() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Cloud SQL server type",
-		ReadContext: dataSourceBrightboxServerTypeRead,
+		ReadContext: datasourceBrightboxRead(
+			(*brightbox.Client).ServerTypes,
+			"Server Type",
+			dataSourceBrightboxServerTypesAttributes,
+			findServerTypeFunc,
+		),
 
 		Schema: map[string]*schema.Schema{
 
@@ -65,93 +67,70 @@ func dataSourceBrightboxServerType() *schema.Resource {
 	}
 }
 
-func dataSourceBrightboxServerTypeRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] ServerType data read called. Retrieving server type list")
-
-	serverTypes, err := client.ServerTypes(ctx)
-	if err != nil {
-		return diag.Errorf("Error retrieving server type list: %s", err)
-	}
-
-	serverType, err := findServerTypeByFilter(serverTypes, d)
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	log.Printf("[DEBUG] Single ServerType found: %s", serverType.ID)
-	return dataSourceBrightboxServerTypesAttributes(d, serverType)
-}
-
 func dataSourceBrightboxServerTypesAttributes(
 	d *schema.ResourceData,
 	serverType *brightbox.ServerType,
 ) diag.Diagnostics {
-	log.Printf("[DEBUG] serverType details: %#v", serverType)
+	var diags diag.Diagnostics
+	var err error
 
 	d.SetId(serverType.ID)
-	d.Set("name", serverType.Name)
-	d.Set("status", serverType.Status.String())
-	d.Set("handle", serverType.Handle)
-	d.Set("cores", serverType.Cores)
-	d.Set("ram", serverType.RAM)
-	d.Set("disk_size", serverType.DiskSize)
-	d.Set("storage_type", serverType.StorageType.String())
-
-	return nil
+	err = d.Set("name", serverType.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("status", serverType.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("handle", serverType.Handle)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("cores", serverType.Cores)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("ram", serverType.RAM)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("disk_size", serverType.DiskSize)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("storage_type", serverType.StorageType.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	return diags
 }
 
-func findServerTypeByFilter(
-	serverTypes []brightbox.ServerType,
+func findServerTypeFunc(
 	d *schema.ResourceData,
-) (*brightbox.ServerType, error) {
-	nameRe, err := regexp.Compile(d.Get("name").(string))
-	if err != nil {
-		return nil, err
-	}
-
-	descRe, err := regexp.Compile(d.Get("handle").(string))
-	if err != nil {
-		return nil, err
-	}
-
-	var results []brightbox.ServerType
-	for _, serverType := range serverTypes {
-		if serverTypeMatch(&serverType, d, nameRe, descRe) {
-			results = append(results, serverType)
+) (func(brightbox.ServerType) bool, diag.Diagnostics) {
+	var nameRe, descRe *regexp.Regexp
+	var err error
+	var diags diag.Diagnostics
+	if temp, ok := d.GetOk("name"); ok {
+		if nameRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
-	if len(results) == 1 {
-		return &results[0], nil
-	} else if len(results) > 1 {
-		return nil, fmt.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-			"specific search criteria.", len(results))
-	} else {
-		return nil, fmt.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
-	}
-}
 
-//Match on the search filter - if the elements exist
-func serverTypeMatch(
-	serverType *brightbox.ServerType,
-	d *schema.ResourceData,
-	nameRe *regexp.Regexp,
-	descRe *regexp.Regexp,
-) bool {
-	_, ok := d.GetOk("name")
-	if ok && !nameRe.MatchString(serverType.Name) {
-		return false
+	if temp, ok := d.GetOk("handle"); ok {
+		if descRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
 	}
-	_, ok = d.GetOk("handle")
-	if ok && !descRe.MatchString(serverType.Handle) {
-		return false
-	}
-	return true
+
+	return func(object brightbox.ServerType) bool {
+		if nameRe != nil && !nameRe.MatchString(object.Name) {
+			return false
+		}
+		if descRe != nil && !descRe.MatchString(object.Handle) {
+			return false
+		}
+		return true
+	}, diags
 }

@@ -494,3 +494,14 @@ func mostRecent[I brightbox.CreateDated](items []I) *I {
 	})
 	return &sortedItems[0]
 }
+
+// filter returns a new slice with all elements from the from the
+// input elements for which the provided predicate function returns true.
+func filter[T any](input []T, pred func(T) bool) (output []T) {
+	for _, v := range input {
+		if pred(v) {
+			output = append(output, v)
+		}
+	}
+	return output
+}

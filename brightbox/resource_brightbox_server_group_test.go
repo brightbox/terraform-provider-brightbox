@@ -2,7 +2,6 @@ package brightbox
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -100,33 +99,10 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 	})
 }
 
-func testAccCheckBrightboxServerGroupDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_server_group" {
-			continue
-		}
-
-		// Try to find the ServerGroup
-		_, err := client.ServerGroup(context.Background(), rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for server_group %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
+var testAccCheckBrightboxServerGroupDestroy = testAccCheckBrightboxDestroyBuilder(
+	"brightbox_server_group",
+	(*brightbox.Client).ServerGroup,
+)
 
 func testAccCheckBrightboxServerGroupExists(n string, serverGroup *brightbox.ServerGroup) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

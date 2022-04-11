@@ -2,7 +2,6 @@ package brightbox
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"testing"
@@ -92,33 +91,10 @@ func TestAccBrightboxAPIClient_clear_names(t *testing.T) {
 	})
 }
 
-func testAccCheckBrightboxAPIClientDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_api_client" {
-			continue
-		}
-
-		// Try to find the APIClient
-		_, err := client.APIClient(context.Background(), rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for apiClient %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
+var testAccCheckBrightboxAPIClientDestroy = testAccCheckBrightboxDestroyBuilder(
+	"brightbox_api_client",
+	(*brightbox.Client).APIClient,
+)
 
 func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.APIClient) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

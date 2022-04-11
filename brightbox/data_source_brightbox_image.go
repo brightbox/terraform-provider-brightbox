@@ -1,7 +1,6 @@
 package brightbox
 
 import (
-	"context"
 	"log"
 	"regexp"
 	"time"
@@ -26,7 +25,12 @@ var (
 func dataSourceBrightboxImage() *schema.Resource {
 	return &schema.Resource{
 		Description: "Brightbox Image",
-		ReadContext: dataSourceBrightboxImageRead,
+		ReadContext: datasourceBrightboxRecentRead(
+			(*brightbox.Client).Images,
+			"Image",
+			dataSourceBrightboxImagesImageAttributes,
+			findImageFunc,
+		),
 
 		Schema: map[string]*schema.Schema{
 
@@ -187,183 +191,186 @@ func dataSourceBrightboxImage() *schema.Resource {
 	}
 }
 
-func dataSourceBrightboxImageRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Image data read called. Retrieving image list")
-
-	images, err := client.Images(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	image, errs := findImageByFilter(images, d)
-
-	if errs.HasError() {
-		// Remove any existing image id on error
-		d.SetId("")
-		return errs
-	}
-
-	log.Printf("[DEBUG] Single Image found: %s", image.ID)
-
-	return dataSourceBrightboxImagesImageAttributes(d, image)
-}
-
 func dataSourceBrightboxImagesImageAttributes(
 	d *schema.ResourceData,
 	image *brightbox.Image,
 ) diag.Diagnostics {
 	log.Printf("[DEBUG] Image details: %#v", image)
 
-	d.SetId(image.ID)
-	d.Set("name", image.Name)
-	d.Set("username", image.Username)
-	d.Set("status", image.Status.String())
-	d.Set("locked", image.Locked)
-	d.Set("description", image.Description)
-	d.Set("arch", image.Arch.String())
-	d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
-	d.Set("official", image.Official)
-	d.Set("public", image.Public)
-	d.Set("owner", image.Owner)
-	d.Set("source", image.Source)
-	d.Set("source_trigger", image.SourceTrigger.String())
-	d.Set("source_type", image.SourceType.String())
-	d.Set("virtual_size", image.VirtualSize)
-	d.Set("disk_size", image.DiskSize)
-	d.Set("compatibility_mode", image.CompatibilityMode)
-	d.Set("licence_name", image.LicenceName)
-	if image.MinRAM != nil {
-		d.Set("min_ram", image.MinRAM)
-	}
-	if image.Ancestor != nil {
-		d.Set("ancestor_id", image.Ancestor.ID)
-	}
-
-	return nil
-}
-
-func findImageByFilter(
-	images []brightbox.Image,
-	d *schema.ResourceData,
-) (*brightbox.Image, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	nameRe, err := regexp.Compile(d.Get("name").(string))
+	var err error
+
+	d.SetId(image.ID)
+	err = d.Set("name", image.Name)
 	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	descRe, err := regexp.Compile(d.Get("description").(string))
+	err = d.Set("username", image.Username)
 	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	if diags.HasError() {
-		return nil, diags
+	err = d.Set("status", image.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	var results []brightbox.Image
-	for _, image := range images {
-		if imageMatch(&image, d, nameRe, descRe) {
-			results = append(results, image)
-		}
+	err = d.Set("locked", image.Locked)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	if len(results) == 1 {
-		return &results[0], nil
-	} else if len(results) > 1 {
-		recent := d.Get("most_recent").(bool)
-		log.Printf("[DEBUG] Multiple results found and `most_recent` is set to: %t", recent)
-		if recent {
-			return mostRecent(results), nil
-		}
-		return nil, diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-			"specific search criteria, or set `most_recent` attribute to true.", len(results))
+	err = d.Set("description", image.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	return nil, diag.Errorf("Your query returned no results. " +
-		"Please change your search criteria and try again.")
-}
-
-//Match on the search filter - if the elements exist
-func imageMatch(
-	image *brightbox.Image,
-	d *schema.ResourceData,
-	nameRe *regexp.Regexp,
-	descRe *regexp.Regexp,
-) bool {
-	// Only check available images
-	if !validImageStatusMap[image.Status] {
-		return false
+	err = d.Set("arch", image.Arch.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	_, ok := d.GetOk("name")
-	if ok && !nameRe.MatchString(image.Name) {
-		return false
+	err = d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	_, ok = d.GetOk("description")
-	if ok && !descRe.MatchString(image.Description) {
-		return false
+	err = d.Set("official", image.Official)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	source, ok := d.GetOk("source")
-	if ok && source.(string) != image.Source {
-		return false
+	err = d.Set("public", image.Public)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	sourceTrigger, ok := d.GetOk("source_trigger")
-	if ok && sourceTrigger.(string) != image.SourceTrigger.String() {
-		return false
+	err = d.Set("owner", image.Owner)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	sourceType, ok := d.GetOk("source_type")
-	if ok && sourceType.(string) != image.SourceType.String() {
-		return false
+	err = d.Set("source", image.Source)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	status, ok := d.GetOk("status")
-	if ok && status.(string) != image.Status.String() {
-		return false
+	err = d.Set("source_trigger", image.SourceTrigger.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	owner, ok := d.GetOk("owner")
-	if ok && owner.(string) != image.Owner {
-		return false
+	err = d.Set("source_type", image.SourceType.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	username, ok := d.GetOk("username")
-	if ok && username.(string) != image.Username {
-		return false
+	err = d.Set("virtual_size", image.VirtualSize)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	licenceName, ok := d.GetOk("licence_name")
-	if ok && licenceName.(string) != image.LicenceName {
-		return false
+	err = d.Set("disk_size", image.DiskSize)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	arch, ok := d.GetOk("arch")
-	if ok && arch.(string) != image.Arch.String() {
-		return false
+	err = d.Set("compatibility_mode", image.CompatibilityMode)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	if image.Ancestor != nil {
-		ancestorID, ok := d.GetOk("ancestor_id")
-		if ok && ancestorID.(string) != image.Ancestor.ID {
-			return false
-		}
+	err = d.Set("licence_name", image.LicenceName)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
 	if image.MinRAM != nil {
-		minRAM, ok := d.GetOk("min_ram")
-		if ok && minRAM.(int) != *image.MinRAM {
-			return false
+		err = d.Set("min_ram", image.MinRAM)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 		}
 	}
-	// Binary choices are treated as Yes/Not bothered
-	// due to false being treated by Terraform as null
-	public, ok := d.GetOk("public")
-	if ok && public.(bool) != image.Public {
-		return false
+	if image.Ancestor != nil {
+		err = d.Set("ancestor_id", image.Ancestor.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
 	}
-	official, ok := d.GetOk("official")
-	if ok && official.(bool) != image.Official {
-		return false
+	return diags
+}
+
+func findImageFunc(
+	d *schema.ResourceData,
+) (func(brightbox.Image) bool, diag.Diagnostics) {
+	var nameRe, descRe *regexp.Regexp
+	var err error
+	var diags diag.Diagnostics
+	if temp, ok := d.GetOk("name"); ok {
+		if nameRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
 	}
-	//Make Compatibility mode Yes/No, rather than Yes/Not bothered
-	if d.Get("compatibility_mode").(bool) != image.CompatibilityMode {
-		return false
+
+	if temp, ok := d.GetOk("handle"); ok {
+		if descRe, err = regexp.Compile(temp.(string)); err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
 	}
-	return true
+	source, sourceok := d.GetOk("source")
+	sourceTrigger, sourceTriggerok := d.GetOk("source_trigger")
+	sourceType, sourceTypeok := d.GetOk("source_type")
+	status, statusok := d.GetOk("status")
+	owner, ownerok := d.GetOk("owner")
+	username, usernameok := d.GetOk("username")
+	licenceName, licenceNameok := d.GetOk("licence_name")
+	arch, archok := d.GetOk("arch")
+	ancestorID, ancestorIDok := d.GetOk("ancestor_id")
+	minRAM, minRAMok := d.GetOk("min_ram")
+	public, publicok := d.GetOk("public")
+	official, officialok := d.GetOk("official")
+	compat := d.Get("compatibility_mode")
+	return func(image brightbox.Image) bool {
+		// Only check available images
+		if !validImageStatusMap[image.Status] {
+			return false
+		}
+		if nameRe != nil && !nameRe.MatchString(image.Name) {
+			return false
+		}
+		if descRe != nil && !descRe.MatchString(image.Description) {
+			return false
+		}
+		if sourceok && source.(string) != image.Source {
+			return false
+		}
+		if sourceTriggerok && sourceTrigger.(string) != image.SourceTrigger.String() {
+			return false
+		}
+		if sourceTypeok && sourceType.(string) != image.SourceType.String() {
+			return false
+		}
+		if statusok && status.(string) != image.Status.String() {
+			return false
+		}
+		if ownerok && owner.(string) != image.Owner {
+			return false
+		}
+		if usernameok && username.(string) != image.Username {
+			return false
+		}
+		if licenceNameok && licenceName.(string) != image.LicenceName {
+			return false
+		}
+		if archok && arch.(string) != image.Arch.String() {
+			return false
+		}
+		if image.Ancestor != nil {
+			if ancestorIDok && ancestorID.(string) != image.Ancestor.ID {
+				return false
+			}
+		}
+		if image.MinRAM != nil {
+			if minRAMok && minRAM.(int) != *image.MinRAM {
+				return false
+			}
+		}
+		// Binary choices are treated as Yes/Not bothered
+		// due to false being treated by Terraform as null
+		if publicok && public.(bool) != image.Public {
+			return false
+		}
+		if officialok && official.(bool) != image.Official {
+			return false
+		}
+		//Make Compatibility mode Yes/No, rather than Yes/Not bothered
+		if compat.(bool) != image.CompatibilityMode {
+			return false
+		}
+		return true
+	}, diags
 }

@@ -1,0 +1,192 @@
+package brightbox
+
+import (
+	"context"
+	"errors"
+	"log"
+
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+func resourceBrightboxCreate[O, I any](
+	creator func(*brightbox.Client, context.Context, I) (*O, error),
+	objectName string,
+	updater func(*schema.ResourceData, *I) diag.Diagnostics,
+	setter func(*schema.ResourceData, *O) diag.Diagnostics,
+) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		client := meta.(*CompositeClient).APIClient
+
+		log.Printf("[INFO] Creating %s", objectName)
+		var objectOptions I
+		errs := updater(d, &objectOptions)
+		if errs.HasError() {
+			return errs
+		}
+		log.Printf("[INFO] %s create configuration: %v", objectName, objectOptions)
+		object, err := creator(client, ctx, objectOptions)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		return setter(d, object)
+	}
+}
+
+func resourceBrightboxRead[O any](
+	reader func(*brightbox.Client, context.Context, string) (*O, error),
+	objectName string,
+	setter func(*schema.ResourceData, *O) diag.Diagnostics,
+) schema.ReadContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		client := meta.(*CompositeClient).APIClient
+
+		object, err := reader(client, ctx, d.Id())
+		if err != nil {
+			var apierror *brightbox.APIError
+			if errors.As(err, &apierror) {
+				if apierror.StatusCode == 404 {
+					log.Printf("[WARN] %s not found, removing from state: %s", objectName, d.Id())
+					d.SetId("")
+					return nil
+				}
+			}
+			return diag.FromErr(err)
+		}
+
+		return setter(d, object)
+	}
+}
+
+func datasourceBrightboxRead[O any](
+	reader func(*brightbox.Client, context.Context) ([]O, error),
+	objectName string,
+	setter func(*schema.ResourceData, *O) diag.Diagnostics,
+	finderGenerator func(*schema.ResourceData) (func(O) bool, diag.Diagnostics),
+) schema.ReadContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		client := meta.(*CompositeClient).APIClient
+
+		log.Printf("[DEBUG] %s data read called. Retrieving object list", objectName)
+
+		objects, err := reader(client, ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		findFunc, errs := finderGenerator(d)
+		if errs.HasError() {
+			return errs
+		}
+
+		results := filter(objects, findFunc)
+
+		if len(results) > 1 {
+			return diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+				"specific search criteria.", len(results))
+		}
+		if len(results) < 1 {
+			return diag.Errorf("Your query returned no results. " +
+				"Please change your search criteria and try again.")
+		}
+
+		result := &results[0]
+		log.Printf("[DEBUG] Single %s found", objectName)
+		log.Printf("[DEBUG] %#v", result)
+		return setter(d, result)
+
+	}
+}
+
+func datasourceBrightboxRecentRead[O brightbox.CreateDated](
+	reader func(*brightbox.Client, context.Context) ([]O, error),
+	objectName string,
+	setter func(*schema.ResourceData, *O) diag.Diagnostics,
+	finderGenerator func(*schema.ResourceData) (func(O) bool, diag.Diagnostics),
+) schema.ReadContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		client := meta.(*CompositeClient).APIClient
+
+		log.Printf("[DEBUG] %s data read called. Retrieving object list", objectName)
+
+		objects, err := reader(client, ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		findFunc, errs := finderGenerator(d)
+		if errs.HasError() {
+			return errs
+		}
+
+		results := filter(objects, findFunc)
+
+		var result *O
+
+		if len(results) > 1 {
+			recent, ok := d.GetOk("most_recent")
+			if ok {
+				if recent.(bool) {
+					log.Printf("[DEBUG] Multiple results found and `most_recent` is set")
+					result = mostRecent(results)
+				}
+			}
+			return diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+				"specific search criteria.", len(results))
+		} else if len(results) < 1 {
+			return diag.Errorf("Your query returned no results. " +
+				"Please change your search criteria and try again.")
+		} else {
+			result = &results[0]
+		}
+		log.Printf("[DEBUG] Single %s found", objectName)
+		log.Printf("[DEBUG] %#v", result)
+		return setter(d, result)
+
+	}
+}
+
+func resourceBrightboxUpdate[O, I any](
+	putter func(*brightbox.Client, context.Context, I) (*O, error),
+	objectName string,
+	newFromID func(string) *I,
+	updater func(*schema.ResourceData, *I) diag.Diagnostics,
+	setter func(*schema.ResourceData, *O) diag.Diagnostics,
+) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		client := meta.(*CompositeClient).APIClient
+
+		objectOpts := newFromID(d.Id())
+		errs := updater(d, objectOpts)
+		if errs.HasError() {
+			return errs
+		}
+		log.Printf("[DEBUG] %s update configuration: %v", objectName, objectOpts)
+
+		object, err := putter(client, ctx, *objectOpts)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		return setter(d, object)
+	}
+}
+
+func resourceBrightboxDelete[O any](
+	deleter func(*brightbox.Client, context.Context, string) (*O, error),
+	objectName string,
+) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		client := meta.(*CompositeClient).APIClient
+
+		log.Printf("[INFO] Deleting %s %s", objectName, d.Id())
+		_, err := deleter(client, ctx, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
+
+	}
+}
