@@ -1,32 +1,36 @@
 package brightbox
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"log"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/brightbox/gobrightbox/status"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/brightbox/gobrightbox/v2/status/cloudip"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccBrightboxCloudip_Basic(t *testing.T) {
 	resourceName := "brightbox_cloudip.foobar"
-	var cloudip brightbox.CloudIP
+	var cloudIPInstance brightbox.CloudIP
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckNoResourceAttr(
@@ -43,19 +47,24 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 }
 
 func TestAccBrightboxCloudip_clear_name(t *testing.T) {
-	var cloudip brightbox.CloudIP
+	var cloudIPInstance brightbox.CloudIP
 	resourceName := "brightbox_cloudip.foobar"
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckNoResourceAttr(
@@ -65,7 +74,12 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxCloudipConfig_empty_name,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckNoResourceAttr(
@@ -82,19 +96,24 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 }
 
 func TestAccBrightboxCloudip_Mapped(t *testing.T) {
-	var cloudip brightbox.CloudIP
+	var cloudIPInstance brightbox.CloudIP
 	resourceName := "brightbox_cloudip.foobar"
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("bar-%d", rInt)),
 				),
@@ -110,19 +129,24 @@ func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 }
 
 func TestAccBrightboxCloudip_PortMapped(t *testing.T) {
-	var cloudip brightbox.CloudIP
+	var cloudIPInstance brightbox.CloudIP
 	resourceName := "brightbox_cloudip.foobar"
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_port_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("bar-%d", rInt)),
 					resource.TestCheckResourceAttr(
@@ -140,19 +164,24 @@ func TestAccBrightboxCloudip_PortMapped(t *testing.T) {
 }
 
 func TestAccBrightboxCloudip_RemappedSingle(t *testing.T) {
-	var cloudip brightbox.CloudIP
+	var cloudIPInstance brightbox.CloudIP
 	resourceName := "brightbox_cloudip.foobar"
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_remapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("baz-%d", rInt)),
 				),
@@ -168,18 +197,23 @@ func TestAccBrightboxCloudip_RemappedSingle(t *testing.T) {
 
 func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 	resourceName := "brightbox_cloudip.foobar"
-	var cloudip brightbox.CloudIP
+	var cloudIPInstance brightbox.CloudIP
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 				),
@@ -187,7 +221,12 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("bar-%d", rInt)),
 				),
@@ -195,7 +234,12 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxCloudipConfig_remapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("baz-%d", rInt)),
 				),
@@ -203,7 +247,12 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists(resourceName, &cloudip),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Cloud IP",
+						&cloudIPInstance,
+						(*brightbox.Client).CloudIP,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 				),
@@ -212,63 +261,10 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 	})
 }
 
-func testAccCheckBrightboxCloudipDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_cloudip" {
-			continue
-		}
-
-		// Try to find the CloudIP
-		_, err := client.CloudIP(rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for cloudip %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckBrightboxCloudipExists(n string, cloudip *brightbox.CloudIP) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No CloudIP ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the CloudIP
-		retrieveCloudip, err := client.CloudIP(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveCloudip.ID != rs.Primary.ID {
-			return fmt.Errorf("CloudIP not found")
-		}
-
-		*cloudip = *retrieveCloudip
-
-		return nil
-	}
-}
+var testAccCheckBrightboxCloudIPDestroy = testAccCheckBrightboxDestroyBuilder(
+	"brightbox_cloud_ip",
+	(*brightbox.Client).CloudIP,
+)
 
 func TestAccBrightboxCloudip_MappedGroup(t *testing.T) {
 	resourceName := "brightbox_cloudip.groupmap"
@@ -277,7 +273,7 @@ func TestAccBrightboxCloudip_MappedGroup(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mappedGroup(rInt),
@@ -299,7 +295,7 @@ func TestAccBrightboxCloudip_MappedLb(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudipDestroy,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mappedLb(rInt),
@@ -423,21 +419,23 @@ func init() {
 	resource.AddTestSweepers("cloud_ip", &resource.Sweeper{
 		Name: "cloud_ip",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.CloudIPs()
+			objects, err := client.APIClient.CloudIPs(ctx)
 			if err != nil {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != status.Unmapped {
+				if object.Status != cloudip.Unmapped {
 					continue
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := client.APIClient.DestroyCloudIP(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyCloudIP(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}

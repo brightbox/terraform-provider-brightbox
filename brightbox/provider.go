@@ -9,7 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const defaultTimeout = 5 * time.Minute
+const (
+	defaultTimeout     = 5 * time.Minute
+	minimumRefreshWait = 3 * time.Second
+	checkDelay         = 10 * time.Second
+)
 
 // Provider is the Brightbox Terraform driver root
 func Provider() *schema.Provider {
@@ -68,7 +72,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			// "brightbox_server":          resourceBrightboxServer(),
-			// "brightbox_cloudip":         resourceBrightboxCloudip(),
+			"brightbox_cloudip":      resourceBrightboxCloudip(),
 			"brightbox_server_group": resourceBrightboxServerGroup(),
 			// "brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
 			// "brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
