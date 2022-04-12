@@ -27,7 +27,12 @@ func TestAccBrightboxConfigMap_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &configMap),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
 					testAccCheckBrightboxConfigMapAttributes(&configMap, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
@@ -43,7 +48,12 @@ func TestAccBrightboxConfigMap_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &configMap),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -56,7 +66,7 @@ func TestAccBrightboxConfigMap_Basic(t *testing.T) {
 
 func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 	resourceName := "brightbox_config_map.foobar"
-	var config_map brightbox.ConfigMap
+	var configMap brightbox.ConfigMap
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
 
@@ -68,8 +78,13 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
-					testAccCheckBrightboxConfigMapAttributes(&config_map, name),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
+					testAccCheckBrightboxConfigMapAttributes(&configMap, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
@@ -79,7 +94,12 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_empty_name(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -89,8 +109,13 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
-					testAccCheckBrightboxConfigMapAttributes(&config_map, name),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
+					testAccCheckBrightboxConfigMapAttributes(&configMap, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
@@ -100,7 +125,12 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_empty_data(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
@@ -110,7 +140,12 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxConfigMapExists(resourceName, &config_map),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Config Map",
+						&configMap,
+						(*brightbox.Client).ConfigMap,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -150,36 +185,6 @@ var testAccCheckBrightboxConfigMapDestroy = testAccCheckBrightboxDestroyBuilder(
 	"brightbox_config_map",
 	(*brightbox.Client).ConfigMap,
 )
-
-func testAccCheckBrightboxConfigMapExists(n string, configMap *brightbox.ConfigMap) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ConfigMap ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the ConfigMap
-		retrieveConfigMap, err := client.ConfigMap(context.Background(), rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveConfigMap.ID != rs.Primary.ID {
-			return fmt.Errorf("ConfigMap not found")
-		}
-
-		*configMap = *retrieveConfigMap
-
-		return nil
-	}
-}
 
 func testAccCheckBrightboxConfigMapAttributes(configMap *brightbox.ConfigMap, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

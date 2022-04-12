@@ -61,3 +61,27 @@ func testAccCheckBrightboxDataSourceID(objectName string, n string) resource.Tes
 		return nil
 	}
 }
+
+func testAccCheckBrightboxObjectExists[O any](
+	n string,
+	objectName string,
+	serverGroup *O,
+	instance func(*brightbox.Client, context.Context, string) (*O, error),
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No %s ID is set", objectName)
+		}
+		client := testAccProvider.Meta().(*CompositeClient).APIClient
+		retrieveobject, err := instance(client, context.Background(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+		*serverGroup = *retrieveobject
+		return nil
+	}
+}

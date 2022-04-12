@@ -27,7 +27,12 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
 					testAccCheckBrightboxServerGroupAttributes(&serverGroup, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
@@ -45,7 +50,12 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -60,7 +70,7 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 
 func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 	resourceName := "brightbox_server_group.foobar"
-	var server_group brightbox.ServerGroup
+	var serverGroup brightbox.ServerGroup
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
 
@@ -72,8 +82,13 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(resourceName, &server_group),
-					testAccCheckBrightboxServerGroupAttributes(&server_group, name),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
+					testAccCheckBrightboxServerGroupAttributes(&serverGroup, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
 					resource.TestCheckResourceAttr(
@@ -83,7 +98,12 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(resourceName, &server_group),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -103,36 +123,6 @@ var testAccCheckBrightboxServerGroupDestroy = testAccCheckBrightboxDestroyBuilde
 	"brightbox_server_group",
 	(*brightbox.Client).ServerGroup,
 )
-
-func testAccCheckBrightboxServerGroupExists(n string, serverGroup *brightbox.ServerGroup) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ServerGroup ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the ServerGroup
-		retrieveServerGroup, err := client.ServerGroup(context.Background(), rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveServerGroup.ID != rs.Primary.ID {
-			return fmt.Errorf("ServerGroup not found")
-		}
-
-		*serverGroup = *retrieveServerGroup
-
-		return nil
-	}
-}
 
 func testAccCheckBrightboxServerGroupAttributes(serverGroup *brightbox.ServerGroup, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

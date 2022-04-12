@@ -27,7 +27,12 @@ func TestAccBrightboxAPIClient_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxAPIClientConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxAPIClientExists(resourceName, &apiClient),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"API Client",
+						&apiClient,
+						(*brightbox.Client).APIClient,
+					),
 					testAccCheckBrightboxAPIClientAttributes(&apiClient, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
@@ -44,7 +49,12 @@ func TestAccBrightboxAPIClient_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxAPIClientConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxAPIClientExists(resourceName, &apiClient),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"API Client",
+						&apiClient,
+						(*brightbox.Client).APIClient,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -69,7 +79,12 @@ func TestAccBrightboxAPIClient_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxAPIClientConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxAPIClientExists(resourceName, &apiClient),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"API Client",
+						&apiClient,
+						(*brightbox.Client).APIClient,
+					),
 					testAccCheckBrightboxAPIClientAttributes(&apiClient, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
@@ -80,7 +95,12 @@ func TestAccBrightboxAPIClient_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxAPIClientConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxAPIClientExists(resourceName, &apiClient),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"API Client",
+						&apiClient,
+						(*brightbox.Client).APIClient,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -95,36 +115,6 @@ var testAccCheckBrightboxAPIClientDestroy = testAccCheckBrightboxDestroyBuilder(
 	"brightbox_api_client",
 	(*brightbox.Client).APIClient,
 )
-
-func testAccCheckBrightboxAPIClientExists(n string, apiClient *brightbox.APIClient) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No APIClient ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the APIClient
-		retrieveAPIClient, err := client.APIClient(context.Background(), rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveAPIClient.ID != rs.Primary.ID {
-			return fmt.Errorf("APIClient not found")
-		}
-
-		*apiClient = *retrieveAPIClient
-
-		return nil
-	}
-}
 
 func testAccCheckBrightboxAPIClientAttributes(apiClient *brightbox.APIClient, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
