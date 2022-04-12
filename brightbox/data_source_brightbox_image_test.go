@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const latest = "focal-20.04"
@@ -22,7 +21,7 @@ func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 			{
 				Config: TestAccBrightboxImageDataSourceConfig_blank_disk,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
+					testAccCheckBrightboxDataSourceID("Image", "data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "name", "Blank Disk Image"),
 					resource.TestCheckResourceAttr(
@@ -75,7 +74,7 @@ func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 			{
 				Config: TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckImagesDataSourceID("data.brightbox_image.foobar"),
+					testAccCheckBrightboxDataSourceID("Image", "data.brightbox_image.foobar"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_image.foobar", "name", fmt.Sprintf("ubuntu-%s-amd64-server", latest)),
 					resource.TestCheckResourceAttr(
@@ -118,21 +117,6 @@ func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckImagesDataSourceID(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Can't find image data source: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("Image data source ID not set")
-		}
-
-		return nil
-	}
 }
 
 const TestAccBrightboxImageDataSourceConfig_blank_disk = `

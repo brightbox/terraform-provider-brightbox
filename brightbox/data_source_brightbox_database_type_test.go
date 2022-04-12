@@ -1,11 +1,9 @@
 package brightbox
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccBrightboxDatabaseType_basic(t *testing.T) {
@@ -16,7 +14,7 @@ func TestAccBrightboxDatabaseType_basic(t *testing.T) {
 			{
 				Config: TestAccBrightboxDatabaseTypeConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatabaseTypeDataSourceID("data.brightbox_database_type.foobar"),
+					testAccCheckBrightboxDataSourceID("Database Type", "data.brightbox_database_type.foobar"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_database_type.foobar", "name", "SSD 4GB"),
 					resource.TestCheckResourceAttr(
@@ -27,21 +25,6 @@ func TestAccBrightboxDatabaseType_basic(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckDatabaseTypeDataSourceID(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Can't find database type data source: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("Database Type data source ID not set")
-		}
-
-		return nil
-	}
 }
 
 const TestAccBrightboxDatabaseTypeConfig_basic = `

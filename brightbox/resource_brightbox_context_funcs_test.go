@@ -46,3 +46,18 @@ func testAccCheckBrightboxDestroyBuilder[I any](
 		return nil
 	}
 }
+
+func testAccCheckBrightboxDataSourceID(objectName string, n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Can't find %s data source: %s", objectName, n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("%s data source ID not set", objectName)
+		}
+
+		return nil
+	}
+}
