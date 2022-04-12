@@ -355,7 +355,7 @@ func findImageFunc(
 			}
 		}
 		if image.MinRAM != nil {
-			if minRAMok && minRAM.(int) != *image.MinRAM {
+			if minRAMok && minRAM.(uint) != *image.MinRAM {
 				return false
 			}
 		}
