@@ -1,12 +1,12 @@
 package brightbox
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"log"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -27,7 +27,12 @@ func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					testAccCheckBrightboxFirewallPolicyAttributes(&firewallPolicy, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
@@ -38,7 +43,12 @@ func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -68,7 +78,12 @@ func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					testAccCheckBrightboxFirewallPolicyAttributes(&firewallPolicy, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", name),
@@ -79,7 +94,12 @@ func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", ""),
 					resource.TestCheckResourceAttr(
@@ -109,8 +129,18 @@ func TestAccBrightboxFirewallPolicy_Mapped(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &serverGroup),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_server_group.group1",
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
 					resource.TestCheckResourceAttrPtr(
 						resourceName, "server_group", &serverGroup.ID),
 				),
@@ -138,8 +168,18 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group1", &serverGroup),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_server_group.group1",
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
 					resource.TestCheckResourceAttrPtr(
 						resourceName, "server_group", &serverGroup.ID),
 				),
@@ -147,8 +187,18 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_remap(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
-					testAccCheckBrightboxServerGroupExists("brightbox_server_group.group2", &serverGroup),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_server_group.group2",
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
 					resource.TestCheckResourceAttrPtr(
 						resourceName, "server_group", &serverGroup.ID),
 				),
@@ -156,7 +206,12 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_unmap(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallPolicyExists(resourceName, &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "server_group", ""),
 				),
@@ -165,70 +220,17 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 	})
 }
 
+var testAccCheckBrightboxFirewallPolicyDestroy = testAccCheckBrightboxDestroyBuilder(
+	"brightbox_firewall_policy",
+	(*brightbox.Client).FirewallPolicy,
+)
+
 func testAccCheckBrightboxFirewallPolicyAndGroupDestroy(s *terraform.State) error {
 	err := testAccCheckBrightboxFirewallPolicyDestroy(s)
 	if err != nil {
 		return err
 	}
 	return testAccCheckBrightboxServerGroupDestroy(s)
-}
-
-func testAccCheckBrightboxFirewallPolicyDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_firewall_policy" {
-			continue
-		}
-
-		// Try to find the FirewallPolicy
-		_, err := client.FirewallPolicy(rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for firewallPolicy %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckBrightboxFirewallPolicyExists(n string, firewallPolicy *brightbox.FirewallPolicy) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No FirewallPolicy ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the FirewallPolicy
-		retrieveFirewallPolicy, err := client.FirewallPolicy(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveFirewallPolicy.ID != rs.Primary.ID {
-			return fmt.Errorf("FirewallPolicy not found")
-		}
-
-		*firewallPolicy = *retrieveFirewallPolicy
-
-		return nil
-	}
 }
 
 func testAccCheckBrightboxFirewallPolicyAttributes(firewallPolicy *brightbox.FirewallPolicy, name string) resource.TestCheckFunc {
@@ -331,11 +333,13 @@ func init() {
 	resource.AddTestSweepers("firewall_policy", &resource.Sweeper{
 		Name: "firewall_policy",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.FirewallPolicies()
+			objects, err := client.APIClient.FirewallPolicies(ctx)
 			if err != nil {
 				return err
 			}
@@ -345,7 +349,7 @@ func init() {
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := client.APIClient.DestroyFirewallPolicy(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyFirewallPolicy(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}

@@ -18,17 +18,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceBrightboxCloudip() *schema.Resource {
+func resourceBrightboxCloudIP() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Provides a Brightbox CloudIP resource",
-		CreateContext: resourceBrightboxCloudipCreateAndAssign,
+		CreateContext: resourceBrightboxCloudIPCreateAndAssign,
 		ReadContext: resourceBrightboxRead(
 			(*brightbox.Client).CloudIP,
 			"Cloud IP",
-			setCloudipAttributes,
+			setCloudIPAttributes,
 		),
-		UpdateContext: resourceBrightboxCloudipUpdateAndRemap,
-		DeleteContext: resourceBrightboxCloudipDelete,
+		UpdateContext: resourceBrightboxCloudIPUpdateAndRemap,
+		DeleteContext: resourceBrightboxCloudIPUnassignAndDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -149,83 +149,102 @@ func resourceBrightboxCloudip() *schema.Resource {
 	}
 }
 
-var resourceBrightboxCloudipCreate = resourceBrightboxCreate(
+var resourceBrightboxCloudIPCreate = resourceBrightboxCreate(
 	(*brightbox.Client).CreateCloudIP,
 	"Cloud IP",
-	addUpdateableCloudipOptions,
-	setCloudipAttributes,
+	addUpdateableCloudIPOptions,
+	setCloudIPAttributes,
 )
 
-func resourceBrightboxCloudipCreateAndAssign(
+func resourceBrightboxCloudIPCreateAndAssign(
 	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
 ) diag.Diagnostics {
-	diags := resourceBrightboxCloudipCreate(ctx, d, meta)
+	diags := resourceBrightboxCloudIPCreate(ctx, d, meta)
 	if diags.HasError() {
 		return diags
 	}
-
-	if targetID, ok := d.GetOk("target"); ok {
-		client := meta.(*CompositeClient).APIClient
-		cloudipInstance, err := assignCloudIP(ctx, client, d.Id(), targetID.(string), d.Timeout(schema.TimeoutCreate))
-		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
-			return diags
-		}
-		return setCloudipAttributes(d, cloudipInstance)
-	}
-	return diags
-}
-
-func resourceBrightboxCloudipDelete(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-	return removeCloudIP(ctx, client, d.Id(), d.Timeout(schema.TimeoutDelete))
-}
-
-var resourceBrightboxCloudipUpdate = resourceBrightboxUpdate(
-	(*brightbox.Client).UpdateCloudIP,
-	"Cloud IP",
-	cloudIPFromID,
-	addUpdateableCloudipOptions,
-	setCloudipAttributes,
-)
-
-func resourceBrightboxCloudipUpdateAndRemap(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	if d.HasChange("target") {
-		err := unmapCloudIP(ctx, client, d.Id(), d.Timeout(schema.TimeoutDelete))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if targetID, ok := d.GetOk("target"); ok {
-			_, err := assignCloudIP(ctx, client, d.Id(), targetID.(string), d.Timeout(schema.TimeoutCreate))
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-	}
-
-	return resourceBrightboxCloudipUpdate(ctx, d, meta)
+	return assignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutCreate))
 }
 
 func assignCloudIP(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+	timeout time.Duration,
+) diag.Diagnostics {
+	if targetID, ok := d.GetOk("target"); ok {
+		log.Printf("[INFO] Attaching %s to %s", d.Id(), targetID.(string))
+		client := meta.(*CompositeClient).APIClient
+		cloudipInstance, err := assuredMapCloudIP(
+			ctx,
+			client,
+			d.Id(),
+			targetID.(string),
+			timeout,
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return setCloudIPAttributes(d, cloudipInstance)
+	}
+	return nil
+}
+
+func unassignCloudIP(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+	timeout time.Duration,
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+	targetID, _ := d.GetChange("target")
+	if targetID.(string) != "" {
+		log.Printf("[INFO] Detaching %s from %s", d.Id(), targetID.(string))
+		_, err := assuredUnmapCloudIP(
+			ctx,
+			client,
+			d.Id(),
+			timeout,
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return nil
+}
+
+var resourceBrightboxCloudIPUpdate = resourceBrightboxUpdate(
+	(*brightbox.Client).UpdateCloudIP,
+	"Cloud IP",
+	cloudIPFromID,
+	addUpdateableCloudIPOptions,
+	setCloudIPAttributes,
+)
+
+func resourceBrightboxCloudIPUpdateAndRemap(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if d.HasChange("target") {
+		log.Printf("[INFO] Cloud IP target has changed, updating...")
+		diags = append(diags, unassignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))...)
+		diags = append(diags, assignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))...)
+	}
+	return append(diags, resourceBrightboxCloudIPUpdate(ctx, d, meta)...)
+}
+
+func assuredMapCloudIP(
 	ctx context.Context,
 	client *brightbox.Client,
 	cloudipID string,
 	targetID string,
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	log.Printf("[INFO] Assigning Cloud IP %s to target %s", cloudipID, targetID)
 	_, err := client.MapCloudIP(
 		ctx,
 		cloudipID,
@@ -234,41 +253,23 @@ func assignCloudIP(
 	if err != nil {
 		return nil, fmt.Errorf("Error assigning Cloud IP %s to target %s: %s", cloudipID, targetID, err)
 	}
-	cloudipInstance, err := waitForMappedCloudIP(ctx, client, cloudipID, timeout)
-	if err != nil {
-		return nil, err
-	}
-	return cloudipInstance, err
+	return waitForMappedCloudIP(ctx, client, cloudipID, timeout)
 }
 
-func unmapCloudIP(
+func assuredUnmapCloudIP(
 	ctx context.Context,
 	client *brightbox.Client,
 	cloudipID string,
 	timeout time.Duration,
-) error {
-	log.Printf("[INFO] Checking mapping of Cloud IP %s", cloudipID)
-	cloudipInstance, err := client.CloudIP(ctx, cloudipID)
+) (*brightbox.CloudIP, error) {
+	_, err := client.UnMapCloudIP(ctx, cloudipID)
 	if err != nil {
-		return fmt.Errorf("Error retrieving details of Cloud IP %s: %s", cloudipID, err)
+		return nil, fmt.Errorf("Error unmapping Cloud IP %s: %s", cloudipID, err)
 	}
-	if cloudipInstance.Status == cloudip.Mapped {
-		log.Printf("[INFO] Unmapping Cloud IP %s", cloudipID)
-		_, err := client.UnMapCloudIP(ctx, cloudipID)
-		if err != nil {
-			return fmt.Errorf("Error unmapping Cloud IP %s: %s", cloudipID, err)
-		}
-		_, err = waitForUnmappedCloudIP(ctx, client, cloudipID, timeout)
-		if err != nil {
-			return err
-		}
-	} else {
-		log.Printf("[DEBUG] Cloud IP %s is already unmapped", cloudipID)
-	}
-	return nil
+	return waitForUnmappedCloudIP(ctx, client, cloudipID, timeout)
 }
 
-func waitForCloudip(
+func waitForCloudIP(
 	ctx context.Context,
 	client *brightbox.Client,
 	cloudipID string,
@@ -284,7 +285,7 @@ func waitForCloudip(
 		MinTimeout: minimumRefreshWait,
 	}
 
-	activeCloudIP, err := stateConf.WaitForState()
+	activeCloudIP, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +299,7 @@ func waitForMappedCloudIP(
 	cloudipID string,
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(ctx, client, cloudipID, timeout,
+	return waitForCloudIP(ctx, client, cloudipID, timeout,
 		cloudip.Unmapped.String(),
 		cloudip.Mapped.String(),
 	)
@@ -310,7 +311,7 @@ func waitForUnmappedCloudIP(
 	cloudipID string,
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
-	return waitForCloudip(ctx, client, cloudipID, timeout,
+	return waitForCloudIP(ctx, client, cloudipID, timeout,
 		cloudip.Mapped.String(),
 		cloudip.Unmapped.String(),
 	)
@@ -327,6 +328,23 @@ func cloudipStateRefresh(ctx context.Context, client *brightbox.Client, cloudipI
 	}
 }
 
+var resourceBrightboxCloudIPDelete = resourceBrightboxDelete(
+	(*brightbox.Client).DestroyCloudIP,
+	"Cloud IP",
+)
+
+func resourceBrightboxCloudIPUnassignAndDelete(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	diags := unassignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))
+	if diags.HasError() {
+		return diags
+	}
+	return resourceBrightboxCloudIPDelete(ctx, d, meta)
+}
+
 func cloudIPFromID(
 	id string,
 ) *brightbox.CloudIPOptions {
@@ -335,7 +353,18 @@ func cloudIPFromID(
 	}
 }
 
-func setCloudipAttributes(
+func addUpdateableCloudIPOptions(
+	d *schema.ResourceData,
+	opts *brightbox.CloudIPOptions,
+) diag.Diagnostics {
+	assignEnum(d, &opts.Mode, "mode")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.ReverseDNS, "reverse_dns")
+	assignPortTranslators(d, &opts.PortTranslators)
+	return nil
+}
+
+func setCloudIPAttributes(
 	d *schema.ResourceData,
 	cloudipInstance *brightbox.CloudIP,
 ) diag.Diagnostics {
@@ -417,31 +446,6 @@ func setCloudipAttributes(
 	}
 
 	return diags
-}
-
-func removeCloudIP(ctx context.Context, client *brightbox.Client, id string, timeout time.Duration) diag.Diagnostics {
-	log.Printf("[DEBUG] Unmapping Cloud IP %s", id)
-	err := unmapCloudIP(ctx, client, id, timeout)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	log.Printf("[INFO] Deleting Cloud IP %s", id)
-	_, err = client.DestroyCloudIP(ctx, id)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
-}
-
-func addUpdateableCloudipOptions(
-	d *schema.ResourceData,
-	opts *brightbox.CloudIPOptions,
-) diag.Diagnostics {
-	assignEnum(d, &opts.Mode, "mode")
-	assignString(d, &opts.Name, "name")
-	assignString(d, &opts.ReverseDNS, "reverse_dns")
-	assignPortTranslators(d, &opts.PortTranslators)
-	return nil
 }
 
 func resourceBrightboxPortTranslationHash(

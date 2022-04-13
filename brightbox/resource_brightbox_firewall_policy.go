@@ -1,13 +1,13 @@
 package brightbox
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"log"
-	"strings"
 	"time"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -15,11 +15,18 @@ import (
 
 func resourceBrightboxFirewallPolicy() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Firewall Policy resource",
-		Create:      resourceBrightboxFirewallPolicyCreate,
-		Read:        resourceBrightboxFirewallPolicyRead,
-		Update:      resourceBrightboxFirewallPolicyUpdate,
-		Delete:      resourceBrightboxFirewallPolicyDelete,
+		Description:   "Provides a Brightbox Firewall Policy resource",
+		CreateContext: resourceBrightboxFirewallPolicyCreateAndAssign,
+		ReadContext: resourceBrightboxRead(
+			(*brightbox.Client).FirewallPolicy,
+			"Firewall Policy",
+			setFirewallPolicyAttributes,
+		),
+		UpdateContext: resourceBrightboxFirewallPolicyUpdateAndRemap,
+		DeleteContext: resourceBrightboxDelete(
+			(*brightbox.Client).DestroyFirewallPolicy,
+			"Firewall Policy",
+		),
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -52,127 +59,102 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 	}
 }
 
-func resourceBrightboxFirewallPolicyCreate(
+var resourceBrightboxFirewallPolicyCreate = resourceBrightboxCreate(
+	(*brightbox.Client).CreateFirewallPolicy,
+	"Firewall Policy",
+	addUpdateableFirewallPolicyOptions,
+	setFirewallPolicyAttributes,
+)
+
+func resourceBrightboxFirewallPolicyCreateAndAssign(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Creating Firewall Policy")
-	firewallPolicyOpts := &brightbox.FirewallPolicyOptions{}
-	err := addUpdateableFirewallPolicyOptions(d, firewallPolicyOpts)
-	if err != nil {
-		return err
+) diag.Diagnostics {
+	diags := resourceBrightboxFirewallPolicyCreate(ctx, d, meta)
+	if diags.HasError() {
+		return diags
 	}
-	assignString(d, &firewallPolicyOpts.ServerGroup, "server_group")
-
-	log.Printf("[INFO] Firewall Policy create configuration: %#v", firewallPolicyOpts)
-
-	firewallPolicy, err := client.CreateFirewallPolicy(firewallPolicyOpts)
-	if err != nil {
-		return fmt.Errorf("Error creating Firewall Policy: %s", err)
-	}
-
-	d.SetId(firewallPolicy.ID)
-
-	return setFirewallPolicyAttributes(d, firewallPolicy)
+	return assignFirewallPolicy(ctx, d, meta)
 }
 
-func resourceBrightboxFirewallPolicyRead(
+func assignFirewallPolicy(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	firewallPolicy, err := client.FirewallPolicy(d.Id())
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Firewall Policy not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
+) diag.Diagnostics {
+	if targetID, ok := d.GetOk("server_group"); ok {
+		log.Printf("[INFO] Attaching %s to %s", d.Id(), targetID.(string))
+		client := meta.(*CompositeClient).APIClient
+		FirewallPolicyInstance, err := client.ApplyFirewallPolicy(
+			ctx,
+			d.Id(),
+			brightbox.FirewallPolicyAttachment{targetID.(string)},
+		)
+		if err != nil {
+			return diag.FromErr(err)
 		}
-		return fmt.Errorf("Error retrieving Firewall Policy details: %s", err)
-	}
-
-	return setFirewallPolicyAttributes(d, firewallPolicy)
-}
-
-func resourceBrightboxFirewallPolicyDelete(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Deleting Firewall Policy %s", d.Id())
-	err := client.DestroyFirewallPolicy(d.Id())
-	if err != nil {
-		return fmt.Errorf("Error deleting Firewall Policy (%s): %s", d.Id(), err)
+		return setFirewallPolicyAttributes(d, FirewallPolicyInstance)
 	}
 	return nil
 }
 
-func resourceBrightboxFirewallPolicyUpdate(
+func unassignFirewallPolicy(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
+	targetID, _ := d.GetChange("server_group")
+	if targetID.(string) != "" {
+		log.Printf("[INFO] Detaching %s from %s", d.Id(), targetID.(string))
+		_, err := client.RemoveFirewallPolicy(
+			ctx,
+			d.Id(),
+			brightbox.FirewallPolicyAttachment{targetID.(string)},
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return nil
+}
 
-	firewallPolicyOpts := &brightbox.FirewallPolicyOptions{
-		ID: d.Id(),
-	}
-	err := addUpdateableFirewallPolicyOptions(d, firewallPolicyOpts)
-	if err != nil {
-		return err
-	}
+var resourceBrightboxFirewallPolicyUpdate = resourceBrightboxUpdate(
+	(*brightbox.Client).UpdateFirewallPolicy,
+	"Firewall Policy",
+	firewallPolicyFromID,
+	addUpdateableFirewallPolicyOptions,
+	setFirewallPolicyAttributes,
+)
 
-	log.Printf("[INFO] Firewall Policy update configuration: %#v", firewallPolicyOpts)
-	firewallPolicy, err := client.UpdateFirewallPolicy(firewallPolicyOpts)
-	if err != nil {
-		return fmt.Errorf("Error updating Firewall Policy (%s): %s", firewallPolicyOpts.ID, err)
-	}
+func resourceBrightboxFirewallPolicyUpdateAndRemap(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	var diags diag.Diagnostics
 
 	if d.HasChange("server_group") {
-		var err error
 		log.Printf("[INFO] Server Group changed, updating...")
-		o, n := d.GetChange("server_group")
-		newServerGroupID := n.(string)
-		oldServerGroupID := o.(string)
-		if firewallPolicy.ServerGroup != nil {
-			log.Printf("[INFO] Detaching %s from Server Group %s", firewallPolicyOpts.ID, oldServerGroupID)
-			err = retryServerGroupChange(
-				func() error {
-					_, err := client.RemoveFirewallPolicy(firewallPolicyOpts.ID, oldServerGroupID)
-					return err
-				},
-				d.Timeout(schema.TimeoutUpdate),
-			)
-			if err != nil {
-				return fmt.Errorf("Error removing group from Firewall Policy (%s): %s", firewallPolicyOpts.ID, err)
-			}
-		}
-		if newServerGroupID != "" {
-			log.Printf("[INFO] Attaching %s to Server Group %s", firewallPolicyOpts.ID, newServerGroupID)
-			err = retryServerGroupChange(
-				func() error {
-					_, err := client.ApplyFirewallPolicy(firewallPolicyOpts.ID, newServerGroupID)
-					return err
-				},
-				d.Timeout(schema.TimeoutUpdate),
-			)
-			if err != nil {
-				return fmt.Errorf("Error adding group to Firewall Policy (%s): %s", firewallPolicyOpts.ID, err)
-			}
-		}
-
+		diags = append(diags, unassignFirewallPolicy(ctx, d, meta)...)
+		diags = append(diags, assignFirewallPolicy(ctx, d, meta)...)
 	}
+	return append(diags, resourceBrightboxFirewallPolicyUpdate(ctx, d, meta)...)
+}
 
-	return resourceBrightboxFirewallPolicyRead(d, meta)
+func firewallPolicyFromID(
+	id string,
+) *brightbox.FirewallPolicyOptions {
+	return &brightbox.FirewallPolicyOptions{
+		ID: id,
+	}
 }
 
 func addUpdateableFirewallPolicyOptions(
 	d *schema.ResourceData,
 	opts *brightbox.FirewallPolicyOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignString(d, &opts.Description, "description")
 	return nil
@@ -181,15 +163,31 @@ func addUpdateableFirewallPolicyOptions(
 func setFirewallPolicyAttributes(
 	d *schema.ResourceData,
 	firewallPolicy *brightbox.FirewallPolicy,
-) error {
-	d.Set("name", firewallPolicy.Name)
-	d.Set("description", firewallPolicy.Description)
-	if firewallPolicy.ServerGroup == nil {
-		d.Set("server_group", "")
-	} else {
-		d.Set("server_group", firewallPolicy.ServerGroup.ID)
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(firewallPolicy.ID)
+	err = d.Set("name", firewallPolicy.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	return nil
+	err = d.Set("description", firewallPolicy.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	if firewallPolicy.ServerGroup == nil {
+		err = d.Set("server_group", "")
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	} else {
+		err = d.Set("server_group", firewallPolicy.ServerGroup.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	return diags
 }
 
 func retryServerGroupChange(changeFunc func() error, timeout time.Duration) error {
