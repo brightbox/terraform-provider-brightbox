@@ -1,14 +1,15 @@
 package brightbox
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"regexp"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/brightbox/gobrightbox/status"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	serverConst "github.com/brightbox/gobrightbox/v2/status/server"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -31,7 +32,12 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_locked(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
@@ -85,7 +91,12 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_locked(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
 					resource.TestCheckResourceAttr(
@@ -105,7 +116,12 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
@@ -155,8 +171,12 @@ func TestAccBrightboxServer_userDataBase64(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_base64_userdata(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(
-						resourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName,
 						"user_data_base64",
@@ -182,8 +202,18 @@ func TestAccBrightboxServer_serverGroup(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
-					testAccCheckBrightboxServerExists(serverResourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
+					testAccCheckBrightboxObjectExists(
+						serverResourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						serverResourceName, "server_groups.#", "1"),
 				),
@@ -213,7 +243,12 @@ func TestAccBrightboxServer_multiServerGroupUp(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(serverResourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						serverResourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						serverResourceName, "server_groups.#", "1"),
 				),
@@ -221,9 +256,24 @@ func TestAccBrightboxServer_multiServerGroupUp(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_multiServerGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(serverGroupResourceName, &serverGroup),
-					testAccCheckBrightboxServerGroupExists(otherServerGroupResourceName, &serverGroup2),
-					testAccCheckBrightboxServerExists(serverResourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						serverGroupResourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
+					testAccCheckBrightboxObjectExists(
+						otherServerGroupResourceName,
+						"Server Group",
+						&serverGroup2,
+						(*brightbox.Client).ServerGroup,
+					),
+					testAccCheckBrightboxObjectExists(
+						serverResourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						serverResourceName, "server_groups.#", "2"),
 				),
@@ -248,9 +298,24 @@ func TestAccBrightboxServer_multiServerGroupDown(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_multiServerGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerGroupExists(resourceName, &serverGroup),
-					testAccCheckBrightboxServerGroupExists(otherResourceName, &serverGroup2),
-					testAccCheckBrightboxServerExists(serverResourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server Group",
+						&serverGroup,
+						(*brightbox.Client).ServerGroup,
+					),
+					testAccCheckBrightboxObjectExists(
+						otherResourceName,
+						"Server Group",
+						&serverGroup2,
+						(*brightbox.Client).ServerGroup,
+					),
+					testAccCheckBrightboxObjectExists(
+						serverResourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						serverResourceName, "server_groups.#", "2"),
 				),
@@ -258,7 +323,12 @@ func TestAccBrightboxServer_multiServerGroupDown(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(serverResourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						serverResourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						serverResourceName, "server_groups.#", "1"),
 				),
@@ -284,11 +354,11 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 		}
 
 		// Try to find the Server
-		server, err := client.Server(rs.Primary.ID)
+		server, err := client.Server(context.Background(), rs.Primary.ID)
 
 		// Wait
 
-		if err == nil && server.Status != "deleted" {
+		if err == nil && server.Status != serverConst.Deleted {
 			return fmt.Errorf(
 				"Server %s not in deleted state. Status is %s", rs.Primary.ID, server.Status)
 		} else if err != nil {
@@ -304,36 +374,6 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func testAccCheckBrightboxServerExists(n string, server *brightbox.Server) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Server ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the Server
-		retrieveServer, err := client.Server(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveServer.ID != rs.Primary.ID {
-			return fmt.Errorf("Server not found")
-		}
-
-		*server = *retrieveServer
-
-		return nil
-	}
 }
 
 func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.TestCheckFunc {
@@ -356,6 +396,7 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 }
 
 func TestAccBrightboxServer_Update(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
 	var server brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -367,20 +408,30 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
 
 			{
 				Config: testAccCheckBrightboxServerConfig_rename(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					testAccCheckBrightboxServerAttributes(&server),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", fmt.Sprintf("baz-%d", rInt)),
+						resourceName, "name", fmt.Sprintf("baz-%d", rInt)),
 				),
 			},
 		},
@@ -388,6 +439,7 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 }
 
 func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
 	var afterCreate, afterUpdate brightbox.Server
 	rInt := acctest.RandInt()
 
@@ -399,21 +451,31 @@ func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &afterCreate),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&afterCreate,
+						(*brightbox.Client).Server,
+					),
 					testAccCheckBrightboxServerAttributes(&afterCreate),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 				),
 			},
 
 			{
 				Config: testAccCheckBrightboxServerConfig_userdata_update(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists("brightbox_server.foobar", &afterUpdate),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&afterUpdate,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar", "name", fmt.Sprintf("foo-%d", rInt)),
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckResourceAttr(
-						"brightbox_server.foobar",
+						resourceName,
 						"user_data",
 						"a26afb778136f34ce2ef86e72be0802498b0291b"),
 					testAccCheckBrightboxServerRecreated(
@@ -437,7 +499,12 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_networkdisk40G(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
 					resource.TestCheckResourceAttr(
@@ -457,7 +524,12 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_networkdisk60G(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
 					resource.TestCheckResourceAttr(
@@ -480,7 +552,7 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 
 func TestAccBrightboxServer_ServerResize(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
-	var server brightbox.Server
+	var serverResource brightbox.Server
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
@@ -491,31 +563,45 @@ func TestAccBrightboxServer_ServerResize(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxServerConfig_networkdisk40G(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
-					testAccCheckBrightboxServerType(&server.ServerType, 2, 4096),
-					resource.TestCheckResourceAttrPtr(
-						resourceName, "type", &server.ServerType.ID),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&serverResource,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_size", "40960"),
+					testAccCheckBrightboxServerType(&serverResource.ServerType, 2, 4096),
+					resource.TestCheckResourceAttrSet(
+						resourceName, "type"),
 				),
 			},
 			{
 				Config: testAccCheckBrightboxServerConfig_typechange40G(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxServerExists(resourceName, &server),
-					testAccCheckBrightboxServerType(&server.ServerType, 6, 16384),
-					resource.TestCheckResourceAttrPtr(
-						resourceName, "type", &server.ServerType.ID),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&serverResource,
+						(*brightbox.Client).Server,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_size", "40960"),
+					testAccCheckBrightboxServerType(&serverResource.ServerType, 6, 16384),
+					resource.TestCheckResourceAttrSet(
+						resourceName, "type"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckBrightboxServerType(serverType *brightbox.ServerType, cores int, ram int) resource.TestCheckFunc {
+func testAccCheckBrightboxServerType(serverTypeRef **brightbox.ServerType, cores uint, ram uint) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		serverType := *serverTypeRef
+		if serverType == nil {
+			return fmt.Errorf("Expected a server Type, got nil")
+		}
 		if serverType.Cores != cores {
 			return fmt.Errorf("Expected %v cores, got %v", cores, serverType.Cores)
 		}
@@ -752,24 +838,26 @@ func init() {
 	resource.AddTestSweepers("server", &resource.Sweeper{
 		Name: "server",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.Servers()
+			objects, err := client.APIClient.Servers(ctx)
 			if err != nil {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != status.Active {
+				if object.Status != serverConst.Active {
 					continue
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := setLockState(client.APIClient, false, brightbox.Server{ID: object.ID}); err != nil {
+					if _, err := client.APIClient.UnlockServer(ctx, object.ID); err != nil {
 						log.Printf("error unlocking %s during sweep: %s", object.ID, err)
 					}
-					if err := client.APIClient.DestroyServer(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyServer(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}

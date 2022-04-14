@@ -1,10 +1,12 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
 	"log"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	serverConst "github.com/brightbox/gobrightbox/v2/status/server"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -16,11 +18,15 @@ const (
 
 func resourceBrightboxServer() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Server resource",
-		Create:      resourceBrightboxServerCreate,
-		Read:        resourceBrightboxServerRead,
-		Update:      resourceBrightboxServerUpdate,
-		Delete:      resourceBrightboxServerDelete,
+		Description:   "Provides a Brightbox Server resource",
+		CreateContext: resourceBrightboxServerCreateAndWait,
+		ReadContext: resourceBrightboxRead(
+			(*brightbox.Client).Server,
+			"Server",
+			setServerAttributes,
+		),
+		UpdateContext: resourceBrightboxServerUpdate,
+		DeleteContext: resourceBrightboxServerDeleteAndWait,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -181,203 +187,196 @@ func resourceBrightboxServer() *schema.Resource {
 	}
 }
 
-func resourceBrightboxServerCreate(
+func resourceBrightboxServerCreateAndWait(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
-	log.Printf("[DEBUG] Server create called")
-	serverOpts := &brightbox.ServerOptions{}
+	log.Printf("[INFO] Creating Server")
+	var serverOpts brightbox.ServerOptions
 
-	err := addUpdateableServerOptions(d, serverOpts)
-	if err != nil {
-		return err
+	errs := addUpdateableServerOptions(d, &serverOpts)
+	if errs.HasError() {
+		return errs
 	}
 
-	serverType := &serverOpts.ServerType
-	assignString(d, &serverType, "type")
-	zone := &serverOpts.Zone
-	assignString(d, &zone, "zone")
-	encrypted := &serverOpts.DiskEncrypted
-	assignBool(d, encrypted, "disk_encrypted")
-	addBlockStorageOptions(d, serverOpts)
+	assignString(d, &serverOpts.ServerType, "type")
+	assignString(d, &serverOpts.Zone, "zone")
+	assignBool(d, &serverOpts.DiskEncrypted, "disk_encrypted")
+	addBlockStorageOptions(d, &serverOpts)
 
-	log.Printf("[DEBUG] Server create configuration: %#v", serverOpts)
+	log.Printf("[DEBUG] Server create configuration: %v", serverOpts)
 
-	server, err := client.CreateServer(serverOpts)
+	server, err := client.CreateServer(ctx, serverOpts)
 	if err != nil {
-		return fmt.Errorf("Error creating server: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(server.ID)
 
-	locked := d.Get("locked").(bool)
-	log.Printf("[INFO] Setting lock state to %v", locked)
-	if err := setLockState(client, locked, server); err != nil {
-		return err
-	}
-
 	log.Printf("[INFO] Waiting for Server (%s) to become available", d.Id())
 
 	stateConf := resource.StateChangeConf{
-		Pending:    []string{"creating"},
-		Target:     []string{"active", "inactive"},
-		Refresh:    serverStateRefresh(client, server.ID),
+		Pending: []string{
+			serverConst.Creating.String(),
+		},
+		Target: []string{
+			serverConst.Active.String(),
+			serverConst.Inactive.String(),
+		},
+		Refresh:    serverStateRefresh(ctx, client, server.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	activeServer, err := stateConf.WaitForState()
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return setServerAttributes(d, activeServer.(*brightbox.Server))
+	return resourceBrightboxSetServerLockState(ctx, d, meta)
 }
 
-func resourceBrightboxServerRead(
+var resourceBrightboxServerDelete = resourceBrightboxDelete(
+	(*brightbox.Client).DestroyServer,
+	"Server",
+)
+
+func resourceBrightboxServerDeleteAndWait(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
+	diags := resourceBrightboxServerDelete(ctx, d, meta)
+	if diags.HasError() {
+		return diags
+	}
+
 	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Server read called for %s", d.Id())
-	server, err := client.Server(d.Id())
-	if err != nil {
-		return fmt.Errorf("Error retrieving server details: %s", err)
-	}
-	if unreadable[server.Status] {
-		log.Printf("[WARN] Server not found, removing from state: %s", d.Id())
-		d.SetId("")
-		return nil
-	}
-
-	return setServerAttributes(d, server)
-}
-
-func resourceBrightboxServerDelete(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Server delete called for %s", d.Id())
-	err := client.DestroyServer(d.Id())
-	if err != nil {
-		return fmt.Errorf("Error deleting server: %s", err)
-	}
 	stateConf := resource.StateChangeConf{
-		Pending:    []string{"deleting", "active", "inactive"},
-		Target:     []string{"deleted"},
-		Refresh:    serverStateRefresh(client, d.Id()),
+		Pending: []string{
+			serverConst.Deleting.String(),
+			serverConst.Active.String(),
+			serverConst.Inactive.String(),
+		},
+		Target:     []string{serverConst.Deleted.String()},
+		Refresh:    serverStateRefresh(ctx, client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	_, err = stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return nil
 }
 
 func resourceBrightboxServerUpdate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Server update called for %s", d.Id())
-	serverOpts := &brightbox.ServerOptions{
+	serverOpts := brightbox.ServerOptions{
 		ID: d.Id(),
 	}
 	var server *brightbox.Server
 	var err error
 
 	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64") {
-		err = addUpdateableServerOptions(d, serverOpts)
-		if err != nil {
-			return err
+		errs := addUpdateableServerOptions(d, &serverOpts)
+		if errs.HasError() {
+			return errs
 		}
 
-		log.Printf("[DEBUG] Server update configuration: %#v", serverOpts)
+		log.Printf("[DEBUG] Server update configuration: %v", serverOpts)
 
-		server, err = client.UpdateServer(serverOpts)
+		server, err = client.UpdateServer(ctx, serverOpts)
 		if err != nil {
-			return fmt.Errorf("Error updating server: %s", err)
+			return diag.FromErr(err)
 		}
 	} else {
-		server, err = client.Server(d.Id())
+		server, err = client.Server(ctx, d.Id())
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
-	var reRead bool
 	if d.HasChange("disk_size") {
 		volumeID := server.Volumes[0].ID
 		oldSize, newSize := d.GetChange("disk_size")
 		oldSizeInt, ok := oldSize.(int)
 		if !ok {
-			return fmt.Errorf("expected type of old disk size to be Integer")
+			return diag.Errorf("expected type of old disk size to be Integer")
 		}
 		newSizeInt, ok := newSize.(int)
 		if !ok {
-			return fmt.Errorf("expected type of new disk size to be Integer")
+			return diag.Errorf("expected type of new disk size to be Integer")
 		}
 		if oldSizeInt > newSizeInt {
-			return fmt.Errorf("expected new disk size (%v) to be bigger than old disk size (%v)", newSizeInt, oldSizeInt)
+			return diag.Errorf("expected new disk size (%v) to be bigger than old disk size (%v)", newSizeInt, oldSizeInt)
 
 		}
 		log.Printf("[INFO] Resizing volume %v from %v to %v", volumeID, oldSizeInt, newSizeInt)
-		if err := client.ResizeVolume(volumeID, oldSizeInt, newSizeInt); err != nil {
-			return err
+		_, err = client.ResizeVolume(
+			ctx,
+			volumeID,
+			brightbox.VolumeNewSize{
+				From: uint(oldSizeInt),
+				To:   uint(newSizeInt),
+			},
+		)
+		if err != nil {
+			return diag.FromErr(err)
 		}
-		reRead = true
+		server, err = client.Server(ctx, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	if d.HasChange("type") {
 		newServerType := d.Get("type").(string)
 		log.Printf("[INFO] Changing server type to %v", newServerType)
-		if err := client.ResizeServer(d.Id(), newServerType); err != nil {
-			return err
+		server, err = client.ResizeServer(
+			ctx,
+			d.Id(),
+			brightbox.ServerNewSize{newServerType},
+		)
+		if err != nil {
+			return diag.FromErr(err)
 		}
-		reRead = true
 	}
 	if d.HasChange("locked") {
-		locked := d.Get("locked").(bool)
-		log.Printf("[INFO] Setting lock state to %v", locked)
-		if err := setLockState(client, locked, server); err != nil {
-			return err
-		}
-		reRead = true
-	}
-	if d.HasChange("type") {
-
-	}
-	if reRead {
-		server, err = client.Server(d.Id())
-		if err != nil {
-			return err
-		}
+		return resourceBrightboxSetServerLockState(ctx, d, meta)
 	}
 	return setServerAttributes(d, server)
 }
+
+var resourceBrightboxSetServerLockState = resourceBrightboxSetLockState(
+	(*brightbox.Client).LockServer,
+	(*brightbox.Client).UnlockServer,
+	setServerAttributes,
+)
 
 func addBlockStorageOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerOptions,
 ) {
-	var diskSize *int
+	var diskSize *uint
 	image := d.Get("image").(string)
 	assignInt(d, &diskSize, "disk_size")
 	if diskSize == nil {
-		opts.Image = image
+		opts.Image = &image
 	} else {
 		opts.Volumes = []brightbox.VolumeOptions{
 			brightbox.VolumeOptions{
-				Image: &image,
-				Size:  diskSize,
+				Image: image,
+				Size:  *diskSize,
 			},
 		}
 	}
@@ -386,7 +385,7 @@ func addBlockStorageOptions(
 func addUpdateableServerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignStringSet(d, &opts.ServerGroups, "server_groups")
 	encodedUserData := ""
@@ -403,7 +402,7 @@ func addUpdateableServerOptions(
 		}
 	}
 	if len(encodedUserData) > userdataSizeLimit {
-		return fmt.Errorf(
+		return diag.Errorf(
 			"The supplied user_data contains %d bytes after encoding, this exeeds the limit of %d bytes",
 			len(encodedUserData),
 			userdataSizeLimit,
@@ -418,42 +417,92 @@ func addUpdateableServerOptions(
 func setServerAttributes(
 	d *schema.ResourceData,
 	server *brightbox.Server,
-) error {
-	d.Set("image", server.Image.ID)
-	d.Set("name", server.Name)
-	d.Set("zone", server.Zone.Handle)
-	d.Set("status", server.Status)
-	d.Set("locked", server.Locked)
-	d.Set("disk_encrypted", server.DiskEncrypted)
-	d.Set("hostname", server.Hostname)
-	d.Set("username", server.Image.Username)
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(server.ID)
+	err = d.Set("image", server.Image.ID)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("name", server.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("zone", server.Zone.Handle)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("status", server.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("locked", server.Locked)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("disk_encrypted", server.DiskEncrypted)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("hostname", server.Hostname)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("username", server.Image.Username)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
 	if server.ServerType.DiskSize != 0 {
-		d.Set("disk_size", server.ServerType.DiskSize)
+		err = d.Set("disk_size", server.ServerType.DiskSize)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
 	} else {
-		d.Set("disk_size", server.Volumes[0].Size)
+		err = d.Set("disk_size", server.Volumes[0].Size)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
 	}
 
 	if len(server.Interfaces) > 0 {
 		serverInterface := server.Interfaces[0]
-		d.Set("interface", serverInterface.ID)
-		d.Set("ipv4_address_private", serverInterface.IPv4Address)
-		d.Set("fqdn", server.Fqdn)
-		d.Set("ipv6_address", serverInterface.IPv6Address)
-		d.Set("ipv6_hostname", "ipv6."+server.Fqdn)
+		err = d.Set("interface", serverInterface.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("ipv4_address_private", serverInterface.IPv4Address)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("fqdn", server.Fqdn)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("ipv6_address", serverInterface.IPv6Address)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("ipv6_hostname", "ipv6."+server.Fqdn)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
 	}
 
 	if len(server.CloudIPs) > 0 {
 		setPrimaryCloudIP(d, &server.CloudIPs[0])
 	}
 
-	if err := d.Set("server_groups", serverGroupIDListFromGroups(server.ServerGroups)); err != nil {
-		return fmt.Errorf("error setting server_groups: %s", err)
+	err = d.Set("server_groups", serverGroupIDListFromGroups(server.ServerGroups))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
 
-	setUserDataDetails(d, server.UserData)
+	diags = append(diags, setUserDataDetails(d, server.UserData)...)
 	setConnectionDetails(d)
-	setServerTypeDetails(d, &server.ServerType)
-	return nil
+	diags = append(diags, setServerTypeDetails(d, server.ServerType)...)
+	return diags
 
 }
 
@@ -467,19 +516,24 @@ func serverGroupIDListFromGroups(
 	return srvGrpIds
 }
 
-func setUserDataDetails(d *schema.ResourceData, base64Userdata string) {
+func setUserDataDetails(d *schema.ResourceData, base64Userdata string) diag.Diagnostics {
 	if len(base64Userdata) <= 0 {
 		log.Printf("[DEBUG] No user data found, skipping set")
-		return
+		return nil
 	}
 	_, b64 := d.GetOk("user_data_base64")
 	if b64 {
 		log.Printf("[DEBUG] encoded user_data requested, setting user_data_base64")
-		d.Set("user_data_base64", base64Userdata)
+		if err := d.Set("user_data_base64", base64Userdata); err != nil {
+			return diag.FromErr(err)
+		}
 	} else {
 		log.Printf("[DEBUG] decrypted user_data requested, setting user_data")
-		d.Set("user_data", userDataHashSum(base64Userdata))
+		if err := d.Set("user_data", userDataHashSum(base64Userdata)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
+	return nil
 }
 
 func setConnectionDetails(d *schema.ResourceData) {
@@ -504,23 +558,28 @@ func setConnectionDetails(d *schema.ResourceData) {
 	}
 }
 
-func setServerTypeDetails(d *schema.ResourceData, serverType *brightbox.ServerType) {
+func setServerTypeDetails(d *schema.ResourceData, serverType *brightbox.ServerType) diag.Diagnostics {
 	if currentType, ok := d.GetOk("type"); ok {
 		if !serverTypeRegexp.MatchString(currentType.(string)) {
-			d.Set("type", serverType.Handle)
-			return
+			if err := d.Set("type", serverType.Handle); err != nil {
+				return diag.FromErr(err)
+			}
+			return nil
 		}
 	}
-	d.Set("type", serverType.ID)
+	if err := d.Set("type", serverType.ID); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
-func serverStateRefresh(client *brightbox.Client, serverID string) resource.StateRefreshFunc {
+func serverStateRefresh(ctx context.Context, client *brightbox.Client, serverID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		server, err := client.Server(serverID)
+		serverInstance, err := client.Server(ctx, serverID)
 		if err != nil {
 			log.Printf("Error on Server State Refresh: %s", err)
 			return nil, "", err
 		}
-		return server, server.Status, nil
+		return serverInstance, serverInstance.Status.String(), nil
 	}
 }

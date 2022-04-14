@@ -161,35 +161,41 @@ func resourceBrightboxCloudIPCreateAndAssign(
 	d *schema.ResourceData,
 	meta interface{},
 ) diag.Diagnostics {
+	targetID, ok := d.GetOk("target")
 	diags := resourceBrightboxCloudIPCreate(ctx, d, meta)
-	if diags.HasError() {
+	if !ok || diags.HasError() {
 		return diags
 	}
-	return assignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutCreate))
+	cloudIPInstance, err := assignCloudIP(
+		ctx,
+		d,
+		meta,
+		targetID.(string),
+		d.Timeout(schema.TimeoutCreate),
+	)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	log.Printf("[DEBUG] setting details from returned object")
+	return setCloudIPAttributes(d, cloudIPInstance)
 }
 
 func assignCloudIP(
 	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
+	target string,
 	timeout time.Duration,
-) diag.Diagnostics {
-	if targetID, ok := d.GetOk("target"); ok {
-		log.Printf("[INFO] Attaching %s to %s", d.Id(), targetID.(string))
-		client := meta.(*CompositeClient).APIClient
-		cloudipInstance, err := assuredMapCloudIP(
-			ctx,
-			client,
-			d.Id(),
-			targetID.(string),
-			timeout,
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return setCloudIPAttributes(d, cloudipInstance)
-	}
-	return nil
+) (*brightbox.CloudIP, error) {
+	log.Printf("[INFO] Attaching %s to %s", d.Id(), target)
+	client := meta.(*CompositeClient).APIClient
+	return assuredMapCloudIP(
+		ctx,
+		client,
+		d.Id(),
+		target,
+		timeout,
+	)
 }
 
 func unassignCloudIP(
@@ -208,11 +214,29 @@ func unassignCloudIP(
 			d.Id(),
 			timeout,
 		)
-		if err != nil {
+		if err == nil {
+			log.Printf("[DEBUG] detached cleanly")
+			return nil
+		}
+		log.Printf("[DEBUG] detachment failed - checking for out of band detachment")
+		instance, readerr := client.CloudIP(ctx, d.Id())
+		if readerr != nil {
+			return diag.FromErr(readerr)
+		}
+		if !detachedCloudIP(instance) {
 			return diag.FromErr(err)
 		}
+		log.Printf("[DEBUG] detached out of band")
 	}
 	return nil
+}
+
+func detachedCloudIP(instance *brightbox.CloudIP) bool {
+	return instance.Interface == nil &&
+		instance.Server == nil &&
+		instance.ServerGroup == nil &&
+		instance.LoadBalancer == nil &&
+		instance.DatabaseServer == nil
 }
 
 var resourceBrightboxCloudIPUpdate = resourceBrightboxUpdate(
@@ -233,7 +257,14 @@ func resourceBrightboxCloudIPUpdateAndRemap(
 	if d.HasChange("target") {
 		log.Printf("[INFO] Cloud IP target has changed, updating...")
 		diags = append(diags, unassignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))...)
-		diags = append(diags, assignCloudIP(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))...)
+		if targetID, ok := d.GetOk("target"); ok {
+			if target := targetID.(string); target != "" {
+				_, err := assignCloudIP(ctx, d, meta, target, d.Timeout(schema.TimeoutUpdate))
+				if err != nil {
+					diags = append(diags, diag.FromErr(err)...)
+				}
+			}
+		}
 	}
 	return append(diags, resourceBrightboxCloudIPUpdate(ctx, d, meta)...)
 }
@@ -248,7 +279,7 @@ func assuredMapCloudIP(
 	_, err := client.MapCloudIP(
 		ctx,
 		cloudipID,
-		brightbox.CloudIPAttachment{targetID},
+		brightbox.CloudIPAttachment{Destination: targetID},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Error assigning Cloud IP %s to target %s: %s", cloudipID, targetID, err)
@@ -473,8 +504,8 @@ func expandPortTranslators(configured []interface{}) []brightbox.PortTranslator 
 	for i, portTranslationSource := range configured {
 		data := portTranslationSource.(map[string]interface{})
 		portTranslators[i].Protocol.UnmarshalText([]byte(data["protocol"].(string)))
-		portTranslators[i].Incoming = data["incoming"].(uint16)
-		portTranslators[i].Outgoing = data["outgoing"].(uint16)
+		portTranslators[i].Incoming = uint16(data["incoming"].(int))
+		portTranslators[i].Outgoing = uint16(data["outgoing"].(int))
 	}
 	return portTranslators
 }

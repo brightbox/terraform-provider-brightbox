@@ -25,12 +25,12 @@ func resourceBrightboxCreate[O, I any](
 		if errs.HasError() {
 			return errs
 		}
-		log.Printf("[INFO] %s create configuration: %v", objectName, objectOptions)
+		log.Printf("[INFO] %s create configuration: %+v", objectName, objectOptions)
 		object, err := creator(client, ctx, objectOptions)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
+		log.Printf("[DEBUG] setting details from returned object")
 		return setter(d, object)
 	}
 }
@@ -55,7 +55,7 @@ func resourceBrightboxRead[O any](
 			}
 			return diag.FromErr(err)
 		}
-
+		log.Printf("[DEBUG] setting details from returned object")
 		return setter(d, object)
 	}
 }
@@ -163,13 +163,13 @@ func resourceBrightboxUpdate[O, I any](
 		if errs.HasError() {
 			return errs
 		}
-		log.Printf("[DEBUG] %s update configuration: %v", objectName, objectOpts)
+		log.Printf("[DEBUG] %s update configuration: %+v", objectName, objectOpts)
 
 		object, err := putter(client, ctx, *objectOpts)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
+		log.Printf("[DEBUG] setting details from returned object")
 		return setter(d, object)
 	}
 }
@@ -186,7 +186,32 @@ func resourceBrightboxDelete[O any](
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		log.Printf("[DEBUG] Deleted cleanly")
 		return nil
+	}
+}
 
+func resourceBrightboxSetLockState[O any](
+	locker func(*brightbox.Client, context.Context, string) (*O, error),
+	unlocker func(*brightbox.Client, context.Context, string) (*O, error),
+	setter func(*schema.ResourceData, *O) diag.Diagnostics,
+) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{},
+	) diag.Diagnostics {
+		locked := d.Get("locked").(bool)
+		log.Printf("[INFO] Setting lock state to %v", locked)
+		client := meta.(*CompositeClient).APIClient
+		var object *O
+		var err error
+		if locked {
+			object, err = locker(client, ctx, d.Id())
+		} else {
+			object, err = unlocker(client, ctx, d.Id())
+		}
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		log.Printf("[DEBUG] setting details from returned object")
+		return setter(d, object)
 	}
 }

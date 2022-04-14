@@ -65,7 +65,7 @@ func testAccCheckBrightboxDataSourceID(objectName string, n string) resource.Tes
 func testAccCheckBrightboxObjectExists[O any](
 	n string,
 	objectName string,
-	serverGroup *O,
+	object *O,
 	instance func(*brightbox.Client, context.Context, string) (*O, error),
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -81,7 +81,7 @@ func testAccCheckBrightboxObjectExists[O any](
 		if err != nil {
 			return err
 		}
-		*serverGroup = *retrieveobject
+		*object = *retrieveobject
 		return nil
 	}
 }

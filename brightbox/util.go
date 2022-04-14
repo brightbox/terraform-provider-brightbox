@@ -141,11 +141,11 @@ func flattenStringSlice(list []string) []interface{} {
 	return temp
 }
 
-func assignInt(d *schema.ResourceData, target **int, index string) {
+func assignInt(d *schema.ResourceData, target **uint, index string) {
 	if d.HasChange(index) {
-		var temp int
+		var temp uint
 		if attr, ok := d.GetOk(index); ok {
-			temp = attr.(int)
+			temp = uint(attr.(int))
 		}
 		*target = &temp
 	}

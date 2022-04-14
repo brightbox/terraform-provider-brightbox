@@ -93,10 +93,11 @@ func dataSourceBrightboxImage() *schema.Resource {
 			},
 
 			"min_ram": {
-				Description: "The actual size of the data within this image in Megabytes",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
+				Description:  "The actual size of the data within this image in Megabytes",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntAtLeast(0),
 			},
 
 			"most_recent": {

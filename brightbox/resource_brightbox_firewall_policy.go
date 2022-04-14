@@ -71,32 +71,32 @@ func resourceBrightboxFirewallPolicyCreateAndAssign(
 	d *schema.ResourceData,
 	meta interface{},
 ) diag.Diagnostics {
+	targetID, ok := d.GetOk("server_group")
 	diags := resourceBrightboxFirewallPolicyCreate(ctx, d, meta)
-	if diags.HasError() {
+	if !ok || diags.HasError() {
 		return diags
 	}
-	return assignFirewallPolicy(ctx, d, meta)
+	FirewallPolicyInstance, err := assignFirewallPolicy(ctx, d, meta, targetID.(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	log.Printf("[DEBUG] setting details from returned object")
+	return setFirewallPolicyAttributes(d, FirewallPolicyInstance)
 }
 
 func assignFirewallPolicy(
 	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) diag.Diagnostics {
-	if targetID, ok := d.GetOk("server_group"); ok {
-		log.Printf("[INFO] Attaching %s to %s", d.Id(), targetID.(string))
-		client := meta.(*CompositeClient).APIClient
-		FirewallPolicyInstance, err := client.ApplyFirewallPolicy(
-			ctx,
-			d.Id(),
-			brightbox.FirewallPolicyAttachment{targetID.(string)},
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return setFirewallPolicyAttributes(d, FirewallPolicyInstance)
-	}
-	return nil
+	target string,
+) (*brightbox.FirewallPolicy, error) {
+	log.Printf("[INFO] Attaching %s to %s", d.Id(), target)
+	client := meta.(*CompositeClient).APIClient
+	return client.ApplyFirewallPolicy(
+		ctx,
+		d.Id(),
+		brightbox.FirewallPolicyAttachment{ServerGroup: target},
+	)
 }
 
 func unassignFirewallPolicy(
@@ -106,18 +106,32 @@ func unassignFirewallPolicy(
 ) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 	targetID, _ := d.GetChange("server_group")
-	if targetID.(string) != "" {
-		log.Printf("[INFO] Detaching %s from %s", d.Id(), targetID.(string))
+	if target := targetID.(string); target != "" {
+		log.Printf("[INFO] Detaching %s from %s", d.Id(), target)
 		_, err := client.RemoveFirewallPolicy(
 			ctx,
 			d.Id(),
-			brightbox.FirewallPolicyAttachment{targetID.(string)},
+			brightbox.FirewallPolicyAttachment{ServerGroup: target},
 		)
-		if err != nil {
+		if err == nil {
+			log.Printf("[DEBUG] detached cleanly")
+			return nil
+		}
+		log.Printf("[DEBUG] detachment failed - checking for out of band detachment")
+		instance, readerr := client.FirewallPolicy(ctx, d.Id())
+		if readerr != nil {
+			return diag.FromErr(readerr)
+		}
+		if !detachedFirewallPolicy(instance) {
 			return diag.FromErr(err)
 		}
+		log.Printf("[DEBUG] detached out of band")
 	}
 	return nil
+}
+
+func detachedFirewallPolicy(instance *brightbox.FirewallPolicy) bool {
+	return instance.ServerGroup == nil
 }
 
 var resourceBrightboxFirewallPolicyUpdate = resourceBrightboxUpdate(
@@ -138,7 +152,14 @@ func resourceBrightboxFirewallPolicyUpdateAndRemap(
 	if d.HasChange("server_group") {
 		log.Printf("[INFO] Server Group changed, updating...")
 		diags = append(diags, unassignFirewallPolicy(ctx, d, meta)...)
-		diags = append(diags, assignFirewallPolicy(ctx, d, meta)...)
+		if targetID, ok := d.GetOk("server_group"); ok {
+			if target := targetID.(string); target != "" {
+				_, err := assignFirewallPolicy(ctx, d, meta, target)
+				if err != nil {
+					diags = append(diags, diag.FromErr(err)...)
+				}
+			}
+		}
 	}
 	return append(diags, resourceBrightboxFirewallPolicyUpdate(ctx, d, meta)...)
 }

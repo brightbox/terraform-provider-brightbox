@@ -71,7 +71,7 @@ func Provider() *schema.Provider {
 			"brightbox_database_snapshot": dataSourceBrightboxDatabaseSnapshot(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			// "brightbox_server":          resourceBrightboxServer(),
+			"brightbox_server":          resourceBrightboxServer(),
 			"brightbox_cloudip":         resourceBrightboxCloudIP(),
 			"brightbox_server_group":    resourceBrightboxServerGroup(),
 			"brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
