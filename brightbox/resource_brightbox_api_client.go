@@ -112,8 +112,10 @@ func setAPIClientAttributes(
 		return nil
 	}
 	var diags diag.Diagnostics
+	var err error
+
 	d.SetId(apiClient.ID)
-	err := d.Set("name", apiClient.Name)
+	err = d.Set("name", apiClient.Name)
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}

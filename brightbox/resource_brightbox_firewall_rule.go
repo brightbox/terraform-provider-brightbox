@@ -1,12 +1,12 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"regexp"
-	"strings"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -19,11 +19,15 @@ var (
 
 func resourceBrightboxFirewallRule() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Firewall Rule resource",
-		Create:      resourceBrightboxFirewallRuleCreate,
-		Read:        resourceBrightboxFirewallRuleRead,
-		Update:      resourceBrightboxFirewallRuleUpdate,
-		Delete:      resourceBrightboxFirewallRuleDelete,
+		Description:   "Provides a Brightbox Firewall Rule resource",
+		CreateContext: resourceBrightboxFirewallRuleCreate,
+		ReadContext: resourceBrightboxRead(
+			(*brightbox.Client).FirewallRule,
+			"Firewall Rule",
+			setFirewallRuleAttributes,
+		),
+		UpdateContext: resourceBrightboxFirewallRuleUpdateAndRegenerate,
+		DeleteContext: resourceBrightboxFirewallRuleDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -110,138 +114,135 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 	}
 }
 
-func resourceBrightboxFirewallRuleCreate(
+var resourceBrightboxFirewallRuleCreate = resourceBrightboxCreate(
+	(*brightbox.Client).CreateFirewallRule,
+	"Firewall Rule",
+	addUpdateableFirewallRuleOptions,
+	setFirewallRuleAttributes,
+)
+
+var resourceBrightboxFirewallRuleDelete = resourceBrightboxDelete(
+	(*brightbox.Client).DestroyFirewallRule,
+	"Firewall Rule",
+)
+
+var resourceBrightboxFirewallRuleUpdate = resourceBrightboxUpdate(
+	(*brightbox.Client).UpdateFirewallRule,
+	"Firewall Rule",
+	firewallRuleFromID,
+	addUpdateableFirewallRuleOptions,
+	setFirewallRuleAttributes,
+)
+
+func resourceBrightboxFirewallRuleUpdateAndRegenerate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Creating Firewall Rule")
-	protocol := d.Get("protocol").(string)
-	source := d.Get("source").(string)
-	sourcePort := d.Get("source_port").(string)
-	destination := d.Get("destination").(string)
-	destinationPort := d.Get("destination_port").(string)
-	icmpTypeName := d.Get("icmp_type_name").(string)
-	description := d.Get("description").(string)
-	firewallRuleOpts := &brightbox.FirewallRuleOptions{
-		FirewallPolicy:  d.Get("firewall_policy").(string),
-		Protocol:        &protocol,
-		Source:          &source,
-		SourcePort:      &sourcePort,
-		Destination:     &destination,
-		DestinationPort: &destinationPort,
-		IcmpTypeName:    &icmpTypeName,
-		Description:     &description,
-	}
-
-	log.Printf("[INFO] Firewall Rule create configuration: %#v", firewallRuleOpts)
-
-	firewallRule, err := client.CreateFirewallRule(firewallRuleOpts)
-	if err != nil {
-		return fmt.Errorf("Error creating Firewall Rule: %s", err)
-	}
-
-	d.SetId(firewallRule.ID)
-
-	return setFirewallRuleAttributes(d, firewallRule)
-}
-
-func resourceBrightboxFirewallRuleRead(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	firewallRule, err := client.FirewallRule(d.Id())
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "missing_resource:") {
-			log.Printf("[WARN] Firewall Rule not found, removing from state: %s", d.Id())
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error retrieving Firewall Rule details: %s", err)
-	}
-
-	return setFirewallRuleAttributes(d, firewallRule)
-}
-
-func resourceBrightboxFirewallRuleDelete(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[INFO] Deleting Firewall Rule %s", d.Id())
-	err := client.DestroyFirewallRule(d.Id())
-	if err != nil {
-		return fmt.Errorf("Error deleting Firewall Rule (%s): %s", d.Id(), err)
-	}
-	return nil
-}
-
-func resourceBrightboxFirewallRuleUpdate(
-	d *schema.ResourceData,
-	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
+) diag.Diagnostics {
 
 	if d.HasChange("firewall_policy") {
 		log.Printf("[INFO] Firewall Policy changed, regenerating rule")
-		oldFirewallRuleID := d.Id()
-		err := resourceBrightboxFirewallRuleCreate(d, meta)
-		if err != nil {
-			return err
-		}
-		log.Printf("[INFO] Removing original rule %s", oldFirewallRuleID)
-		err = client.DestroyFirewallRule(oldFirewallRuleID)
-		if err != nil {
-			return fmt.Errorf("Error deleting Firewall Rule (%s): %s", oldFirewallRuleID, err)
-		}
-		return nil
+		log.Printf("[INFO] Removing original rule %s", d.Id())
 
-	}
-	firewallRuleOpts := &brightbox.FirewallRuleOptions{
-		ID: d.Id(),
-	}
-	err := addUpdateableFirewallRuleOptions(d, firewallRuleOpts)
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] Firewall Rule update configuration: %#v", firewallRuleOpts)
-	firewallRule, err := client.UpdateFirewallRule(firewallRuleOpts)
-	if err != nil {
-		return fmt.Errorf("Error updating Firewall Rule (%s): %s", firewallRuleOpts.ID, err)
-	}
+		errs := resourceBrightboxFirewallRuleDelete(ctx, d, meta)
+		if errs.HasError() {
+			return errs
+		}
 
-	return setFirewallRuleAttributes(d, firewallRule)
+		log.Printf("[INFO] Creating new rule")
+		return resourceBrightboxFirewallRuleCreate(ctx, d, meta)
+	}
+	return resourceBrightboxFirewallRuleUpdate(ctx, d, meta)
+}
+
+func firewallRuleFromID(
+	id string,
+) *brightbox.FirewallRuleOptions {
+	return &brightbox.FirewallRuleOptions{
+		ID: id,
+	}
 }
 
 func addUpdateableFirewallRuleOptions(
 	d *schema.ResourceData,
 	opts *brightbox.FirewallRuleOptions,
-) error {
-	assignString(d, &opts.Protocol, "protocol")
-	assignString(d, &opts.Source, "source")
-	assignString(d, &opts.SourcePort, "source_port")
-	assignString(d, &opts.Destination, "destination")
-	assignString(d, &opts.DestinationPort, "destination_port")
-	assignString(d, &opts.IcmpTypeName, "icmp_type_name")
-	assignString(d, &opts.Description, "description")
+) diag.Diagnostics {
+	if d.HasChange("firewall_policy") {
+		opts.FirewallPolicy = d.Get("firewall_policy").(string)
+	}
+	if got, ok := d.GetOk("protocol"); ok {
+		temp := got.(string)
+		opts.Protocol = &temp
+	}
+	if got, ok := d.GetOk("source"); ok {
+		temp := got.(string)
+		opts.Source = &temp
+	}
+	if got, ok := d.GetOk("source_port"); ok {
+		temp := got.(string)
+		opts.SourcePort = &temp
+	}
+	if got, ok := d.GetOk("destination"); ok {
+		temp := got.(string)
+		opts.Destination = &temp
+	}
+	if got, ok := d.GetOk("destination_port"); ok {
+		temp := got.(string)
+		opts.DestinationPort = &temp
+	}
+	if got, ok := d.GetOk("icmp_type_name"); ok {
+		temp := got.(string)
+		opts.IcmpTypeName = &temp
+	}
+	if got, ok := d.GetOk("description"); ok {
+		temp := got.(string)
+		opts.Description = &temp
+	} else {
+		// Check if description has been cleared
+		assignString(d, &opts.Description, "description")
+	}
 	return nil
 }
 
 func setFirewallRuleAttributes(
 	d *schema.ResourceData,
 	firewallRule *brightbox.FirewallRule,
-) error {
-	d.Set("firewall_policy", firewallRule.FirewallPolicy.ID)
-	d.Set("protocol", firewallRule.Protocol)
-	d.Set("source", firewallRule.Source)
-	d.Set("source_port", firewallRule.SourcePort)
-	d.Set("destination", firewallRule.Destination)
-	d.Set("destination_port", firewallRule.DestinationPort)
-	d.Set("icmp_type_name", firewallRule.IcmpTypeName)
-	d.Set("description", firewallRule.Description)
-	return nil
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(firewallRule.ID)
+	err = d.Set("firewall_policy", firewallRule.FirewallPolicy.ID)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("protocol", firewallRule.Protocol)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("source", firewallRule.Source)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("source_port", firewallRule.SourcePort)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("destination", firewallRule.Destination)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("destination_port", firewallRule.DestinationPort)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("icmp_type_name", firewallRule.IcmpTypeName)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("description", firewallRule.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	return diags
 }

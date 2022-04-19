@@ -88,8 +88,10 @@ func setConfigMapAttributes(
 	configMap *brightbox.ConfigMap,
 ) diag.Diagnostics {
 	var diags diag.Diagnostics
+	var err error
+
 	d.SetId(configMap.ID)
-	err := d.Set("name", configMap.Name)
+	err = d.Set("name", configMap.Name)
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}

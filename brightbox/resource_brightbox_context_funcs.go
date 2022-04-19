@@ -30,7 +30,7 @@ func resourceBrightboxCreate[O, I any](
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		log.Printf("[DEBUG] setting details from returned object")
+		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		return setter(d, object)
 	}
 }
@@ -55,7 +55,7 @@ func resourceBrightboxRead[O any](
 			}
 			return diag.FromErr(err)
 		}
-		log.Printf("[DEBUG] setting details from returned object")
+		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		return setter(d, object)
 	}
 }
@@ -94,7 +94,7 @@ func datasourceBrightboxRead[O any](
 
 		result := &results[0]
 		log.Printf("[DEBUG] Single %s found", objectName)
-		log.Printf("[DEBUG] %#v", result)
+		log.Printf("[DEBUG] %+v", *result)
 		return setter(d, result)
 
 	}
@@ -142,7 +142,7 @@ func datasourceBrightboxRecentRead[O brightbox.CreateDated](
 			result = &results[0]
 		}
 		log.Printf("[DEBUG] Single %s found", objectName)
-		log.Printf("[DEBUG] %#v", result)
+		log.Printf("[DEBUG] %+v", *result)
 		return setter(d, result)
 
 	}
@@ -169,7 +169,7 @@ func resourceBrightboxUpdate[O, I any](
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		log.Printf("[DEBUG] setting details from returned object")
+		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		return setter(d, object)
 	}
 }
@@ -211,7 +211,7 @@ func resourceBrightboxSetLockState[O any](
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		log.Printf("[DEBUG] setting details from returned object")
+		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		return setter(d, object)
 	}
 }

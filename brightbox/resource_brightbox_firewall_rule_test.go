@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -28,8 +28,18 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.terraform", &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Rule",
+						&firewallRule,
+						(*brightbox.Client).FirewallRule,
+					),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_firewall_policy.terraform",
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					testAccCheckBrightboxEmptyFirewallRuleAttributes(&firewallRule, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "description", name),
@@ -40,7 +50,12 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_updated(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Rule",
+						&firewallRule,
+						(*brightbox.Client).FirewallRule,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "description", updatedName),
 				),
@@ -55,7 +70,7 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 }
 
 func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
-	var firewall_rule brightbox.FirewallRule
+	var firewallRule brightbox.FirewallRule
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("foo-%d", rInt)
 	resourceName := "brightbox_firewall_rule.rule1"
@@ -68,7 +83,12 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewall_rule),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Rule",
+						&firewallRule,
+						(*brightbox.Client).FirewallRule,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "description", name),
 				),
@@ -76,7 +96,12 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_empty,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewall_rule),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Rule",
+						&firewallRule,
+						(*brightbox.Client).FirewallRule,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "description", ""),
 				),
@@ -104,8 +129,18 @@ func TestAccBrightboxFirewallRule_mappings(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_mapped(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.policy1", &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Rule",
+						&firewallRule,
+						(*brightbox.Client).FirewallRule,
+					),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_firewall_policy.policy1",
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					resource.TestCheckResourceAttrPtr(
 						resourceName, "firewall_policy", &firewallPolicy.ID),
 				),
@@ -113,8 +148,18 @@ func TestAccBrightboxFirewallRule_mappings(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_remap(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxFirewallRuleExists(resourceName, &firewallRule),
-					testAccCheckBrightboxFirewallPolicyExists("brightbox_firewall_policy.policy2", &firewallPolicy),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Firewall Rule",
+						&firewallRule,
+						(*brightbox.Client).FirewallRule,
+					),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_firewall_policy.policy2",
+						"Firewall Policy",
+						&firewallPolicy,
+						(*brightbox.Client).FirewallPolicy,
+					),
 					resource.TestCheckResourceAttrPtr(
 						resourceName, "firewall_policy", &firewallPolicy.ID),
 				),
@@ -124,76 +169,26 @@ func TestAccBrightboxFirewallRule_mappings(t *testing.T) {
 }
 
 func testAccCheckBrightboxFirewallRuleAndPolicyDestroy(s *terraform.State) error {
-	err := testAccCheckBrightboxFirewallRuleDestroy(s)
+	err := testAccCheckBrightboxDestroyBuilder(
+		"Firewall Policy",
+		(*brightbox.Client).DestroyFirewallPolicy,
+	)(s)
 	if err != nil {
-		return err
-	}
-	return testAccCheckBrightboxFirewallPolicyDestroy(s)
-}
-
-func testAccCheckBrightboxFirewallRuleDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_firewall_rule" {
-			continue
-		}
-
-		// Try to find the FirewallRule
-		_, err := client.FirewallRule(rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for firewall_rule %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
+		var apierror *brightbox.APIError
+		if errors.As(err, &apierror) {
+			if apierror.StatusCode != 404 {
+				return err
 			}
 		}
 	}
-
 	return nil
 }
 
-func testAccCheckBrightboxFirewallRuleExists(n string, firewall_policy *brightbox.FirewallRule) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No FirewallRule ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the FirewallRule
-		retrieveFirewallRule, err := client.FirewallRule(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveFirewallRule.ID != rs.Primary.ID {
-			return fmt.Errorf("FirewallRule not found")
-		}
-
-		*firewall_policy = *retrieveFirewallRule
-
-		return nil
-	}
-}
-
-func testAccCheckBrightboxEmptyFirewallRuleAttributes(firewall_policy *brightbox.FirewallRule, name string) resource.TestCheckFunc {
+func testAccCheckBrightboxEmptyFirewallRuleAttributes(firewallPolicy *brightbox.FirewallRule, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if firewall_policy.Description != name {
-			return fmt.Errorf("Bad description: %s", firewall_policy.Description)
+		if firewallPolicy.Description != name {
+			return fmt.Errorf("Bad description: %s", firewallPolicy.Description)
 		}
 		return nil
 	}

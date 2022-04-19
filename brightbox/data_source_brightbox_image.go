@@ -1,7 +1,6 @@
 package brightbox
 
 import (
-	"log"
 	"regexp"
 	"time"
 
@@ -196,8 +195,6 @@ func dataSourceBrightboxImagesImageAttributes(
 	d *schema.ResourceData,
 	image *brightbox.Image,
 ) diag.Diagnostics {
-	log.Printf("[DEBUG] Image details: %#v", image)
-
 	var diags diag.Diagnostics
 	var err error
 
