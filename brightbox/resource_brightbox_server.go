@@ -207,7 +207,7 @@ func resourceBrightboxServerCreateAndWait(
 	assignBool(d, &serverOpts.DiskEncrypted, "disk_encrypted")
 	addBlockStorageOptions(d, &serverOpts)
 
-	log.Printf("[DEBUG] Server create configuration: %v", serverOpts)
+	log.Printf("[DEBUG] Server create configuration: %+v", serverOpts)
 
 	server, err := client.CreateServer(ctx, serverOpts)
 	if err != nil {
@@ -295,7 +295,7 @@ func resourceBrightboxServerUpdate(
 			return errs
 		}
 
-		log.Printf("[DEBUG] Server update configuration: %v", serverOpts)
+		log.Printf("[DEBUG] Server update configuration: %+v", serverOpts)
 
 		server, err = client.UpdateServer(ctx, serverOpts)
 		if err != nil {

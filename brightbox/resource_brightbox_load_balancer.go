@@ -2,22 +2,26 @@ package brightbox
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
 
-	brightbox "github.com/brightbox/gobrightbox"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/brightbox/gobrightbox/v2/status/balancingpolicy"
+	"github.com/brightbox/gobrightbox/v2/status/healthchecktype"
+	"github.com/brightbox/gobrightbox/v2/status/listenerprotocol"
+	loadBalancerConst "github.com/brightbox/gobrightbox/v2/status/loadbalancer"
+	"github.com/brightbox/gobrightbox/v2/status/proxyprotocol"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
-	validSSLVersions           = []string{"TLSv1.0", "TLSv1.1", "TLSv1.2", "TLSv1.3", "SSLv3"}
-	validListenerProtocols     = []string{"tcp", "http", "https", "http+ws", "https+wss"}
-	validHealthcheckType       = []string{"tcp", "http"}
-	validLoadBalancingPolicies = []string{"least-connections", "round-robin", "source-address"}
-	validProxyProtocols        = []string{"v1", "v2", "v2-ssl", "v2-ssl-cn"}
+	validSSLVersions = []string{"TLSv1.0", "TLSv1.1", "TLSv1.2", "TLSv1.3", "SSLv3"}
 )
 
 const (
@@ -26,11 +30,11 @@ const (
 
 func resourceBrightboxLoadBalancer() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Load Balancer resource",
-		Create:      resourceBrightboxLoadBalancerCreate,
-		Read:        resourceBrightboxLoadBalancerRead,
-		Update:      resourceBrightboxLoadBalancerUpdate,
-		Delete:      resourceBrightboxLoadBalancerDelete,
+		Description:   "Provides a Brightbox Load Balancer resource",
+		CreateContext: resourceBrightboxLoadBalancerCreateAndWait,
+		ReadContext:   resourceBrightboxLoadBalancerRead,
+		UpdateContext: resourceBrightboxLoadBalancerUpdate,
+		DeleteContext: resourceBrightboxLoadBalancerDeleteAndWait,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -136,7 +140,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							ValidateFunc: validation.StringInSlice(
-								validHealthcheckType,
+								healthchecktype.ValidStrings,
 								false,
 							),
 						},
@@ -176,7 +180,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							ValidateFunc: validation.StringInSlice(
-								validListenerProtocols,
+								listenerprotocol.ValidStrings,
 								false,
 							),
 						},
@@ -186,7 +190,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							ValidateFunc: validation.StringInSlice(
-								validProxyProtocols,
+								proxyprotocol.ValidStrings,
 								false,
 							),
 						},
@@ -235,7 +239,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 				Computed:    true,
 				// Default:     "least-connections",
 				ValidateFunc: validation.StringInSlice(
-					validLoadBalancingPolicies,
+					balancingpolicy.ValidStrings,
 					false,
 				),
 			},
@@ -303,11 +307,11 @@ func mapFromListeners(
 	listeners := make([]map[string]interface{}, len(listenerSet))
 	for i, listener := range listenerSet {
 		listeners[i] = map[string]interface{}{
-			"protocol":       listener.Protocol,
+			"protocol":       listener.Protocol.String(),
 			"in":             listener.In,
 			"out":            listener.Out,
 			"timeout":        listener.Timeout,
-			"proxy_protocol": listener.ProxyProtocol,
+			"proxy_protocol": listener.ProxyProtocol.String(),
 		}
 	}
 	return listeners
@@ -318,7 +322,7 @@ func mapFromHealthcheck(
 ) []map[string]interface{} {
 	return []map[string]interface{}{
 		{
-			"type":           healthcheck.Type,
+			"type":           healthcheck.Type.String(),
 			"port":           healthcheck.Port,
 			"request":        healthcheck.Request,
 			"interval":       healthcheck.Interval,
@@ -333,109 +337,149 @@ func mapFromHealthcheck(
 func setLoadBalancerAttributes(
 	d *schema.ResourceData,
 	loadBalancer *brightbox.LoadBalancer,
-) error {
-	d.Set("name", loadBalancer.Name)
-	d.Set("status", loadBalancer.Status)
-	d.Set("locked", loadBalancer.Locked)
-	d.Set("policy", loadBalancer.Policy)
-	d.Set("buffer_size", loadBalancer.BufferSize)
-	d.Set("https_redirect", loadBalancer.HTTPSRedirect)
-	d.Set("ssl_minimum_version", loadBalancer.SslMinimumVersion)
-	d.Set("sslv3", false)
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
 
-	if err := d.Set("domains", stringSliceFromAcme(loadBalancer.Acme)); err != nil {
-		return fmt.Errorf("error setting domains: %s", err)
+	d.SetId(loadBalancer.ID)
+	err = d.Set("name", loadBalancer.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	if err := d.Set("nodes", serverIDListFromNodes(loadBalancer.Nodes)); err != nil {
-		return fmt.Errorf("error setting nodes: %s", err)
+	err = d.Set("status", loadBalancer.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	if err := d.Set("listener", mapFromListeners(loadBalancer.Listeners)); err != nil {
-		return fmt.Errorf("error setting listener: %s", err)
+	err = d.Set("locked", loadBalancer.Locked)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	log.Printf("[DEBUG] Healthcheck details are %#v", loadBalancer.Healthcheck)
-	if err := d.Set("healthcheck", mapFromHealthcheck(&loadBalancer.Healthcheck)); err != nil {
-		return fmt.Errorf("error setting healthcheck: %s", err)
+	err = d.Set("policy", loadBalancer.Policy.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-
-	log.Printf("[DEBUG] Certificate details are %#v", loadBalancer.Certificate)
-
-	return nil
+	err = d.Set("buffer_size", loadBalancer.BufferSize)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("https_redirect", loadBalancer.HTTPSRedirect)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("ssl_minimum_version", loadBalancer.SslMinimumVersion)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("sslv3", false)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("domains", stringSliceFromAcme(loadBalancer.Acme))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("nodes", serverIDListFromNodes(loadBalancer.Nodes))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("listener", mapFromListeners(loadBalancer.Listeners))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	log.Printf("[DEBUG] Healthcheck details are %+v", loadBalancer.Healthcheck)
+	err = d.Set("healthcheck", mapFromHealthcheck(&loadBalancer.Healthcheck))
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	log.Printf("[DEBUG] Certificate details are %+v", loadBalancer.Certificate)
+	return diags
 }
 
-func loadBalancerStateRefresh(client *brightbox.Client, loadBalancerID string) resource.StateRefreshFunc {
+func loadBalancerStateRefresh(ctx context.Context, client *brightbox.Client, loadBalancerID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		loadBalancer, err := client.LoadBalancer(loadBalancerID)
+		loadBalancer, err := client.LoadBalancer(ctx, loadBalancerID)
 		if err != nil {
 			log.Printf("Error on Load Balancer State Refresh: %s", err)
 			return nil, "", err
 		}
-		return loadBalancer, loadBalancer.Status, nil
+		return loadBalancer, loadBalancer.Status.String(), nil
 	}
 }
 
-func resourceBrightboxLoadBalancerCreate(
+func resourceBrightboxLoadBalancerCreateAndWait(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
-	log.Printf("[DEBUG] Load Balancer create called")
-	loadBalancerOpts := &brightbox.LoadBalancerOptions{}
+	log.Printf("[INFO]] Creating Load Balancer")
+	var loadBalancerOpts brightbox.LoadBalancerOptions
 
-	err := addUpdateableLoadBalancerOptions(d, loadBalancerOpts)
-	if err != nil {
-		return err
+	errs := addUpdateableLoadBalancerOptions(d, &loadBalancerOpts)
+	if errs.HasError() {
+		return errs
 	}
 
-	log.Printf("[DEBUG] Load Balancer create configuration %#v", loadBalancerOpts)
-	outputLoadBalancerOptions(loadBalancerOpts)
+	log.Printf("[DEBUG] Load Balancer create configuration %+v", loadBalancerOpts)
+	outputLoadBalancerOptions(&loadBalancerOpts)
 
-	loadBalancer, err := client.CreateLoadBalancer(loadBalancerOpts)
+	loadBalancer, err := client.CreateLoadBalancer(ctx, loadBalancerOpts)
 	if err != nil {
-		return fmt.Errorf("Error creating server: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(loadBalancer.ID)
 
-	locked := d.Get("locked").(bool)
-	log.Printf("[INFO] Setting lock state to %v", locked)
-	if err := setLockState(client, locked, loadBalancer); err != nil {
-		return err
-	}
-
 	log.Printf("[INFO] Waiting for Load Balancer (%s) to become available", d.Id())
 
 	stateConf := resource.StateChangeConf{
-		Pending:    []string{"creating"},
-		Target:     []string{"active"},
-		Refresh:    loadBalancerStateRefresh(client, loadBalancer.ID),
+		Pending: []string{
+			loadBalancerConst.Creating.String(),
+		},
+		Target: []string{
+			loadBalancerConst.Active.String(),
+		},
+		Refresh:    loadBalancerStateRefresh(ctx, client, loadBalancer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	activeLoadBalancer, err := stateConf.WaitForState()
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return setLoadBalancerAttributes(d, activeLoadBalancer.(*brightbox.LoadBalancer))
+	return resourceBrightboxSetLoadBalancerLockState(ctx, d, meta)
 }
 
+var resourceBrightboxSetLoadBalancerLockState = resourceBrightboxSetLockState(
+	(*brightbox.Client).LockLoadBalancer,
+	(*brightbox.Client).UnlockLoadBalancer,
+	setLoadBalancerAttributes,
+)
+
 func resourceBrightboxLoadBalancerRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Load Balancer read called for %s", d.Id())
-	loadBalancer, err := client.LoadBalancer(d.Id())
+	loadBalancer, err := client.LoadBalancer(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("Error retrieving Load Balancer details: %s", err)
+		var apierror *brightbox.APIError
+		if errors.As(err, &apierror) {
+			if apierror.StatusCode == 404 {
+				log.Printf("[WARN] Load Balancer not found, removing from state: %s", d.Id())
+				d.SetId("")
+				return nil
+			}
+		}
 	}
-	if unreadable[loadBalancer.Status] {
+	if loadBalancer.Status == loadBalancerConst.Deleted ||
+		loadBalancer.Status == loadBalancerConst.Failed {
 		log.Printf("[WARN] Load Balancer not found, removing from state: %s", d.Id())
 		d.SetId("")
 		return nil
@@ -445,76 +489,82 @@ func resourceBrightboxLoadBalancerRead(
 }
 
 func resourceBrightboxLoadBalancerUpdate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
 	log.Printf("[DEBUG] Load Balancer update called for %s", d.Id())
-	loadBalancerOpts := &brightbox.LoadBalancerOptions{
+	loadBalancerOpts := brightbox.LoadBalancerOptions{
 		ID: d.Id(),
 	}
 
-	err := addUpdateableLoadBalancerOptions(d, loadBalancerOpts)
-	if err != nil {
-		return err
+	errs := addUpdateableLoadBalancerOptions(d, &loadBalancerOpts)
+	if errs.HasError() {
+		return errs
 	}
 
-	log.Printf("[DEBUG] Load Balancer update configuration %#v", loadBalancerOpts)
-	outputLoadBalancerOptions(loadBalancerOpts)
+	log.Printf("[DEBUG] Load Balancer update configuration %+v", loadBalancerOpts)
+	outputLoadBalancerOptions(&loadBalancerOpts)
 
-	loadBalancer, err := client.UpdateLoadBalancer(loadBalancerOpts)
+	loadBalancer, err := client.UpdateLoadBalancer(ctx, loadBalancerOpts)
 	if err != nil {
-		return fmt.Errorf("Error updating loadBalancer: %s", err)
+		return diag.FromErr(err)
 	}
 
 	if d.HasChange("locked") {
-		locked := d.Get("locked").(bool)
-		log.Printf("[INFO] Setting lock state to %v", locked)
-		if err := setLockState(client, locked, loadBalancer); err != nil {
-			return err
-		}
-		return resourceBrightboxLoadBalancerRead(d, meta)
+		return resourceBrightboxSetLoadBalancerLockState(ctx, d, meta)
 	}
 	return setLoadBalancerAttributes(d, loadBalancer)
 }
 
-func resourceBrightboxLoadBalancerDelete(
+var resourceBrightboxLoadBalancerDelete = resourceBrightboxDelete(
+	(*brightbox.Client).DestroyLoadBalancer,
+	"Load Balancer",
+)
+
+func resourceBrightboxLoadBalancerDeleteAndWait(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Load Balancer delete called for %s", d.Id())
-	err := client.DestroyLoadBalancer(d.Id())
-	if err != nil {
-		return fmt.Errorf("Error deleting Load Balancer: %s", err)
+) diag.Diagnostics {
+	diags := resourceBrightboxLoadBalancerDelete(ctx, d, meta)
+	if diags.HasError() {
+		return diags
 	}
+
+	client := meta.(*CompositeClient).APIClient
 	stateConf := resource.StateChangeConf{
-		Pending:    []string{"deleting", "active"},
-		Target:     []string{"deleted"},
-		Refresh:    loadBalancerStateRefresh(client, d.Id()),
+		Pending: []string{
+			loadBalancerConst.Deleting.String(),
+			loadBalancerConst.Active.String(),
+		},
+		Target: []string{
+			loadBalancerConst.Deleted.String(),
+		},
+		Refresh:    loadBalancerStateRefresh(ctx, client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	_, err = stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
+	d.SetId("")
 	return nil
 }
 
 func addUpdateableLoadBalancerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.LoadBalancerOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
-	assignString(d, &opts.Policy, "policy")
+	assignEnum(d, &opts.Policy, "policy")
 	assignString(d, &opts.CertificatePem, "certificate_pem")
 	assignString(d, &opts.CertificatePrivateKey, "certificate_private_key")
 	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
-	assignInt(d, &opts.BufferSize, "buffer_size")
 	assignBool(d, &opts.HTTPSRedirect, "https_redirect")
 	var domains []string
 	opts.Domains = &domains
@@ -524,28 +574,33 @@ func addUpdateableLoadBalancerOptions(
 	return assignHealthCheck(d, &opts.Healthcheck)
 }
 
-func assignHealthCheck(d *schema.ResourceData, target **brightbox.LoadBalancerHealthcheck) error {
+func assignHealthCheck(d *schema.ResourceData, target **brightbox.LoadBalancerHealthcheck) diag.Diagnostics {
+	var diags diag.Diagnostics
 	if d.HasChange("healthcheck") {
 		hc := d.Get("healthcheck").([]interface{})
 		check := hc[0].(map[string]interface{})
 		temp := brightbox.LoadBalancerHealthcheck{
-			Type: check["type"].(string),
-			Port: check["port"].(int),
+			Port: uint16(check["port"].(int)),
+		}
+		if hctype, err := healthchecktype.ParseStatus(check["type"].(string)); err == nil {
+			temp.Type = hctype
+		} else {
+			diags = append(diags, diag.FromErr(err)...)
 		}
 		if attr, ok := check["request"]; ok {
 			temp.Request = attr.(string)
 		}
 		if attr, ok := check["interval"]; ok {
-			temp.Interval = attr.(int)
+			temp.Interval = uint(attr.(int))
 		}
 		if attr, ok := check["timeout"]; ok {
-			temp.Timeout = attr.(int)
+			temp.Timeout = uint(attr.(int))
 		}
 		if attr, ok := check["threshold_up"]; ok {
-			temp.ThresholdUp = attr.(int)
+			temp.ThresholdUp = uint(attr.(int))
 		}
 		if attr, ok := check["threshold_down"]; ok {
-			temp.ThresholdDown = attr.(int)
+			temp.ThresholdDown = uint(attr.(int))
 		}
 		*target = &temp
 	}
@@ -569,14 +624,16 @@ func expandListeners(configured []interface{}) []brightbox.LoadBalancerListener 
 
 	for i, listenSource := range configured {
 		data := listenSource.(map[string]interface{})
-		listeners[i].Protocol = data["protocol"].(string)
-		listeners[i].In = data["in"].(int)
-		listeners[i].Out = data["out"].(int)
+		protocolTarget := &listeners[i].Protocol
+		protocolTarget.UnmarshalText([]byte(data["protocol"].(string)))
+		listeners[i].In = uint16(data["in"].(int))
+		listeners[i].Out = uint16(data["out"].(int))
 		if attr, ok := data["timeout"]; ok {
-			listeners[i].Timeout = attr.(int)
+			listeners[i].Timeout = uint(attr.(int))
 		}
 		if attr, ok := data["proxy_protocol"]; ok {
-			listeners[i].ProxyProtocol = attr.(string)
+			proxyTarget := &listeners[i].ProxyProtocol
+			proxyTarget.UnmarshalText([]byte(attr.(string)))
 		}
 	}
 	return listeners
@@ -598,11 +655,8 @@ func outputLoadBalancerOptions(opts *brightbox.LoadBalancerOptions) {
 	if opts.Nodes != nil {
 		log.Printf("[DEBUG] Load Balancer Nodes %#v", opts.Nodes)
 	}
-	if opts.Policy != nil {
-		log.Printf("[DEBUG] Load Balancer Policy %v", *opts.Policy)
-	}
-	if opts.BufferSize != nil {
-		log.Printf("[DEBUG] Load Balancer BufferSize %v", *opts.BufferSize)
+	if opts.Policy != 0 {
+		log.Printf("[DEBUG] Load Balancer Policy %v", opts.Policy.String())
 	}
 	if opts.Listeners != nil {
 		log.Printf("[DEBUG] Load Balancer Listeners %#v", opts.Listeners)

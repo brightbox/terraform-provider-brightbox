@@ -1,13 +1,15 @@
 package brightbox
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"log"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/brightbox/gobrightbox/status"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/brightbox/gobrightbox/v2/status/balancingpolicy"
+	loadBalancerConst "github.com/brightbox/gobrightbox/v2/status/loadbalancer"
+	loadbalancerConst "github.com/brightbox/gobrightbox/v2/status/loadbalancer"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -24,7 +26,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_locked,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
 					resource.TestCheckResourceAttr(
@@ -48,7 +55,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					testAccCheckBrightboxEmptyLoadBalancerAttributes(&loadBalancer),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
@@ -64,7 +76,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					testAccCheckBrightboxEmptyLoadBalancerAttributes(&loadBalancer),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
@@ -78,7 +95,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_timeout,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
 				),
@@ -86,7 +108,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_new_healthcheck,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "healthcheck.0.type", "tcp"),
 					resource.TestCheckResourceAttr(
@@ -100,7 +127,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_addListener,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "https_redirect", "true"),
 					resource.TestCheckResourceAttr(
@@ -122,7 +154,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_changeListener,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "https_redirect", "true"),
 					resource.TestCheckResourceAttr(
@@ -138,7 +175,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_remove_listener,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "https_redirect", "false"),
 					resource.TestCheckResourceAttr(
@@ -154,7 +196,12 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_change_defaults,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxLoadBalancerExists(resourceName, &loadBalancer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Load Balancer",
+						&loadBalancer,
+						(*brightbox.Client).LoadBalancer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
 					resource.TestCheckResourceAttr(
@@ -187,63 +234,10 @@ func testAccCheckBrightboxLoadBalancerAndServerDestroy(s *terraform.State) error
 	return testAccCheckBrightboxServerDestroy(s)
 }
 
-func testAccCheckBrightboxLoadBalancerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_load_balancer" {
-			continue
-		}
-
-		// Try to find the LoadBalancer
-		_, err := client.LoadBalancer(rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for load_balancer %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckBrightboxLoadBalancerExists(n string, loadBalancer *brightbox.LoadBalancer) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No LoadBalancer ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the LoadBalancer
-		retrieveLoadBalancer, err := client.LoadBalancer(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveLoadBalancer.ID != rs.Primary.ID {
-			return fmt.Errorf("LoadBalancer not found")
-		}
-
-		*loadBalancer = *retrieveLoadBalancer
-
-		return nil
-	}
-}
+var testAccCheckBrightboxLoadBalancerDestroy = testAccCheckBrightboxDestroyBuilder(
+	"load_balancer",
+	(*brightbox.Client).LoadBalancer,
+)
 
 func testAccCheckBrightboxEmptyLoadBalancerAttributes(loadBalancer *brightbox.LoadBalancer) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -254,10 +248,10 @@ func testAccCheckBrightboxEmptyLoadBalancerAttributes(loadBalancer *brightbox.Lo
 		if loadBalancer.Locked != false {
 			return fmt.Errorf("Bad locked: %v", loadBalancer.Locked)
 		}
-		if loadBalancer.Status != "active" {
+		if loadBalancer.Status != loadBalancerConst.Active {
 			return fmt.Errorf("Bad status: %s", loadBalancer.Status)
 		}
-		if loadBalancer.Policy != "least-connections" {
+		if loadBalancer.Policy != balancingpolicy.LeastConnections {
 			return fmt.Errorf("Bad policy: %s", loadBalancer.Policy)
 		}
 		if loadBalancer.BufferSize != 4096 {
@@ -277,7 +271,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 8080
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -313,7 +307,7 @@ resource "brightbox_load_balancer" "default" {
 		proxy_protocol = "v1"
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -348,7 +342,7 @@ resource "brightbox_load_balancer" "default" {
 		timeout = 10000
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -381,7 +375,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 8080
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -420,7 +414,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 8080
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -512,7 +506,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 8080
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -547,7 +541,7 @@ resource "brightbox_load_balancer" "default" {
 		out = 8080
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -586,7 +580,7 @@ resource "brightbox_load_balancer" "default" {
 		proxy_protocol = "v1"
 	}
 	listener {
-		protocol = "http+ws"
+		protocol = "http"
 		in = 81
 		out = 81
 		timeout = 10000
@@ -621,24 +615,26 @@ func init() {
 	resource.AddTestSweepers("load_balancer", &resource.Sweeper{
 		Name: "load_balancer",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.LoadBalancers()
+			objects, err := client.APIClient.LoadBalancers(ctx)
 			if err != nil {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != status.Active {
+				if object.Status != loadbalancerConst.Active {
 					continue
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := setLockState(client.APIClient, false, brightbox.LoadBalancer{ID: object.ID}); err != nil {
+					if _, err := client.APIClient.UnlockLoadBalancer(ctx, object.ID); err != nil {
 						log.Printf("error unlocking %s during sweep: %s", object.ID, err)
 					}
-					if err := client.APIClient.DestroyLoadBalancer(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyLoadBalancer(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}
