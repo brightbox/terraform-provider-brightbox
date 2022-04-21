@@ -235,7 +235,7 @@ func testAccCheckBrightboxLoadBalancerAndServerDestroy(s *terraform.State) error
 }
 
 var testAccCheckBrightboxLoadBalancerDestroy = testAccCheckBrightboxDestroyBuilder(
-	"load_balancer",
+	"brightbox_load_balancer",
 	(*brightbox.Client).LoadBalancer,
 )
 

@@ -1,14 +1,14 @@
 package brightbox
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"testing"
 
-	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/brightbox/gobrightbox/status"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	databaseServerConst "github.com/brightbox/gobrightbox/v2/status/databaseserver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -30,7 +30,12 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_locked(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
 					resource.TestCheckResourceAttr(
@@ -52,7 +57,12 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_basic(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					testAccCheckBrightboxEmptyDatabaseServerAttributes(&databaseServer, name),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
@@ -61,7 +71,12 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_locked(name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "true"),
 				),
@@ -69,7 +84,12 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_clear_names,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "locked", "false"),
 					resource.TestCheckResourceAttr(
@@ -93,7 +113,12 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_maintenance(updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -117,7 +142,12 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_update_access(updatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -139,8 +169,18 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_map_cloudip(updatedName, rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxCloudipExists("brightbox_cloudip.barfar", &cloudip),
-					testAccCheckBrightboxDatabaseServerExists(resourceName, &databaseServer),
+					testAccCheckBrightboxObjectExists(
+						"brightbox_cloudip.barfar",
+						"Cloud IP",
+						&cloudip,
+						(*brightbox.Client).CloudIP,
+					),
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&databaseServer,
+						(*brightbox.Client).DatabaseServer,
+					),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", updatedName),
 					resource.TestCheckResourceAttr(
@@ -178,70 +218,17 @@ func testAccCheckBrightboxDatabaseServerAndOthersDestroy(s *terraform.State) err
 	if err != nil {
 		return err
 	}
-	err = testAccCheckBrightboxCloudipDestroy(s)
+	err = testAccCheckBrightboxCloudIPDestroy(s)
 	if err != nil {
 		return err
 	}
 	return testAccCheckBrightboxServerDestroy(s)
 }
 
-func testAccCheckBrightboxDatabaseServerDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "brightbox_database_server" {
-			continue
-		}
-
-		// Try to find the DatabaseServer
-		_, err := client.DatabaseServer(rs.Primary.ID)
-
-		// Wait
-
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode != 404 {
-					return fmt.Errorf(
-						"Error waiting for database_server %s to be destroyed: %s",
-						rs.Primary.ID, err)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckBrightboxDatabaseServerExists(n string, databaseServer *brightbox.DatabaseServer) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No DatabaseServer ID is set")
-		}
-
-		client := testAccProvider.Meta().(*CompositeClient).APIClient
-
-		// Try to find the DatabaseServer
-		retrieveDatabaseServer, err := client.DatabaseServer(rs.Primary.ID)
-
-		if err != nil {
-			return err
-		}
-
-		if retrieveDatabaseServer.ID != rs.Primary.ID {
-			return fmt.Errorf("DatabaseServer not found")
-		}
-
-		*databaseServer = *retrieveDatabaseServer
-
-		return nil
-	}
-}
+var testAccCheckBrightboxDatabaseServerDestroy = testAccCheckBrightboxDestroyBuilder(
+	"brightbox_database_server",
+	(*brightbox.Client).DatabaseServer,
+)
 
 func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbox.DatabaseServer, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -259,7 +246,7 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if databaseServer.Locked != false {
 			return fmt.Errorf("Bad locked: %v", databaseServer.Locked)
 		}
-		if databaseServer.Status != "active" {
+		if databaseServer.Status != databaseServerConst.Active {
 			return fmt.Errorf("Bad status: %s", databaseServer.Status)
 		}
 		if databaseServer.DatabaseEngine != "mysql" {
@@ -292,8 +279,8 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if databaseServer.SnapshotsScheduleNextAt != nil {
 			return fmt.Errorf("Bad Snapshot Schedule Time: %#v", databaseServer.SnapshotsScheduleNextAt)
 		}
-		if databaseServer.SnapshotsSchedule != "" {
-			return fmt.Errorf("Bad Snapshot Schedule: %q", databaseServer.SnapshotsSchedule)
+		if databaseServer.SnapshotsSchedule != nil {
+			return fmt.Errorf("Bad Snapshot Schedule: %q", *databaseServer.SnapshotsSchedule)
 		}
 		return nil
 	}
@@ -427,24 +414,26 @@ func init() {
 	resource.AddTestSweepers("database_server", &resource.Sweeper{
 		Name: "database_server",
 		F: func(_ string) error {
-			client, err := obtainCloudClient()
-			if err != nil {
-				return err
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			client, errs := obtainCloudClient()
+			if errs != nil {
+				return fmt.Errorf(errs[0].Summary)
 			}
-			objects, err := client.APIClient.DatabaseServers()
+			objects, err := client.APIClient.DatabaseServers(ctx)
 			if err != nil {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != status.Active {
+				if object.Status != databaseServerConst.Active {
 					continue
 				}
 				if isTestName(object.Name) {
 					log.Printf("[INFO] removing %s named %s", object.ID, object.Name)
-					if err := setLockState(client.APIClient, false, brightbox.DatabaseServer{ID: object.ID}); err != nil {
+					if _, err := client.APIClient.UnlockDatabaseServer(ctx, object.ID); err != nil {
 						log.Printf("error unlocking %s during sweep: %s", object.ID, err)
 					}
-					if err := client.APIClient.DestroyDatabaseServer(object.ID); err != nil {
+					if _, err := client.APIClient.DestroyDatabaseServer(ctx, object.ID); err != nil {
 						log.Printf("error destroying %s during sweep: %s", object.ID, err)
 					}
 				}

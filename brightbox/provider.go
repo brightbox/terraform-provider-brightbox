@@ -77,7 +77,7 @@ func Provider() *schema.Provider {
 			"brightbox_firewall_policy": resourceBrightboxFirewallPolicy(),
 			"brightbox_firewall_rule":   resourceBrightboxFirewallRule(),
 			"brightbox_load_balancer":   resourceBrightboxLoadBalancer(),
-			// "brightbox_database_server": resourceBrightboxDatabaseServer(),
+			"brightbox_database_server": resourceBrightboxDatabaseServer(),
 			"brightbox_orbit_container": resourceBrightboxContainer(),
 			"brightbox_api_client":      resourceBrightboxAPIClient(),
 			"brightbox_config_map":      resourceBrightboxConfigMap(),

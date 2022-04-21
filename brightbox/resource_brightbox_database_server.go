@@ -1,29 +1,26 @@
 package brightbox
 
 import (
-	"fmt"
+	"context"
+	"errors"
 	"log"
 	"time"
 
-	brightbox "github.com/brightbox/gobrightbox"
-	"github.com/google/go-cmp/cmp"
+	brightbox "github.com/brightbox/gobrightbox/v2"
+	databaseServerConst "github.com/brightbox/gobrightbox/v2/status/databaseserver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var (
-	blankDatabaseServerOpts = brightbox.DatabaseServerOptions{}
-	validDatabaseEngines    = []string{"mysql", "postgresql"}
-)
-
 func resourceBrightboxDatabaseServer() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Database Server resource",
-		Create:      resourceBrightboxDatabaseServerCreate,
-		Read:        resourceBrightboxDatabaseServerRead,
-		Update:      resourceBrightboxDatabaseServerUpdate,
-		Delete:      resourceBrightboxDatabaseServerDelete,
+		Description:   "Provides a Brightbox Database Server resource",
+		CreateContext: resourceBrightboxDatabaseServerCreateAndWait,
+		ReadContext:   resourceBrightboxDatabaseServerRead,
+		UpdateContext: resourceBrightboxDatabaseServerUpdate,
+		DeleteContext: resourceBrightboxDatabaseServerDeleteAndWait,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -168,66 +165,98 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 func setDatabaseServerAttributes(
 	d *schema.ResourceData,
 	databaseServer *brightbox.DatabaseServer,
-) {
-	d.Set("name", databaseServer.Name)
-	d.Set("description", databaseServer.Description)
-	d.Set("status", databaseServer.Status)
-	d.Set("locked", databaseServer.Locked)
-	d.Set("database_engine", databaseServer.DatabaseEngine)
-	d.Set("database_version", databaseServer.DatabaseVersion)
-	d.Set("database_type", databaseServer.DatabaseServerType.ID)
-	d.Set("admin_username", databaseServer.AdminUsername)
-	d.Set("maintenance_weekday", databaseServer.MaintenanceWeekday)
-	d.Set("maintenance_hour", databaseServer.MaintenanceHour)
-	if databaseServer.SnapshotsSchedule != "" {
-		d.Set("snapshots_schedule", databaseServer.SnapshotsSchedule)
-		d.Set("snapshots_schedule_next_at", databaseServer.SnapshotsScheduleNextAt.Format(time.RFC3339))
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(databaseServer.ID)
+	err = d.Set("name", databaseServer.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	d.Set("zone", databaseServer.Zone.Handle)
+	err = d.Set("description", databaseServer.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("status", databaseServer.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("locked", databaseServer.Locked)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("database_engine", databaseServer.DatabaseEngine)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("database_version", databaseServer.DatabaseVersion)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("database_type", databaseServer.DatabaseServerType.ID)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("admin_username", databaseServer.AdminUsername)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("maintenance_weekday", databaseServer.MaintenanceWeekday)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("maintenance_hour", databaseServer.MaintenanceHour)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	if databaseServer.SnapshotsSchedule != nil {
+		err = d.Set("snapshots_schedule", databaseServer.SnapshotsSchedule)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("snapshots_schedule_next_at", databaseServer.SnapshotsScheduleNextAt.Format(time.RFC3339))
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	err = d.Set("zone", databaseServer.Zone.Handle)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("allow_access", databaseServer.AllowAccess)
+	if err != nil {
+		diags = append(diags, diag.Errorf("error setting allow_access: %s", err)...)
+	}
+	return diags
 }
 
-func setAllowAccessAttribute(
-	d *schema.ResourceData,
-	databaseServer *brightbox.DatabaseServer,
-) error {
-	if err := d.Set("allow_access", databaseServer.AllowAccess); err != nil {
-		return fmt.Errorf("error setting allow_access: %s", err)
-	}
-	return nil
-}
-
-func databaseServerStateRefresh(client *brightbox.Client, databaseServerID string) resource.StateRefreshFunc {
+func databaseServerStateRefresh(ctx context.Context, client *brightbox.Client, databaseServerID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		databaseServer, err := client.DatabaseServer(databaseServerID)
+		databaseServer, err := client.DatabaseServer(ctx, databaseServerID)
 		if err != nil {
 			log.Printf("Error on Database Server State Refresh: %s", err)
 			return nil, "", err
 		}
-		return databaseServer, databaseServer.Status, nil
+		return databaseServer, databaseServer.Status.String(), nil
 	}
 }
 
-func resourceBrightboxDatabaseServerCreate(
+func resourceBrightboxDatabaseServerCreateAndWait(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
-	err := createDatabaseServer(d, client)
-	if err != nil {
-		return err
-	}
-	databaseServerOpts := getBlankDatabaseServerOpts()
-	databaseServerOpts.AllowAccess = sliceFromStringSet(d, "allow_access")
-	return updateDatabaseServerAttributes(d, meta, client, databaseServerOpts)
-}
 
-func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) error {
-	log.Printf("[DEBUG] Database Server create called")
-	databaseServerOpts := getBlankDatabaseServerOpts()
-	err := addUpdateableDatabaseServerOptions(d, databaseServerOpts)
-	if err != nil {
-		return err
+	log.Printf("[INFO]] Creating Database Server")
+	var databaseServerOpts brightbox.DatabaseServerOptions
+
+	errs := addUpdateableDatabaseServerOptions(d, &databaseServerOpts)
+	if errs.HasError() {
+		return errs
 	}
+
 	engine := &databaseServerOpts.Engine
 	assignString(d, &engine, "database_engine")
 	version := &databaseServerOpts.Version
@@ -238,11 +267,13 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 	assignString(d, &snapshot, "snapshot")
 	zone := &databaseServerOpts.Zone
 	assignString(d, &zone, "zone")
-	log.Printf("[DEBUG] Database Server create configuration %#v", databaseServerOpts)
-	outputDatabaseServerOptions(databaseServerOpts)
-	databaseServer, err := client.CreateDatabaseServer(databaseServerOpts)
+
+	log.Printf("[DEBUG] Database Server create configuration %+v", databaseServerOpts)
+	outputDatabaseServerOptions(&databaseServerOpts)
+
+	databaseServer, err := client.CreateDatabaseServer(ctx, databaseServerOpts)
 	if err != nil {
-		return fmt.Errorf("Error creating server: %s", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(databaseServer.ID)
@@ -253,147 +284,140 @@ func createDatabaseServer(d *schema.ResourceData, client *brightbox.Client) erro
 		d.Set("admin_password", databaseServer.AdminPassword)
 	}
 
-	locked := d.Get("locked").(bool)
-	log.Printf("[INFO] Setting lock state to %v", locked)
-	if err := setLockState(client, locked, databaseServer); err != nil {
-		return err
-	}
-
 	log.Printf("[INFO] Waiting for Database Server (%s) to become available", d.Id())
+
 	stateConf := resource.StateChangeConf{
-		Pending:    []string{"creating"},
-		Target:     []string{"active"},
-		Refresh:    databaseServerStateRefresh(client, databaseServer.ID),
+		Pending: []string{
+			databaseServerConst.Creating.String(),
+		},
+		Target: []string{
+			databaseServerConst.Active.String(),
+		},
+		Refresh:    databaseServerStateRefresh(ctx, client, databaseServer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	activeDatabaseServer, err := stateConf.WaitForState()
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	setDatabaseServerAttributes(d, activeDatabaseServer.(*brightbox.DatabaseServer))
-	return nil
+
+	return resourceBrightboxSetDatabaseServerLockState(ctx, d, meta)
 }
+
+var resourceBrightboxSetDatabaseServerLockState = resourceBrightboxSetLockState(
+	(*brightbox.Client).LockDatabaseServer,
+	(*brightbox.Client).UnlockDatabaseServer,
+	setDatabaseServerAttributes,
+)
 
 func resourceBrightboxDatabaseServerUpdate(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
 
-	// Create/Update Database
-	databaseServerOpts := getBlankDatabaseServerOpts()
-	err := addUpdateableDatabaseServerOptions(d, databaseServerOpts)
-	if err != nil {
-		return err
+	log.Printf("[DEBUG] Load Balancer update called for %s", d.Id())
+	databaseServerOpts := brightbox.DatabaseServerOptions{
+		ID: d.Id(),
 	}
-	assignStringSet(d, &databaseServerOpts.AllowAccess, "allow_access")
-	log.Printf("[DEBUG] Database Server update configuration %#v", databaseServerOpts)
-	outputDatabaseServerOptions(databaseServerOpts)
-	return updateDatabaseServerAttributes(d, meta, client, databaseServerOpts)
-}
 
-func updateDatabaseServer(
-	client *brightbox.Client,
-	databaseServerOpts *brightbox.DatabaseServerOptions,
-) (*brightbox.DatabaseServer, error) {
-	log.Printf("[DEBUG] Database Server update configuration %#v", databaseServerOpts)
-	outputDatabaseServerOptions(databaseServerOpts)
-	databaseServer, err := client.UpdateDatabaseServer(databaseServerOpts)
-	if err != nil {
-		return nil, fmt.Errorf("Error updating databaseServer: %s", err)
+	errs := addUpdateableDatabaseServerOptions(d, &databaseServerOpts)
+	if errs.HasError() {
+		return errs
 	}
-	return databaseServer, nil
-}
 
-func getBlankDatabaseServerOpts() *brightbox.DatabaseServerOptions {
-	temp := blankDatabaseServerOpts
-	return &temp
-}
+	log.Printf("[DEBUG] Database Server update configuration %+v", databaseServerOpts)
+	outputDatabaseServerOptions(&databaseServerOpts)
 
-func updateDatabaseServerAttributes(
-	d *schema.ResourceData,
-	meta interface{},
-	client *brightbox.Client,
-	databaseServerOpts *brightbox.DatabaseServerOptions,
-) error {
-	if cmp.Equal(*databaseServerOpts, blankDatabaseServerOpts) && !d.HasChange("locked") {
-		return fmt.Errorf("[ERROR] No database update changes detected for %s", d.Id())
-	}
-	databaseServerOpts.ID = d.Id()
-	databaseServer, err := updateDatabaseServer(client, databaseServerOpts)
+	databaseServer, err := client.UpdateDatabaseServer(ctx, databaseServerOpts)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	if d.HasChange("locked") {
-		locked := d.Get("locked").(bool)
-		log.Printf("[INFO] Setting lock state to %v", locked)
-		if err := setLockState(client, locked, databaseServer); err != nil {
-			return err
-		}
-		return resourceBrightboxDatabaseServerRead(d, meta)
+		return resourceBrightboxSetDatabaseServerLockState(ctx, d, meta)
 	}
-
-	setDatabaseServerAttributes(d, databaseServer)
-	return setAllowAccessAttribute(d, databaseServer)
+	return setDatabaseServerAttributes(d, databaseServer)
 }
 
 func resourceBrightboxDatabaseServerRead(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
+) diag.Diagnostics {
 	client := meta.(*CompositeClient).APIClient
+
 	log.Printf("[DEBUG] Database Server read called for %s", d.Id())
-	databaseServer, err := client.DatabaseServer(d.Id())
+	databaseServer, err := client.DatabaseServer(ctx, d.Id())
 	if err != nil {
-		return fmt.Errorf("Error retrieving Database Server details: %s", err)
+		var apierror *brightbox.APIError
+		if errors.As(err, &apierror) {
+			if apierror.StatusCode == 404 {
+				log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
+				d.SetId("")
+				return nil
+			}
+		}
 	}
-	if unreadable[databaseServer.Status] {
+	if databaseServer.Status == databaseServerConst.Deleted ||
+		databaseServer.Status == databaseServerConst.Failed {
 		log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
 		d.SetId("")
 		return nil
 	}
-	setDatabaseServerAttributes(d, databaseServer)
-	return setAllowAccessAttribute(d, databaseServer)
+	return setDatabaseServerAttributes(d, databaseServer)
 }
 
-func resourceBrightboxDatabaseServerDelete(
+var resourceBrightboxDatabaseServerDelete = resourceBrightboxDelete(
+	(*brightbox.Client).DestroyDatabaseServer,
+	"Database Server",
+)
+
+func resourceBrightboxDatabaseServerDeleteAndWait(
+	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
-) error {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Database Server delete called for %s", d.Id())
-	err := client.DestroyDatabaseServer(d.Id())
-	if err != nil {
-		return fmt.Errorf("Error deleting Database Server: %s", err)
+) diag.Diagnostics {
+	diags := resourceBrightboxDatabaseServerDelete(ctx, d, meta)
+	if diags.HasError() {
+		return diags
 	}
+
+	client := meta.(*CompositeClient).APIClient
 	stateConf := resource.StateChangeConf{
-		Pending:    []string{"deleting", "active"},
-		Target:     []string{"deleted"},
-		Refresh:    databaseServerStateRefresh(client, d.Id()),
+		Pending: []string{
+			databaseServerConst.Deleting.String(),
+			databaseServerConst.Active.String(),
+		},
+		Target: []string{
+			databaseServerConst.Deleted.String(),
+		},
+		Refresh:    databaseServerStateRefresh(ctx, client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	_, err = stateConf.WaitForState()
+	_, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
+	d.SetId("")
 	return nil
 }
 
 func addUpdateableDatabaseServerOptions(
 	d *schema.ResourceData,
 	opts *brightbox.DatabaseServerOptions,
-) error {
+) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
 	assignString(d, &opts.Description, "description")
-	assignInt(d, &opts.MaintenanceWeekday, "maintenance_weekday")
-	assignInt(d, &opts.MaintenanceHour, "maintenance_hour")
+	assignByte(d, &opts.MaintenanceWeekday, "maintenance_weekday")
+	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
 	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
+	assignStringSet(d, &opts.AllowAccess, "allow_access")
 	return nil
 }
 

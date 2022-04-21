@@ -151,6 +151,16 @@ func assignInt(d *schema.ResourceData, target **uint, index string) {
 	}
 }
 
+func assignByte(d *schema.ResourceData, target **uint8, index string) {
+	if d.HasChange(index) {
+		var temp uint8
+		if attr, ok := d.GetOk(index); ok {
+			temp = uint8(attr.(int))
+		}
+		*target = &temp
+	}
+}
+
 func assignBool(d *schema.ResourceData, target **bool, index string) {
 	if d.HasChange(index) {
 		var temp bool

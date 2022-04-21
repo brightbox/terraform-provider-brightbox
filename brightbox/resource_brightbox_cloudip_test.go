@@ -288,27 +288,27 @@ func TestAccBrightboxCloudip_MappedGroup(t *testing.T) {
 	})
 }
 
-// func TestAccBrightboxCloudip_MappedLb(t *testing.T) {
-// 	resourceName := "brightbox_cloudip.lbmap"
-// 	rInt := acctest.RandInt()
+func TestAccBrightboxCloudip_MappedLb(t *testing.T) {
+	resourceName := "brightbox_cloudip.lbmap"
+	rInt := acctest.RandInt()
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccCheckBrightboxCloudipConfig_mappedLb(rInt),
-// 			},
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxCloudipConfig_mappedLb(rInt),
+			},
 
-// 			{
-// 				ResourceName:      resourceName,
-// 				ImportState:       true,
-// 				ImportStateVerify: true,
-// 			},
-// 		},
-// 	})
-// }
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
 
 func testAccCheckBrightboxCloudipConfig_mappedGroup(rInt int) string {
 	return fmt.Sprintf(`
@@ -321,16 +321,16 @@ resource "brightbox_cloudip" "groupmap" {
 %s`, rInt, testAccCheckBrightboxServerConfig_serverGroup(rInt))
 }
 
-// func testAccCheckBrightboxCloudipConfig_mappedLb(rInt int) string {
-// 	return fmt.Sprintf(`
+func testAccCheckBrightboxCloudipConfig_mappedLb(rInt int) string {
+	return fmt.Sprintf(`
 
-// resource "brightbox_cloudip" "lbmap" {
-// 	name = "bar-%d"
-// 	target = brightbox_load_balancer.default.id
-// }
+resource "brightbox_cloudip" "lbmap" {
+	name = "bar-%d"
+	target = brightbox_load_balancer.default.id
+}
 
-// %s`, rInt, testAccCheckBrightboxLoadBalancerConfig_basic)
-// }
+%s`, rInt, testAccCheckBrightboxLoadBalancerConfig_basic)
+}
 
 func testAccCheckBrightboxCloudipConfig_basic(rInt int) string {
 	return fmt.Sprintf(`

@@ -49,6 +49,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			"buffer_size": {
 				Description:  "Buffer size in bytes",
 				Type:         schema.TypeInt,
+				Deprecated:   "Buffer size is automatically calculated",
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.IntAtLeast(0),
@@ -566,9 +567,10 @@ func addUpdateableLoadBalancerOptions(
 	assignString(d, &opts.CertificatePrivateKey, "certificate_private_key")
 	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
 	assignBool(d, &opts.HTTPSRedirect, "https_redirect")
-	var domains []string
-	opts.Domains = &domains
-	assignStringSet(d, opts.Domains, "domains")
+	if d.HasChange("domains") {
+		temp := sliceFromStringSet(d, "domains")
+		opts.Domains = &temp
+	}
 	assignListeners(d, &opts.Listeners)
 	assignNodes(d, &opts.Nodes)
 	return assignHealthCheck(d, &opts.Healthcheck)
