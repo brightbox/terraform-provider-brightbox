@@ -41,26 +41,14 @@ func resourceBrightboxRead[O any](
 	objectName string,
 	setter func(*schema.ResourceData, *O) diag.Diagnostics,
 ) schema.ReadContextFunc {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-		client := meta.(*CompositeClient).APIClient
-
-		log.Printf("[DEBUG] %s resource read called for %s", objectName, d.Id())
-
-		object, err := reader(client, ctx, d.Id())
-		if err != nil {
-			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
-				if apierror.StatusCode == 404 {
-					log.Printf("[WARN] %s not found, removing from state: %s", objectName, d.Id())
-					d.SetId("")
-					return nil
-				}
-			}
-			return diag.FromErr(err)
-		}
-		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
-		return setter(d, object)
-	}
+	return resourceBrightboxReadStatus(
+		reader,
+		objectName,
+		setter,
+		func(_*O) bool {
+			return false
+		},
+	)
 }
 
 func resourceBrightboxReadStatus[O any](
