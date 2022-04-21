@@ -2,7 +2,6 @@ package brightbox
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -343,32 +342,16 @@ func resourceBrightboxDatabaseServerUpdate(
 	return setDatabaseServerAttributes(d, databaseServer)
 }
 
-func resourceBrightboxDatabaseServerRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
+var resourceBrightboxDatabaseServerRead = resourceBrightboxReadStatus(
+	(*brightbox.Client).DatabaseServer,
+	"Load Balancer",
+	setDatabaseServerAttributes,
+	databaseServerUnavailable,
+)
 
-	log.Printf("[DEBUG] Database Server read called for %s", d.Id())
-	databaseServer, err := client.DatabaseServer(ctx, d.Id())
-	if err != nil {
-		var apierror *brightbox.APIError
-		if errors.As(err, &apierror) {
-			if apierror.StatusCode == 404 {
-				log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
-				d.SetId("")
-				return nil
-			}
-		}
-	}
-	if databaseServer.Status == databaseServerConst.Deleted ||
-		databaseServer.Status == databaseServerConst.Failed {
-		log.Printf("[WARN] Database Server not found, removing from state: %s", d.Id())
-		d.SetId("")
-		return nil
-	}
-	return setDatabaseServerAttributes(d, databaseServer)
+func databaseServerUnavailable(obj *brightbox.DatabaseServer) bool {
+	return obj.Status == databaseServerConst.Deleted ||
+		obj.Status == databaseServerConst.Failed
 }
 
 var resourceBrightboxDatabaseServerDeleteAndWait = resourceBrightboxDeleteAndWait(

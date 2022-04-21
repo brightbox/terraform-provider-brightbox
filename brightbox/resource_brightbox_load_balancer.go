@@ -3,7 +3,6 @@ package brightbox
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -460,33 +459,16 @@ var resourceBrightboxSetLoadBalancerLockState = resourceBrightboxSetLockState(
 	setLoadBalancerAttributes,
 )
 
-func resourceBrightboxLoadBalancerRead(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
+var resourceBrightboxLoadBalancerRead = resourceBrightboxReadStatus(
+	(*brightbox.Client).LoadBalancer,
+	"Load Balancer",
+	setLoadBalancerAttributes,
+	loadBalancerUnavailable,
+)
 
-	log.Printf("[DEBUG] Load Balancer read called for %s", d.Id())
-	loadBalancer, err := client.LoadBalancer(ctx, d.Id())
-	if err != nil {
-		var apierror *brightbox.APIError
-		if errors.As(err, &apierror) {
-			if apierror.StatusCode == 404 {
-				log.Printf("[WARN] Load Balancer not found, removing from state: %s", d.Id())
-				d.SetId("")
-				return nil
-			}
-		}
-	}
-	if loadBalancer.Status == loadBalancerConst.Deleted ||
-		loadBalancer.Status == loadBalancerConst.Failed {
-		log.Printf("[WARN] Load Balancer not found, removing from state: %s", d.Id())
-		d.SetId("")
-		return nil
-	}
-
-	return setLoadBalancerAttributes(d, loadBalancer)
+func loadBalancerUnavailable(obj *brightbox.LoadBalancer) bool {
+	return obj.Status == loadBalancerConst.Deleted ||
+		obj.Status == loadBalancerConst.Failed
 }
 
 func resourceBrightboxLoadBalancerUpdate(

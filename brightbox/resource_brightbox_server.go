@@ -20,11 +20,7 @@ func resourceBrightboxServer() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Provides a Brightbox Server resource",
 		CreateContext: resourceBrightboxServerCreateAndWait,
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).Server,
-			"Server",
-			setServerAttributes,
-		),
+		ReadContext:   resourceBrightboxServerRead,
 		UpdateContext: resourceBrightboxServerUpdate,
 		DeleteContext: resourceBrightboxServerDeleteAndWait,
 		Importer: &schema.ResourceImporter{
@@ -237,6 +233,18 @@ func resourceBrightboxServerCreateAndWait(
 	}
 
 	return resourceBrightboxSetServerLockState(ctx, d, meta)
+}
+
+var resourceBrightboxServerRead = resourceBrightboxReadStatus(
+	(*brightbox.Client).Server,
+	"Server",
+	setServerAttributes,
+	serverUnavailable,
+)
+
+func serverUnavailable(obj *brightbox.Server) bool {
+	return obj.Status == serverConst.Deleted ||
+		obj.Status == serverConst.Failed
 }
 
 var resourceBrightboxServerDeleteAndWait = resourceBrightboxDeleteAndWait(
