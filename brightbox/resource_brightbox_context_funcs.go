@@ -7,6 +7,7 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -187,6 +188,37 @@ func resourceBrightboxDelete[O any](
 			return diag.FromErr(err)
 		}
 		log.Printf("[DEBUG] Deleted cleanly")
+		return nil
+	}
+}
+
+func resourceBrightboxDeleteAndWait[O any](
+	deleter func(*brightbox.Client, context.Context, string) (*O, error),
+	objectName string,
+	pending []string,
+	target []string,
+	refresher func(*brightbox.Client, context.Context, string) resource.StateRefreshFunc,
+) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		diags := resourceBrightboxDelete(deleter, objectName)(ctx, d, meta)
+		if diags.HasError() {
+			return diags
+		}
+
+		client := meta.(*CompositeClient).APIClient
+		stateConf := resource.StateChangeConf{
+			Pending:    pending,
+			Target:     target,
+			Refresh:    refresher(client, ctx, d.Id()),
+			Timeout:    d.Timeout(schema.TimeoutDelete),
+			Delay:      checkDelay,
+			MinTimeout: minimumRefreshWait,
+		}
+		_, err := stateConf.WaitForStateContext(ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId("")
 		return nil
 	}
 }

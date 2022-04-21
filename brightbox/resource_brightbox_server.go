@@ -226,7 +226,7 @@ func resourceBrightboxServerCreateAndWait(
 			serverConst.Active.String(),
 			serverConst.Inactive.String(),
 		},
-		Refresh:    serverStateRefresh(ctx, client, server.ID),
+		Refresh:    serverStateRefresh(client, ctx, server.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
@@ -239,41 +239,19 @@ func resourceBrightboxServerCreateAndWait(
 	return resourceBrightboxSetServerLockState(ctx, d, meta)
 }
 
-var resourceBrightboxServerDelete = resourceBrightboxDelete(
+var resourceBrightboxServerDeleteAndWait = resourceBrightboxDeleteAndWait(
 	(*brightbox.Client).DestroyServer,
 	"Server",
+	[]string{
+		serverConst.Deleting.String(),
+		serverConst.Active.String(),
+		serverConst.Inactive.String(),
+	},
+	[]string{
+		serverConst.Deleted.String(),
+	},
+	serverStateRefresh,
 )
-
-func resourceBrightboxServerDeleteAndWait(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	diags := resourceBrightboxServerDelete(ctx, d, meta)
-	if diags.HasError() {
-		return diags
-	}
-
-	client := meta.(*CompositeClient).APIClient
-	stateConf := resource.StateChangeConf{
-		Pending: []string{
-			serverConst.Deleting.String(),
-			serverConst.Active.String(),
-			serverConst.Inactive.String(),
-		},
-		Target:     []string{serverConst.Deleted.String()},
-		Refresh:    serverStateRefresh(ctx, client, d.Id()),
-		Timeout:    d.Timeout(schema.TimeoutDelete),
-		Delay:      checkDelay,
-		MinTimeout: minimumRefreshWait,
-	}
-	_, err := stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId("")
-	return nil
-}
 
 func resourceBrightboxServerUpdate(
 	ctx context.Context,
@@ -345,7 +323,7 @@ func resourceBrightboxServerUpdate(
 		server, err = client.ResizeServer(
 			ctx,
 			d.Id(),
-			brightbox.ServerNewSize{newServerType},
+			brightbox.ServerNewSize{NewType: newServerType},
 		)
 		if err != nil {
 			return diag.FromErr(err)
@@ -573,7 +551,7 @@ func setServerTypeDetails(d *schema.ResourceData, serverType *brightbox.ServerTy
 	return nil
 }
 
-func serverStateRefresh(ctx context.Context, client *brightbox.Client, serverID string) resource.StateRefreshFunc {
+func serverStateRefresh(client *brightbox.Client, ctx context.Context, serverID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		serverInstance, err := client.Server(ctx, serverID)
 		if err != nil {

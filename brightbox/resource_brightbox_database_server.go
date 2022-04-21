@@ -231,7 +231,7 @@ func setDatabaseServerAttributes(
 	return diags
 }
 
-func databaseServerStateRefresh(ctx context.Context, client *brightbox.Client, databaseServerID string) resource.StateRefreshFunc {
+func databaseServerStateRefresh(client *brightbox.Client, ctx context.Context, databaseServerID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		databaseServer, err := client.DatabaseServer(ctx, databaseServerID)
 		if err != nil {
@@ -293,7 +293,7 @@ func resourceBrightboxDatabaseServerCreateAndWait(
 		Target: []string{
 			databaseServerConst.Active.String(),
 		},
-		Refresh:    databaseServerStateRefresh(ctx, client, databaseServer.ID),
+		Refresh:    databaseServerStateRefresh(client, ctx, databaseServer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
@@ -371,42 +371,18 @@ func resourceBrightboxDatabaseServerRead(
 	return setDatabaseServerAttributes(d, databaseServer)
 }
 
-var resourceBrightboxDatabaseServerDelete = resourceBrightboxDelete(
+var resourceBrightboxDatabaseServerDeleteAndWait = resourceBrightboxDeleteAndWait(
 	(*brightbox.Client).DestroyDatabaseServer,
 	"Database Server",
+	[]string{
+		databaseServerConst.Deleting.String(),
+		databaseServerConst.Active.String(),
+	},
+	[]string{
+		databaseServerConst.Deleted.String(),
+	},
+	databaseServerStateRefresh,
 )
-
-func resourceBrightboxDatabaseServerDeleteAndWait(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	diags := resourceBrightboxDatabaseServerDelete(ctx, d, meta)
-	if diags.HasError() {
-		return diags
-	}
-
-	client := meta.(*CompositeClient).APIClient
-	stateConf := resource.StateChangeConf{
-		Pending: []string{
-			databaseServerConst.Deleting.String(),
-			databaseServerConst.Active.String(),
-		},
-		Target: []string{
-			databaseServerConst.Deleted.String(),
-		},
-		Refresh:    databaseServerStateRefresh(ctx, client, d.Id()),
-		Timeout:    d.Timeout(schema.TimeoutDelete),
-		Delay:      checkDelay,
-		MinTimeout: minimumRefreshWait,
-	}
-	_, err := stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId("")
-	return nil
-}
 
 func addUpdateableDatabaseServerOptions(
 	d *schema.ResourceData,

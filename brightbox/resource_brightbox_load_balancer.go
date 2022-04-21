@@ -396,7 +396,7 @@ func setLoadBalancerAttributes(
 	return diags
 }
 
-func loadBalancerStateRefresh(ctx context.Context, client *brightbox.Client, loadBalancerID string) resource.StateRefreshFunc {
+func loadBalancerStateRefresh(client *brightbox.Client, ctx context.Context, loadBalancerID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		loadBalancer, err := client.LoadBalancer(ctx, loadBalancerID)
 		if err != nil {
@@ -441,7 +441,7 @@ func resourceBrightboxLoadBalancerCreateAndWait(
 		Target: []string{
 			loadBalancerConst.Active.String(),
 		},
-		Refresh:    loadBalancerStateRefresh(ctx, client, loadBalancer.ID),
+		Refresh:    loadBalancerStateRefresh(client, ctx, loadBalancer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
@@ -525,37 +525,18 @@ var resourceBrightboxLoadBalancerDelete = resourceBrightboxDelete(
 	"Load Balancer",
 )
 
-func resourceBrightboxLoadBalancerDeleteAndWait(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	diags := resourceBrightboxLoadBalancerDelete(ctx, d, meta)
-	if diags.HasError() {
-		return diags
-	}
-
-	client := meta.(*CompositeClient).APIClient
-	stateConf := resource.StateChangeConf{
-		Pending: []string{
-			loadBalancerConst.Deleting.String(),
-			loadBalancerConst.Active.String(),
-		},
-		Target: []string{
-			loadBalancerConst.Deleted.String(),
-		},
-		Refresh:    loadBalancerStateRefresh(ctx, client, d.Id()),
-		Timeout:    d.Timeout(schema.TimeoutDelete),
-		Delay:      checkDelay,
-		MinTimeout: minimumRefreshWait,
-	}
-	_, err := stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId("")
-	return nil
-}
+var resourceBrightboxLoadBalancerDeleteAndWait = resourceBrightboxDeleteAndWait(
+	(*brightbox.Client).DestroyLoadBalancer,
+	"Load Balancer",
+	[]string{
+		loadBalancerConst.Deleting.String(),
+		loadBalancerConst.Active.String(),
+	},
+	[]string{
+		loadBalancerConst.Deleted.String(),
+	},
+	loadBalancerStateRefresh,
+)
 
 func addUpdateableLoadBalancerOptions(
 	d *schema.ResourceData,
