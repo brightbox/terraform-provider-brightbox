@@ -3,6 +3,7 @@ package brightbox
 import (
 	"context"
 	"log"
+	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	serverConst "github.com/brightbox/gobrightbox/v2/status/server"
@@ -129,6 +130,27 @@ func resourceBrightboxServer() *schema.Resource {
 					ValidateFunc: validation.StringMatch(serverGroupRegexp, "must be a valid server group ID"),
 				},
 				Set: schema.HashString,
+			},
+
+			"snapshots_retention": {
+				Description:  "Keep this number of scheduled snapshots. Keep all if unset",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+
+			"snapshots_schedule": {
+				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "0 7 * * *",
+				ValidateFunc: ValidateCronString,
+			},
+
+			"snapshots_schedule_next_at": {
+				Description: "time in UTC when next approximate scheduled snapshot will be run",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 
 			"status": {
@@ -373,6 +395,8 @@ func addUpdateableServerOptions(
 	opts *brightbox.ServerOptions,
 ) diag.Diagnostics {
 	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
+	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
 	assignStringSet(d, &opts.ServerGroups, "server_groups")
 	encodedUserData := ""
 	if d.HasChange("user_data") {
@@ -440,6 +464,19 @@ func setServerAttributes(
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
+	err = d.Set("snapshots_retention", server.SnapshotsRetention)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("snapshots_schedule", server.SnapshotsSchedule)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	var snapshotTime string
+	if server.SnapshotsScheduleNextAt != nil {
+		snapshotTime = server.SnapshotsScheduleNextAt.Format(time.RFC3339)
+	}
+	err = d.Set("snapshots_schedule_next_at", snapshotTime)
 	if server.ServerType.DiskSize != 0 {
 		err = d.Set("disk_size", server.ServerType.DiskSize)
 		if err != nil {

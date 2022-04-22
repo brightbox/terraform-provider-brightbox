@@ -48,7 +48,7 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 			"buffer_size": {
 				Description:  "Buffer size in bytes",
 				Type:         schema.TypeInt,
-				Deprecated:   "Buffer size is automatically calculated",
+				Deprecated:   "No longer supported. Buffer size is automatically calculated",
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.IntAtLeast(0),
