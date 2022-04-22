@@ -350,6 +350,7 @@ resource "brightbox_database_server" "default" {
 	maintenance_weekday = 5
 	maintenance_hour = 4
 	snapshots_schedule = "4 5 * * *"
+	snapshots_retention = 5
 	allow_access = [ data.brightbox_server_group.default.id ]
 	timeouts {
 	  create = "60m"

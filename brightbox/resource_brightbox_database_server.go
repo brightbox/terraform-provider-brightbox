@@ -129,6 +129,13 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				ValidateFunc: validation.StringMatch(databaseSnapshotRegexp, "must be a valid database snapshot ID"),
 			},
 
+			"snapshots_retention": {
+				Description:  "Keep this number of scheduled snapshots. Keep all if unset",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotWhiteSpace,
+			},
+
 			"snapshots_schedule": {
 				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
 				Type:         schema.TypeString,
@@ -209,15 +216,21 @@ func setDatabaseServerAttributes(
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	if databaseServer.SnapshotsSchedule != nil {
-		err = d.Set("snapshots_schedule", databaseServer.SnapshotsSchedule)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-		err = d.Set("snapshots_schedule_next_at", databaseServer.SnapshotsScheduleNextAt.Format(time.RFC3339))
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
+	err = d.Set("snapshots_retention", databaseServer.SnapshotsRetention)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("snapshots_schedule", databaseServer.SnapshotsSchedule)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	var snapshotTime string
+	if databaseServer.SnapshotsScheduleNextAt != nil {
+		snapshotTime = databaseServer.SnapshotsScheduleNextAt.Format(time.RFC3339)
+	}
+	err = d.Set("snapshots_schedule_next_at", snapshotTime)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
 	err = d.Set("zone", databaseServer.Zone.Handle)
 	if err != nil {
@@ -311,43 +324,27 @@ var resourceBrightboxSetDatabaseServerLockState = resourceBrightboxSetLockState(
 	setDatabaseServerAttributes,
 )
 
-func resourceBrightboxDatabaseServerUpdate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Load Balancer update called for %s", d.Id())
-	databaseServerOpts := brightbox.DatabaseServerOptions{
-		ID: d.Id(),
-	}
-
-	errs := addUpdateableDatabaseServerOptions(d, &databaseServerOpts)
-	if errs.HasError() {
-		return errs
-	}
-
-	log.Printf("[DEBUG] Database Server update configuration %+v", databaseServerOpts)
-	outputDatabaseServerOptions(&databaseServerOpts)
-
-	databaseServer, err := client.UpdateDatabaseServer(ctx, databaseServerOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if d.HasChange("locked") {
-		return resourceBrightboxSetDatabaseServerLockState(ctx, d, meta)
-	}
-	return setDatabaseServerAttributes(d, databaseServer)
-}
-
 var resourceBrightboxDatabaseServerRead = resourceBrightboxReadStatus(
 	(*brightbox.Client).DatabaseServer,
 	"Load Balancer",
 	setDatabaseServerAttributes,
 	databaseServerUnavailable,
 )
+
+var resourceBrightboxDatabaseServerUpdate = resourceBrightboxUpdateWithLock(
+	(*brightbox.Client).UpdateDatabaseServer,
+	"Database Server",
+	databaseServerFromID,
+	addUpdateableDatabaseServerOptions,
+	setDatabaseServerAttributes,
+	resourceBrightboxSetDatabaseServerLockState,
+)
+
+func databaseServerFromID(id string) *brightbox.DatabaseServerOptions {
+	return &brightbox.DatabaseServerOptions{
+		ID: id,
+	}
+}
 
 func databaseServerUnavailable(obj *brightbox.DatabaseServer) bool {
 	return obj.Status == databaseServerConst.Deleted ||
@@ -376,6 +373,7 @@ func addUpdateableDatabaseServerOptions(
 	assignByte(d, &opts.MaintenanceWeekday, "maintenance_weekday")
 	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
 	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
+	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
 	assignStringSet(d, &opts.AllowAccess, "allow_access")
 	return nil
 }
@@ -401,6 +399,9 @@ func outputDatabaseServerOptions(opts *brightbox.DatabaseServerOptions) {
 	}
 	if opts.Snapshot != "" {
 		log.Printf("[DEBUG] Database Server Snapshot %q", opts.Snapshot)
+	}
+	if opts.SnapshotsRetention != nil {
+		log.Printf("[DEBUG] Database Server Snapshots Retention %q", *opts.SnapshotsRetention)
 	}
 	if opts.SnapshotsSchedule != nil {
 		log.Printf("[DEBUG] Database Server Snapshots Schedule %q", *opts.SnapshotsSchedule)

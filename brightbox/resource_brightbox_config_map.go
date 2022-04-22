@@ -66,9 +66,7 @@ func resourceBrightboxConfigMap() *schema.Resource {
 	}
 }
 
-func configMapFromID(
-	id string,
-) *brightbox.ConfigMapOptions {
+func configMapFromID(id string) *brightbox.ConfigMapOptions {
 	return &brightbox.ConfigMapOptions{
 		ID: id,
 	}

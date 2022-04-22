@@ -104,6 +104,7 @@ func resourceBrightboxCloudIP() *schema.Resource {
 
 			"public_ip": {
 				Description: "Old alias of the IPv4 address",
+				Deprecated:  "Use `public_ipv4` instead",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -142,7 +143,7 @@ func resourceBrightboxCloudIP() *schema.Resource {
 					validation.StringMatch(interfaceRegexp, "must by a valid server interface ID"),
 					validation.StringMatch(loadBalancerRegexp, "must be a valid load balancer ID"),
 					validation.StringMatch(databaseServerRegexp, "must be a valid database server ID"),
-					validation.StringMatch(serverGroupRegexp, "must be a valid serer group ID"),
+					validation.StringMatch(serverGroupRegexp, "must be a valid server group ID"),
 				),
 			},
 		},
@@ -376,9 +377,7 @@ func resourceBrightboxCloudIPUnassignAndDelete(
 	return resourceBrightboxCloudIPDelete(ctx, d, meta)
 }
 
-func cloudIPFromID(
-	id string,
-) *brightbox.CloudIPOptions {
+func cloudIPFromID(id string) *brightbox.CloudIPOptions {
 	return &brightbox.CloudIPOptions{
 		ID: id,
 	}

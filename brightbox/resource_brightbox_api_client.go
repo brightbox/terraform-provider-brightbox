@@ -84,9 +84,7 @@ func resourceBrightboxAPIClient() *schema.Resource {
 	}
 }
 
-func apiClientFromID(
-	id string,
-) *brightbox.APIClientOptions {
+func apiClientFromID(id string) *brightbox.APIClientOptions {
 	return &brightbox.APIClientOptions{
 		ID: id,
 	}

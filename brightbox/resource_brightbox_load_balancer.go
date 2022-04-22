@@ -466,40 +466,24 @@ var resourceBrightboxLoadBalancerRead = resourceBrightboxReadStatus(
 	loadBalancerUnavailable,
 )
 
+var resourceBrightboxLoadBalancerUpdate = resourceBrightboxUpdateWithLock(
+	(*brightbox.Client).UpdateLoadBalancer,
+	"Load Balancer",
+	loadBalancerFromID,
+	addUpdateableLoadBalancerOptions,
+	setLoadBalancerAttributes,
+	resourceBrightboxSetLoadBalancerLockState,
+)
+
+func loadBalancerFromID(id string) *brightbox.LoadBalancerOptions {
+	return &brightbox.LoadBalancerOptions{
+		ID: id,
+	}
+}
+
 func loadBalancerUnavailable(obj *brightbox.LoadBalancer) bool {
 	return obj.Status == loadBalancerConst.Deleted ||
 		obj.Status == loadBalancerConst.Failed
-}
-
-func resourceBrightboxLoadBalancerUpdate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Load Balancer update called for %s", d.Id())
-	loadBalancerOpts := brightbox.LoadBalancerOptions{
-		ID: d.Id(),
-	}
-
-	errs := addUpdateableLoadBalancerOptions(d, &loadBalancerOpts)
-	if errs.HasError() {
-		return errs
-	}
-
-	log.Printf("[DEBUG] Load Balancer update configuration %+v", loadBalancerOpts)
-	outputLoadBalancerOptions(&loadBalancerOpts)
-
-	loadBalancer, err := client.UpdateLoadBalancer(ctx, loadBalancerOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if d.HasChange("locked") {
-		return resourceBrightboxSetLoadBalancerLockState(ctx, d, meta)
-	}
-	return setLoadBalancerAttributes(d, loadBalancer)
 }
 
 var resourceBrightboxLoadBalancerDelete = resourceBrightboxDelete(
