@@ -22,11 +22,7 @@ func resourceBrightboxCloudIP() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Provides a Brightbox CloudIP resource",
 		CreateContext: resourceBrightboxCloudIPCreateAndAssign,
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).CloudIP,
-			"Cloud IP",
-			setCloudIPAttributes,
-		),
+		ReadContext:   resourceBrightboxCloudIPRead,
 		UpdateContext: resourceBrightboxCloudIPUpdateAndRemap,
 		DeleteContext: resourceBrightboxCloudIPUnassignAndDelete,
 		Importer: &schema.ResourceImporter{
@@ -150,12 +146,133 @@ func resourceBrightboxCloudIP() *schema.Resource {
 	}
 }
 
-var resourceBrightboxCloudIPCreate = resourceBrightboxCreate(
-	(*brightbox.Client).CreateCloudIP,
-	"Cloud IP",
-	addUpdateableCloudIPOptions,
-	setCloudIPAttributes,
+var (
+	resourceBrightboxCloudIPCreate = resourceBrightboxCreate(
+		(*brightbox.Client).CreateCloudIP,
+		"Cloud IP",
+		addUpdateableCloudIPOptions,
+		setCloudIPAttributes,
+	)
+	resourceBrightboxCloudIPRead = resourceBrightboxRead(
+		(*brightbox.Client).CloudIP,
+		"Cloud IP",
+		setCloudIPAttributes,
+	)
+
+	resourceBrightboxCloudIPUpdate = resourceBrightboxUpdate(
+		(*brightbox.Client).UpdateCloudIP,
+		"Cloud IP",
+		cloudIPFromID,
+		addUpdateableCloudIPOptions,
+		setCloudIPAttributes,
+	)
+
+	resourceBrightboxCloudIPDelete = resourceBrightboxDelete(
+		(*brightbox.Client).DestroyCloudIP,
+		"Cloud IP",
+	)
 )
+
+func cloudIPFromID(id string) *brightbox.CloudIPOptions {
+	return &brightbox.CloudIPOptions{
+		ID: id,
+	}
+}
+
+func addUpdateableCloudIPOptions(
+	d *schema.ResourceData,
+	opts *brightbox.CloudIPOptions,
+) diag.Diagnostics {
+	assignEnum(d, &opts.Mode, "mode")
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.ReverseDNS, "reverse_dns")
+	assignPortTranslators(d, &opts.PortTranslators)
+	return nil
+}
+
+func setCloudIPAttributes(
+	d *schema.ResourceData,
+	cloudipInstance *brightbox.CloudIP,
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(cloudipInstance.ID)
+	err = d.Set("name", cloudipInstance.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("public_ip", cloudipInstance.PublicIP)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("public_ipv4", cloudipInstance.PublicIPv4)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("public_ipv6", cloudipInstance.PublicIPv6)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("status", cloudipInstance.Status.String())
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("reverse_dns", cloudipInstance.ReverseDNS)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("fqdn", cloudipInstance.Fqdn)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	// Set the server id first and let interface override it
+	// Server and interface should appear together, but catch at least one
+	if cloudipInstance.Server != nil {
+		err = d.Set("target", cloudipInstance.Server.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	if cloudipInstance.Interface != nil {
+		err = d.Set("target", cloudipInstance.Interface.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	if cloudipInstance.LoadBalancer != nil {
+		err = d.Set("target", cloudipInstance.LoadBalancer.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	if cloudipInstance.DatabaseServer != nil {
+		err = d.Set("target", cloudipInstance.DatabaseServer.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	if cloudipInstance.ServerGroup != nil {
+		err = d.Set("target", cloudipInstance.ServerGroup.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	log.Printf("[DEBUG] PortTranslator details are %#v", cloudipInstance.PortTranslators)
+	portTranslators := make([]map[string]interface{}, len(cloudipInstance.PortTranslators))
+	for i, portTranslator := range cloudipInstance.PortTranslators {
+		portTranslators[i] = map[string]interface{}{
+			"incoming": portTranslator.Incoming,
+			"outgoing": portTranslator.Outgoing,
+			"protocol": portTranslator.Protocol.String(),
+		}
+	}
+	if err := d.Set("port_translator", portTranslators); err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+
+	return diags
+}
 
 func resourceBrightboxCloudIPCreateAndAssign(
 	ctx context.Context,
@@ -239,14 +356,6 @@ func detachedCloudIP(instance *brightbox.CloudIP) bool {
 		instance.LoadBalancer == nil &&
 		instance.DatabaseServer == nil
 }
-
-var resourceBrightboxCloudIPUpdate = resourceBrightboxUpdate(
-	(*brightbox.Client).UpdateCloudIP,
-	"Cloud IP",
-	cloudIPFromID,
-	addUpdateableCloudIPOptions,
-	setCloudIPAttributes,
-)
 
 func resourceBrightboxCloudIPUpdateAndRemap(
 	ctx context.Context,
@@ -360,11 +469,6 @@ func cloudipStateRefresh(ctx context.Context, client *brightbox.Client, cloudipI
 	}
 }
 
-var resourceBrightboxCloudIPDelete = resourceBrightboxDelete(
-	(*brightbox.Client).DestroyCloudIP,
-	"Cloud IP",
-)
-
 func resourceBrightboxCloudIPUnassignAndDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -375,107 +479,6 @@ func resourceBrightboxCloudIPUnassignAndDelete(
 		return diags
 	}
 	return resourceBrightboxCloudIPDelete(ctx, d, meta)
-}
-
-func cloudIPFromID(id string) *brightbox.CloudIPOptions {
-	return &brightbox.CloudIPOptions{
-		ID: id,
-	}
-}
-
-func addUpdateableCloudIPOptions(
-	d *schema.ResourceData,
-	opts *brightbox.CloudIPOptions,
-) diag.Diagnostics {
-	assignEnum(d, &opts.Mode, "mode")
-	assignString(d, &opts.Name, "name")
-	assignString(d, &opts.ReverseDNS, "reverse_dns")
-	assignPortTranslators(d, &opts.PortTranslators)
-	return nil
-}
-
-func setCloudIPAttributes(
-	d *schema.ResourceData,
-	cloudipInstance *brightbox.CloudIP,
-) diag.Diagnostics {
-	var diags diag.Diagnostics
-	var err error
-
-	d.SetId(cloudipInstance.ID)
-	err = d.Set("name", cloudipInstance.Name)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("public_ip", cloudipInstance.PublicIP)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("public_ipv4", cloudipInstance.PublicIPv4)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("public_ipv6", cloudipInstance.PublicIPv6)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("status", cloudipInstance.Status.String())
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("reverse_dns", cloudipInstance.ReverseDNS)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("fqdn", cloudipInstance.Fqdn)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	// Set the server id first and let interface override it
-	// Server and interface should appear together, but catch at least one
-	if cloudipInstance.Server != nil {
-		err = d.Set("target", cloudipInstance.Server.ID)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	}
-	if cloudipInstance.Interface != nil {
-		err = d.Set("target", cloudipInstance.Interface.ID)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	}
-	if cloudipInstance.LoadBalancer != nil {
-		err = d.Set("target", cloudipInstance.LoadBalancer.ID)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	}
-	if cloudipInstance.DatabaseServer != nil {
-		err = d.Set("target", cloudipInstance.DatabaseServer.ID)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	}
-	if cloudipInstance.ServerGroup != nil {
-		err = d.Set("target", cloudipInstance.ServerGroup.ID)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	}
-	log.Printf("[DEBUG] PortTranslator details are %#v", cloudipInstance.PortTranslators)
-	portTranslators := make([]map[string]interface{}, len(cloudipInstance.PortTranslators))
-	for i, portTranslator := range cloudipInstance.PortTranslators {
-		portTranslators[i] = map[string]interface{}{
-			"incoming": portTranslator.Incoming,
-			"outgoing": portTranslator.Outgoing,
-			"protocol": portTranslator.Protocol.String(),
-		}
-	}
-	if err := d.Set("port_translator", portTranslators); err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-
-	return diags
 }
 
 func resourceBrightboxPortTranslationHash(

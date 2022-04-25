@@ -17,16 +17,9 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Provides a Brightbox Firewall Policy resource",
 		CreateContext: resourceBrightboxFirewallPolicyCreateAndAssign,
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).FirewallPolicy,
-			"Firewall Policy",
-			setFirewallPolicyAttributes,
-		),
+		ReadContext:   resourceBrightboxFirewallPolicyRead,
 		UpdateContext: resourceBrightboxFirewallPolicyUpdateAndRemap,
-		DeleteContext: resourceBrightboxDelete(
-			(*brightbox.Client).DestroyFirewallPolicy,
-			"Firewall Policy",
-		),
+		DeleteContext: resourceBrightboxFirewallPolicyDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -59,12 +52,78 @@ func resourceBrightboxFirewallPolicy() *schema.Resource {
 	}
 }
 
-var resourceBrightboxFirewallPolicyCreate = resourceBrightboxCreate(
-	(*brightbox.Client).CreateFirewallPolicy,
-	"Firewall Policy",
-	addUpdateableFirewallPolicyOptions,
-	setFirewallPolicyAttributes,
+var (
+	resourceBrightboxFirewallPolicyCreate = resourceBrightboxCreate(
+		(*brightbox.Client).CreateFirewallPolicy,
+		"Firewall Policy",
+		addUpdateableFirewallPolicyOptions,
+		setFirewallPolicyAttributes,
+	)
+
+	resourceBrightboxFirewallPolicyRead = resourceBrightboxRead(
+		(*brightbox.Client).FirewallPolicy,
+		"Firewall Policy",
+		setFirewallPolicyAttributes,
+	)
+
+	resourceBrightboxFirewallPolicyUpdate = resourceBrightboxUpdate(
+		(*brightbox.Client).UpdateFirewallPolicy,
+		"Firewall Policy",
+		firewallPolicyFromID,
+		addUpdateableFirewallPolicyOptions,
+		setFirewallPolicyAttributes,
+	)
+
+	resourceBrightboxFirewallPolicyDelete = resourceBrightboxDelete(
+		(*brightbox.Client).DestroyFirewallPolicy,
+		"Firewall Policy",
+	)
 )
+
+func firewallPolicyFromID(id string) *brightbox.FirewallPolicyOptions {
+	return &brightbox.FirewallPolicyOptions{
+		ID: id,
+	}
+}
+
+func addUpdateableFirewallPolicyOptions(
+	d *schema.ResourceData,
+	opts *brightbox.FirewallPolicyOptions,
+) diag.Diagnostics {
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Description, "description")
+	return nil
+}
+
+func setFirewallPolicyAttributes(
+	d *schema.ResourceData,
+	firewallPolicy *brightbox.FirewallPolicy,
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+	var err error
+
+	d.SetId(firewallPolicy.ID)
+	err = d.Set("name", firewallPolicy.Name)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	err = d.Set("description", firewallPolicy.Description)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	if firewallPolicy.ServerGroup == nil {
+		err = d.Set("server_group", "")
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	} else {
+		err = d.Set("server_group", firewallPolicy.ServerGroup.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	return diags
+}
 
 func resourceBrightboxFirewallPolicyCreateAndAssign(
 	ctx context.Context,
@@ -134,14 +193,6 @@ func detachedFirewallPolicy(instance *brightbox.FirewallPolicy) bool {
 	return instance.ServerGroup == nil
 }
 
-var resourceBrightboxFirewallPolicyUpdate = resourceBrightboxUpdate(
-	(*brightbox.Client).UpdateFirewallPolicy,
-	"Firewall Policy",
-	firewallPolicyFromID,
-	addUpdateableFirewallPolicyOptions,
-	setFirewallPolicyAttributes,
-)
-
 func resourceBrightboxFirewallPolicyUpdateAndRemap(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -162,51 +213,6 @@ func resourceBrightboxFirewallPolicyUpdateAndRemap(
 		}
 	}
 	return append(diags, resourceBrightboxFirewallPolicyUpdate(ctx, d, meta)...)
-}
-
-func firewallPolicyFromID(id string) *brightbox.FirewallPolicyOptions {
-	return &brightbox.FirewallPolicyOptions{
-		ID: id,
-	}
-}
-
-func addUpdateableFirewallPolicyOptions(
-	d *schema.ResourceData,
-	opts *brightbox.FirewallPolicyOptions,
-) diag.Diagnostics {
-	assignString(d, &opts.Name, "name")
-	assignString(d, &opts.Description, "description")
-	return nil
-}
-
-func setFirewallPolicyAttributes(
-	d *schema.ResourceData,
-	firewallPolicy *brightbox.FirewallPolicy,
-) diag.Diagnostics {
-	var diags diag.Diagnostics
-	var err error
-
-	d.SetId(firewallPolicy.ID)
-	err = d.Set("name", firewallPolicy.Name)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	err = d.Set("description", firewallPolicy.Description)
-	if err != nil {
-		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-	}
-	if firewallPolicy.ServerGroup == nil {
-		err = d.Set("server_group", "")
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	} else {
-		err = d.Set("server_group", firewallPolicy.ServerGroup.ID)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
-	}
-	return diags
 }
 
 func retryServerGroupChange(changeFunc func() error, timeout time.Duration) error {

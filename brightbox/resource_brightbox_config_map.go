@@ -9,29 +9,11 @@ import (
 
 func resourceBrightboxConfigMap() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Config Map resource",
-		CreateContext: resourceBrightboxCreate(
-			(*brightbox.Client).CreateConfigMap,
-			"Config Map",
-			addUpdateableConfigMapOptions,
-			setConfigMapAttributes,
-		),
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).ConfigMap,
-			"Config Map",
-			setConfigMapAttributes,
-		),
-		UpdateContext: resourceBrightboxUpdate(
-			(*brightbox.Client).UpdateConfigMap,
-			"Config Map",
-			configMapFromID,
-			addUpdateableConfigMapOptions,
-			setConfigMapAttributes,
-		),
-		DeleteContext: resourceBrightboxDelete(
-			(*brightbox.Client).DestroyConfigMap,
-			"Config Map",
-		),
+		Description:   "Provides a Brightbox Config Map resource",
+		CreateContext: resourceBrightboxConfigMapCreate,
+		ReadContext:   resourceBrightboxConfigMapRead,
+		UpdateContext: resourceBrightboxConfigMapUpdate,
+		DeleteContext: resourceBrightboxConfigMapDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -65,6 +47,34 @@ func resourceBrightboxConfigMap() *schema.Resource {
 		},
 	}
 }
+
+var (
+	resourceBrightboxConfigMapCreate = resourceBrightboxCreate(
+		(*brightbox.Client).CreateConfigMap,
+		"Config Map",
+		addUpdateableConfigMapOptions,
+		setConfigMapAttributes,
+	)
+
+	resourceBrightboxConfigMapRead = resourceBrightboxRead(
+		(*brightbox.Client).ConfigMap,
+		"Config Map",
+		setConfigMapAttributes,
+	)
+
+	resourceBrightboxConfigMapUpdate = resourceBrightboxUpdate(
+		(*brightbox.Client).UpdateConfigMap,
+		"Config Map",
+		configMapFromID,
+		addUpdateableConfigMapOptions,
+		setConfigMapAttributes,
+	)
+
+	resourceBrightboxConfigMapDelete = resourceBrightboxDelete(
+		(*brightbox.Client).DestroyConfigMap,
+		"Config Map",
+	)
+)
 
 func configMapFromID(id string) *brightbox.ConfigMapOptions {
 	return &brightbox.ConfigMapOptions{

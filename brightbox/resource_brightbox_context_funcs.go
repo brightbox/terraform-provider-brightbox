@@ -173,32 +173,6 @@ func datasourceBrightboxRecentRead[O brightbox.CreateDated](
 	}
 }
 
-// func resourceBrightboxUpdate[O, I any](
-// 	putter func(*brightbox.Client, context.Context, I) (*O, error),
-// 	objectName string,
-// 	newFromID func(string) *I,
-// 	updater func(*schema.ResourceData, *I) diag.Diagnostics,
-// 	setter func(*schema.ResourceData, *O) diag.Diagnostics,
-// ) schema.UpdateContextFunc {
-// 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-// 		client := meta.(*CompositeClient).APIClient
-
-// 		objectOpts := newFromID(d.Id())
-// 		errs := updater(d, objectOpts)
-// 		if errs.HasError() {
-// 			return errs
-// 		}
-// 		log.Printf("[DEBUG] %s update configuration: %+v", objectName, objectOpts)
-
-// 		object, err := putter(client, ctx, *objectOpts)
-// 		if err != nil {
-// 			return diag.FromErr(err)
-// 		}
-// 		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
-// 		return setter(d, object)
-// 	}
-// }
-
 func resourceBrightboxUpdate[O, I any](
 	putter func(*brightbox.Client, context.Context, I) (*O, error),
 	objectName string,

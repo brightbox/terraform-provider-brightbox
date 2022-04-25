@@ -168,6 +168,63 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 	}
 }
 
+var (
+	resourceBrightboxDatabaseServerRead = resourceBrightboxReadStatus(
+		(*brightbox.Client).DatabaseServer,
+		"Load Balancer",
+		setDatabaseServerAttributes,
+		databaseServerUnavailable,
+	)
+
+	resourceBrightboxDatabaseServerUpdate = resourceBrightboxUpdateWithLock(
+		(*brightbox.Client).UpdateDatabaseServer,
+		"Database Server",
+		databaseServerFromID,
+		addUpdateableDatabaseServerOptions,
+		setDatabaseServerAttributes,
+		resourceBrightboxSetDatabaseServerLockState,
+	)
+
+	resourceBrightboxDatabaseServerDeleteAndWait = resourceBrightboxDeleteAndWait(
+		(*brightbox.Client).DestroyDatabaseServer,
+		"Database Server",
+		[]string{
+			databaseServerConst.Deleting.String(),
+			databaseServerConst.Active.String(),
+		},
+		[]string{
+			databaseServerConst.Deleted.String(),
+		},
+		databaseServerStateRefresh,
+	)
+
+	resourceBrightboxSetDatabaseServerLockState = resourceBrightboxSetLockState(
+		(*brightbox.Client).LockDatabaseServer,
+		(*brightbox.Client).UnlockDatabaseServer,
+		setDatabaseServerAttributes,
+	)
+)
+
+func databaseServerFromID(id string) *brightbox.DatabaseServerOptions {
+	return &brightbox.DatabaseServerOptions{
+		ID: id,
+	}
+}
+
+func addUpdateableDatabaseServerOptions(
+	d *schema.ResourceData,
+	opts *brightbox.DatabaseServerOptions,
+) diag.Diagnostics {
+	assignString(d, &opts.Name, "name")
+	assignString(d, &opts.Description, "description")
+	assignByte(d, &opts.MaintenanceWeekday, "maintenance_weekday")
+	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
+	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
+	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
+	assignStringSet(d, &opts.AllowAccess, "allow_access")
+	return nil
+}
+
 func setDatabaseServerAttributes(
 	d *schema.ResourceData,
 	databaseServer *brightbox.DatabaseServer,
@@ -243,6 +300,11 @@ func setDatabaseServerAttributes(
 	return diags
 }
 
+func databaseServerUnavailable(obj *brightbox.DatabaseServer) bool {
+	return obj.Status == databaseServerConst.Deleted ||
+		obj.Status == databaseServerConst.Failed
+}
+
 func databaseServerStateRefresh(client *brightbox.Client, ctx context.Context, databaseServerID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		databaseServer, err := client.DatabaseServer(ctx, databaseServerID)
@@ -316,66 +378,6 @@ func resourceBrightboxDatabaseServerCreateAndWait(
 	}
 
 	return resourceBrightboxSetDatabaseServerLockState(ctx, d, meta)
-}
-
-var resourceBrightboxSetDatabaseServerLockState = resourceBrightboxSetLockState(
-	(*brightbox.Client).LockDatabaseServer,
-	(*brightbox.Client).UnlockDatabaseServer,
-	setDatabaseServerAttributes,
-)
-
-var resourceBrightboxDatabaseServerRead = resourceBrightboxReadStatus(
-	(*brightbox.Client).DatabaseServer,
-	"Load Balancer",
-	setDatabaseServerAttributes,
-	databaseServerUnavailable,
-)
-
-var resourceBrightboxDatabaseServerUpdate = resourceBrightboxUpdateWithLock(
-	(*brightbox.Client).UpdateDatabaseServer,
-	"Database Server",
-	databaseServerFromID,
-	addUpdateableDatabaseServerOptions,
-	setDatabaseServerAttributes,
-	resourceBrightboxSetDatabaseServerLockState,
-)
-
-func databaseServerFromID(id string) *brightbox.DatabaseServerOptions {
-	return &brightbox.DatabaseServerOptions{
-		ID: id,
-	}
-}
-
-func databaseServerUnavailable(obj *brightbox.DatabaseServer) bool {
-	return obj.Status == databaseServerConst.Deleted ||
-		obj.Status == databaseServerConst.Failed
-}
-
-var resourceBrightboxDatabaseServerDeleteAndWait = resourceBrightboxDeleteAndWait(
-	(*brightbox.Client).DestroyDatabaseServer,
-	"Database Server",
-	[]string{
-		databaseServerConst.Deleting.String(),
-		databaseServerConst.Active.String(),
-	},
-	[]string{
-		databaseServerConst.Deleted.String(),
-	},
-	databaseServerStateRefresh,
-)
-
-func addUpdateableDatabaseServerOptions(
-	d *schema.ResourceData,
-	opts *brightbox.DatabaseServerOptions,
-) diag.Diagnostics {
-	assignString(d, &opts.Name, "name")
-	assignString(d, &opts.Description, "description")
-	assignByte(d, &opts.MaintenanceWeekday, "maintenance_weekday")
-	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
-	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
-	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
-	assignStringSet(d, &opts.AllowAccess, "allow_access")
-	return nil
 }
 
 func outputDatabaseServerOptions(opts *brightbox.DatabaseServerOptions) {

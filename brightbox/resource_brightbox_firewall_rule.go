@@ -21,11 +21,7 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Provides a Brightbox Firewall Rule resource",
 		CreateContext: resourceBrightboxFirewallRuleCreate,
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).FirewallRule,
-			"Firewall Rule",
-			setFirewallRuleAttributes,
-		),
+		ReadContext:   resourceBrightboxFirewallRuleRead,
 		UpdateContext: resourceBrightboxFirewallRuleUpdateAndRegenerate,
 		DeleteContext: resourceBrightboxFirewallRuleDelete,
 		Importer: &schema.ResourceImporter{
@@ -114,46 +110,33 @@ func resourceBrightboxFirewallRule() *schema.Resource {
 	}
 }
 
-var resourceBrightboxFirewallRuleCreate = resourceBrightboxCreate(
-	(*brightbox.Client).CreateFirewallRule,
-	"Firewall Rule",
-	addUpdateableFirewallRuleOptions,
-	setFirewallRuleAttributes,
+var (
+	resourceBrightboxFirewallRuleCreate = resourceBrightboxCreate(
+		(*brightbox.Client).CreateFirewallRule,
+		"Firewall Rule",
+		addUpdateableFirewallRuleOptions,
+		setFirewallRuleAttributes,
+	)
+
+	resourceBrightboxFirewallRuleRead = resourceBrightboxRead(
+		(*brightbox.Client).FirewallRule,
+		"Firewall Rule",
+		setFirewallRuleAttributes,
+	)
+
+	resourceBrightboxFirewallRuleUpdate = resourceBrightboxUpdate(
+		(*brightbox.Client).UpdateFirewallRule,
+		"Firewall Rule",
+		firewallRuleFromID,
+		addUpdateableFirewallRuleOptions,
+		setFirewallRuleAttributes,
+	)
+
+	resourceBrightboxFirewallRuleDelete = resourceBrightboxDelete(
+		(*brightbox.Client).DestroyFirewallRule,
+		"Firewall Rule",
+	)
 )
-
-var resourceBrightboxFirewallRuleDelete = resourceBrightboxDelete(
-	(*brightbox.Client).DestroyFirewallRule,
-	"Firewall Rule",
-)
-
-var resourceBrightboxFirewallRuleUpdate = resourceBrightboxUpdate(
-	(*brightbox.Client).UpdateFirewallRule,
-	"Firewall Rule",
-	firewallRuleFromID,
-	addUpdateableFirewallRuleOptions,
-	setFirewallRuleAttributes,
-)
-
-func resourceBrightboxFirewallRuleUpdateAndRegenerate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-
-	if d.HasChange("firewall_policy") {
-		log.Printf("[INFO] Firewall Policy changed, regenerating rule")
-		log.Printf("[INFO] Removing original rule %s", d.Id())
-
-		errs := resourceBrightboxFirewallRuleDelete(ctx, d, meta)
-		if errs.HasError() {
-			return errs
-		}
-
-		log.Printf("[INFO] Creating new rule")
-		return resourceBrightboxFirewallRuleCreate(ctx, d, meta)
-	}
-	return resourceBrightboxFirewallRuleUpdate(ctx, d, meta)
-}
 
 func firewallRuleFromID(id string) *brightbox.FirewallRuleOptions {
 	return &brightbox.FirewallRuleOptions{
@@ -243,4 +226,25 @@ func setFirewallRuleAttributes(
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
 	return diags
+}
+
+func resourceBrightboxFirewallRuleUpdateAndRegenerate(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+
+	if d.HasChange("firewall_policy") {
+		log.Printf("[INFO] Firewall Policy changed, regenerating rule")
+		log.Printf("[INFO] Removing original rule %s", d.Id())
+
+		errs := resourceBrightboxFirewallRuleDelete(ctx, d, meta)
+		if errs.HasError() {
+			return errs
+		}
+
+		log.Printf("[INFO] Creating new rule")
+		return resourceBrightboxFirewallRuleCreate(ctx, d, meta)
+	}
+	return resourceBrightboxFirewallRuleUpdate(ctx, d, meta)
 }

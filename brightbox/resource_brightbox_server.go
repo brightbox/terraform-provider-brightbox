@@ -205,190 +205,34 @@ func resourceBrightboxServer() *schema.Resource {
 	}
 }
 
-func resourceBrightboxServerCreateAndWait(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
+var (
+	resourceBrightboxServerRead = resourceBrightboxReadStatus(
+		(*brightbox.Client).Server,
+		"Server",
+		setServerAttributes,
+		serverUnavailable,
+	)
 
-	log.Printf("[INFO] Creating Server")
-	var serverOpts brightbox.ServerOptions
-
-	errs := addUpdateableServerOptions(d, &serverOpts)
-	if errs.HasError() {
-		return errs
-	}
-
-	assignString(d, &serverOpts.ServerType, "type")
-	assignString(d, &serverOpts.Zone, "zone")
-	assignBool(d, &serverOpts.DiskEncrypted, "disk_encrypted")
-	addBlockStorageOptions(d, &serverOpts)
-
-	log.Printf("[DEBUG] Server create configuration: %+v", serverOpts)
-
-	server, err := client.CreateServer(ctx, serverOpts)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(server.ID)
-
-	log.Printf("[INFO] Waiting for Server (%s) to become available", d.Id())
-
-	stateConf := resource.StateChangeConf{
-		Pending: []string{
-			serverConst.Creating.String(),
-		},
-		Target: []string{
+	resourceBrightboxServerDeleteAndWait = resourceBrightboxDeleteAndWait(
+		(*brightbox.Client).DestroyServer,
+		"Server",
+		[]string{
+			serverConst.Deleting.String(),
 			serverConst.Active.String(),
 			serverConst.Inactive.String(),
 		},
-		Refresh:    serverStateRefresh(client, ctx, server.ID),
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      checkDelay,
-		MinTimeout: minimumRefreshWait,
-	}
-	_, err = stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+		[]string{
+			serverConst.Deleted.String(),
+		},
+		serverStateRefresh,
+	)
 
-	return resourceBrightboxSetServerLockState(ctx, d, meta)
-}
-
-var resourceBrightboxServerRead = resourceBrightboxReadStatus(
-	(*brightbox.Client).Server,
-	"Server",
-	setServerAttributes,
-	serverUnavailable,
+	resourceBrightboxSetServerLockState = resourceBrightboxSetLockState(
+		(*brightbox.Client).LockServer,
+		(*brightbox.Client).UnlockServer,
+		setServerAttributes,
+	)
 )
-
-func serverUnavailable(obj *brightbox.Server) bool {
-	return obj.Status == serverConst.Deleted ||
-		obj.Status == serverConst.Failed
-}
-
-var resourceBrightboxServerDeleteAndWait = resourceBrightboxDeleteAndWait(
-	(*brightbox.Client).DestroyServer,
-	"Server",
-	[]string{
-		serverConst.Deleting.String(),
-		serverConst.Active.String(),
-		serverConst.Inactive.String(),
-	},
-	[]string{
-		serverConst.Deleted.String(),
-	},
-	serverStateRefresh,
-)
-
-func resourceBrightboxServerUpdate(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-
-	log.Printf("[DEBUG] Server update called for %s", d.Id())
-	serverOpts := brightbox.ServerOptions{
-		ID: d.Id(),
-	}
-	var server *brightbox.Server
-	var err error
-
-	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64") {
-		errs := addUpdateableServerOptions(d, &serverOpts)
-		if errs.HasError() {
-			return errs
-		}
-
-		log.Printf("[DEBUG] Server update configuration: %+v", serverOpts)
-
-		server, err = client.UpdateServer(ctx, serverOpts)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	} else {
-		server, err = client.Server(ctx, d.Id())
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	if d.HasChange("disk_size") {
-		volumeID := server.Volumes[0].ID
-		oldSize, newSize := d.GetChange("disk_size")
-		oldSizeInt, ok := oldSize.(int)
-		if !ok {
-			return diag.Errorf("expected type of old disk size to be Integer")
-		}
-		newSizeInt, ok := newSize.(int)
-		if !ok {
-			return diag.Errorf("expected type of new disk size to be Integer")
-		}
-		if oldSizeInt > newSizeInt {
-			return diag.Errorf("expected new disk size (%v) to be bigger than old disk size (%v)", newSizeInt, oldSizeInt)
-
-		}
-		log.Printf("[INFO] Resizing volume %v from %v to %v", volumeID, oldSizeInt, newSizeInt)
-		_, err = client.ResizeVolume(
-			ctx,
-			volumeID,
-			brightbox.VolumeNewSize{
-				From: uint(oldSizeInt),
-				To:   uint(newSizeInt),
-			},
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		server, err = client.Server(ctx, d.Id())
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	if d.HasChange("type") {
-		newServerType := d.Get("type").(string)
-		log.Printf("[INFO] Changing server type to %v", newServerType)
-		server, err = client.ResizeServer(
-			ctx,
-			d.Id(),
-			brightbox.ServerNewSize{NewType: newServerType},
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	if d.HasChange("locked") {
-		return resourceBrightboxSetServerLockState(ctx, d, meta)
-	}
-	return setServerAttributes(d, server)
-}
-
-var resourceBrightboxSetServerLockState = resourceBrightboxSetLockState(
-	(*brightbox.Client).LockServer,
-	(*brightbox.Client).UnlockServer,
-	setServerAttributes,
-)
-
-func addBlockStorageOptions(
-	d *schema.ResourceData,
-	opts *brightbox.ServerOptions,
-) {
-	var diskSize *uint
-	image := d.Get("image").(string)
-	assignInt(d, &diskSize, "disk_size")
-	if diskSize == nil {
-		opts.Image = &image
-	} else {
-		opts.Volumes = []brightbox.VolumeOptions{
-			brightbox.VolumeOptions{
-				Image: image,
-				Size:  *diskSize,
-			},
-		}
-	}
-}
 
 func addUpdateableServerOptions(
 	d *schema.ResourceData,
@@ -529,6 +373,175 @@ func setServerAttributes(
 
 }
 
+func serverUnavailable(obj *brightbox.Server) bool {
+	return obj.Status == serverConst.Deleted ||
+		obj.Status == serverConst.Failed
+}
+
+func serverStateRefresh(client *brightbox.Client, ctx context.Context, serverID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		serverInstance, err := client.Server(ctx, serverID)
+		if err != nil {
+			log.Printf("Error on Server State Refresh: %s", err)
+			return nil, "", err
+		}
+		return serverInstance, serverInstance.Status.String(), nil
+	}
+}
+
+func resourceBrightboxServerCreateAndWait(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+
+	log.Printf("[INFO] Creating Server")
+	var serverOpts brightbox.ServerOptions
+
+	errs := addUpdateableServerOptions(d, &serverOpts)
+	if errs.HasError() {
+		return errs
+	}
+
+	assignString(d, &serverOpts.ServerType, "type")
+	assignString(d, &serverOpts.Zone, "zone")
+	assignBool(d, &serverOpts.DiskEncrypted, "disk_encrypted")
+	addBlockStorageOptions(d, &serverOpts)
+
+	log.Printf("[DEBUG] Server create configuration: %+v", serverOpts)
+
+	server, err := client.CreateServer(ctx, serverOpts)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(server.ID)
+
+	log.Printf("[INFO] Waiting for Server (%s) to become available", d.Id())
+
+	stateConf := resource.StateChangeConf{
+		Pending: []string{
+			serverConst.Creating.String(),
+		},
+		Target: []string{
+			serverConst.Active.String(),
+			serverConst.Inactive.String(),
+		},
+		Refresh:    serverStateRefresh(client, ctx, server.ID),
+		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
+	}
+	_, err = stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return resourceBrightboxSetServerLockState(ctx, d, meta)
+}
+
+func resourceBrightboxServerUpdate(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+
+	log.Printf("[DEBUG] Server update called for %s", d.Id())
+	serverOpts := brightbox.ServerOptions{
+		ID: d.Id(),
+	}
+	var server *brightbox.Server
+	var err error
+
+	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64") {
+		errs := addUpdateableServerOptions(d, &serverOpts)
+		if errs.HasError() {
+			return errs
+		}
+
+		log.Printf("[DEBUG] Server update configuration: %+v", serverOpts)
+
+		server, err = client.UpdateServer(ctx, serverOpts)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		server, err = client.Server(ctx, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("disk_size") {
+		volumeID := server.Volumes[0].ID
+		oldSize, newSize := d.GetChange("disk_size")
+		oldSizeInt, ok := oldSize.(int)
+		if !ok {
+			return diag.Errorf("expected type of old disk size to be Integer")
+		}
+		newSizeInt, ok := newSize.(int)
+		if !ok {
+			return diag.Errorf("expected type of new disk size to be Integer")
+		}
+		if oldSizeInt > newSizeInt {
+			return diag.Errorf("expected new disk size (%v) to be bigger than old disk size (%v)", newSizeInt, oldSizeInt)
+
+		}
+		log.Printf("[INFO] Resizing volume %v from %v to %v", volumeID, oldSizeInt, newSizeInt)
+		_, err = client.ResizeVolume(
+			ctx,
+			volumeID,
+			brightbox.VolumeNewSize{
+				From: uint(oldSizeInt),
+				To:   uint(newSizeInt),
+			},
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		server, err = client.Server(ctx, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("type") {
+		newServerType := d.Get("type").(string)
+		log.Printf("[INFO] Changing server type to %v", newServerType)
+		server, err = client.ResizeServer(
+			ctx,
+			d.Id(),
+			brightbox.ServerNewSize{NewType: newServerType},
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("locked") {
+		return resourceBrightboxSetServerLockState(ctx, d, meta)
+	}
+	return setServerAttributes(d, server)
+}
+
+func addBlockStorageOptions(
+	d *schema.ResourceData,
+	opts *brightbox.ServerOptions,
+) {
+	var diskSize *uint
+	image := d.Get("image").(string)
+	assignInt(d, &diskSize, "disk_size")
+	if diskSize == nil {
+		opts.Image = &image
+	} else {
+		opts.Volumes = []brightbox.VolumeOptions{
+			brightbox.VolumeOptions{
+				Image: image,
+				Size:  *diskSize,
+			},
+		}
+	}
+}
+
 func serverGroupIDListFromGroups(
 	list []brightbox.ServerGroup,
 ) []string {
@@ -594,15 +607,4 @@ func setServerTypeDetails(d *schema.ResourceData, serverType *brightbox.ServerTy
 		return diag.FromErr(err)
 	}
 	return nil
-}
-
-func serverStateRefresh(client *brightbox.Client, ctx context.Context, serverID string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		serverInstance, err := client.Server(ctx, serverID)
-		if err != nil {
-			log.Printf("Error on Server State Refresh: %s", err)
-			return nil, "", err
-		}
-		return serverInstance, serverInstance.Status.String(), nil
-	}
 }

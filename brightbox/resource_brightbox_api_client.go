@@ -1,8 +1,6 @@
 package brightbox
 
 import (
-	"log"
-
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/brightbox/gobrightbox/v2/status/permissionsgroup"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -12,29 +10,11 @@ import (
 
 func resourceBrightboxAPIClient() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox API Client resource",
-		CreateContext: resourceBrightboxCreate(
-			(*brightbox.Client).CreateAPIClient,
-			"API Client",
-			addUpdateableAPIClientOptions,
-			setAPIClientAttributes,
-		),
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).APIClient,
-			"API Client",
-			setAPIClientAttributes,
-		),
-		UpdateContext: resourceBrightboxUpdate(
-			(*brightbox.Client).UpdateAPIClient,
-			"API Client",
-			apiClientFromID,
-			addUpdateableAPIClientOptions,
-			setAPIClientAttributes,
-		),
-		DeleteContext: resourceBrightboxDelete(
-			(*brightbox.Client).DestroyAPIClient,
-			"API Client",
-		),
+		Description:   "Provides a Brightbox API Client resource",
+		CreateContext: resourceBrightboxAPIClientCreate,
+		ReadContext:   resourceBrightboxAPIClientRead,
+		UpdateContext: resourceBrightboxAPIClientUpdate,
+		DeleteContext: resourceBrightboxAPIClientDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -84,6 +64,35 @@ func resourceBrightboxAPIClient() *schema.Resource {
 	}
 }
 
+var (
+	resourceBrightboxAPIClientCreate = resourceBrightboxCreate(
+		(*brightbox.Client).CreateAPIClient,
+		"API Client",
+		addUpdateableAPIClientOptions,
+		setAPIClientAttributes,
+	)
+
+	resourceBrightboxAPIClientRead = resourceBrightboxReadStatus(
+		(*brightbox.Client).APIClient,
+		"API Client",
+		setAPIClientAttributes,
+		apiClientRevoked,
+	)
+
+	resourceBrightboxAPIClientUpdate = resourceBrightboxUpdate(
+		(*brightbox.Client).UpdateAPIClient,
+		"API Client",
+		apiClientFromID,
+		addUpdateableAPIClientOptions,
+		setAPIClientAttributes,
+	)
+
+	resourceBrightboxAPIClientDelete = resourceBrightboxDelete(
+		(*brightbox.Client).DestroyAPIClient,
+		"API Client",
+	)
+)
+
 func apiClientFromID(id string) *brightbox.APIClientOptions {
 	return &brightbox.APIClientOptions{
 		ID: id,
@@ -104,11 +113,6 @@ func setAPIClientAttributes(
 	d *schema.ResourceData,
 	apiClient *brightbox.APIClient,
 ) diag.Diagnostics {
-	if apiClient.RevokedAt != nil {
-		log.Printf("[WARN] API Client revoked, removing from state: %s", d.Id())
-		d.SetId("")
-		return nil
-	}
 	var diags diag.Diagnostics
 	var err error
 
@@ -138,4 +142,8 @@ func setAPIClientAttributes(
 		}
 	}
 	return diags
+}
+
+func apiClientRevoked(obj *brightbox.APIClient) bool {
+	return obj.RevokedAt != nil
 }

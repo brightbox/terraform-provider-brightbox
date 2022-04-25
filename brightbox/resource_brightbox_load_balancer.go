@@ -272,66 +272,60 @@ func resourceBrightboxLoadBalancer() *schema.Resource {
 	}
 }
 
-func resourceBrightboxLbListenerHash(
-	v interface{},
-) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%d-", m["in"].(int)))
-	buf.WriteString(fmt.Sprintf("%s-",
-		strings.ToLower(m["protocol"].(string))))
-	buf.WriteString(fmt.Sprintf("%s-",
-		strings.ToLower(m["proxy_protocol"].(string))))
-	buf.WriteString(fmt.Sprintf("%d-", m["out"].(int)))
-	buf.WriteString(fmt.Sprintf("%d-", m["timeout"].(int)))
+var (
+	resourceBrightboxSetLoadBalancerLockState = resourceBrightboxSetLockState(
+		(*brightbox.Client).LockLoadBalancer,
+		(*brightbox.Client).UnlockLoadBalancer,
+		setLoadBalancerAttributes,
+	)
 
-	return HashcodeString(buf.String())
-}
+	resourceBrightboxLoadBalancerRead = resourceBrightboxReadStatus(
+		(*brightbox.Client).LoadBalancer,
+		"Load Balancer",
+		setLoadBalancerAttributes,
+		loadBalancerUnavailable,
+	)
 
-func stringSliceFromAcme(
-	acme *brightbox.LoadBalancerAcme,
-) []string {
-	if acme == nil {
-		return nil
-	}
-	result := make([]string, len(acme.Domains))
-	for i, domain := range acme.Domains {
-		result[i] = domain.Identifier
-	}
-	return result
-}
+	resourceBrightboxLoadBalancerUpdate = resourceBrightboxUpdateWithLock(
+		(*brightbox.Client).UpdateLoadBalancer,
+		"Load Balancer",
+		loadBalancerFromID,
+		addUpdateableLoadBalancerOptions,
+		setLoadBalancerAttributes,
+		resourceBrightboxSetLoadBalancerLockState,
+	)
 
-func mapFromListeners(
-	listenerSet []brightbox.LoadBalancerListener,
-) []map[string]interface{} {
-	listeners := make([]map[string]interface{}, len(listenerSet))
-	for i, listener := range listenerSet {
-		listeners[i] = map[string]interface{}{
-			"protocol":       listener.Protocol.String(),
-			"in":             listener.In,
-			"out":            listener.Out,
-			"timeout":        listener.Timeout,
-			"proxy_protocol": listener.ProxyProtocol.String(),
-		}
-	}
-	return listeners
-}
-
-func mapFromHealthcheck(
-	healthcheck *brightbox.LoadBalancerHealthcheck,
-) []map[string]interface{} {
-	return []map[string]interface{}{
-		{
-			"type":           healthcheck.Type.String(),
-			"port":           healthcheck.Port,
-			"request":        healthcheck.Request,
-			"interval":       healthcheck.Interval,
-			"timeout":        healthcheck.Timeout,
-			"threshold_up":   healthcheck.ThresholdUp,
-			"threshold_down": healthcheck.ThresholdDown,
+	resourceBrightboxLoadBalancerDeleteAndWait = resourceBrightboxDeleteAndWait(
+		(*brightbox.Client).DestroyLoadBalancer,
+		"Load Balancer",
+		[]string{
+			loadBalancerConst.Deleting.String(),
+			loadBalancerConst.Active.String(),
 		},
-	}
+		[]string{
+			loadBalancerConst.Deleted.String(),
+		},
+		loadBalancerStateRefresh,
+	)
+)
 
+func addUpdateableLoadBalancerOptions(
+	d *schema.ResourceData,
+	opts *brightbox.LoadBalancerOptions,
+) diag.Diagnostics {
+	assignString(d, &opts.Name, "name")
+	assignEnum(d, &opts.Policy, "policy")
+	assignString(d, &opts.CertificatePem, "certificate_pem")
+	assignString(d, &opts.CertificatePrivateKey, "certificate_private_key")
+	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
+	assignBool(d, &opts.HTTPSRedirect, "https_redirect")
+	if d.HasChange("domains") {
+		temp := sliceFromStringSet(d, "domains")
+		opts.Domains = &temp
+	}
+	assignListeners(d, &opts.Listeners)
+	assignNodes(d, &opts.Nodes)
+	return assignHealthCheck(d, &opts.Healthcheck)
 }
 
 func setLoadBalancerAttributes(
@@ -395,6 +389,17 @@ func setLoadBalancerAttributes(
 	return diags
 }
 
+func loadBalancerFromID(id string) *brightbox.LoadBalancerOptions {
+	return &brightbox.LoadBalancerOptions{
+		ID: id,
+	}
+}
+
+func loadBalancerUnavailable(obj *brightbox.LoadBalancer) bool {
+	return obj.Status == loadBalancerConst.Deleted ||
+		obj.Status == loadBalancerConst.Failed
+}
+
 func loadBalancerStateRefresh(client *brightbox.Client, ctx context.Context, loadBalancerID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		loadBalancer, err := client.LoadBalancer(ctx, loadBalancerID)
@@ -404,6 +409,68 @@ func loadBalancerStateRefresh(client *brightbox.Client, ctx context.Context, loa
 		}
 		return loadBalancer, loadBalancer.Status.String(), nil
 	}
+}
+
+func resourceBrightboxLbListenerHash(
+	v interface{},
+) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%d-", m["in"].(int)))
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["protocol"].(string))))
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["proxy_protocol"].(string))))
+	buf.WriteString(fmt.Sprintf("%d-", m["out"].(int)))
+	buf.WriteString(fmt.Sprintf("%d-", m["timeout"].(int)))
+
+	return HashcodeString(buf.String())
+}
+
+func stringSliceFromAcme(
+	acme *brightbox.LoadBalancerAcme,
+) []string {
+	if acme == nil {
+		return nil
+	}
+	result := make([]string, len(acme.Domains))
+	for i, domain := range acme.Domains {
+		result[i] = domain.Identifier
+	}
+	return result
+}
+
+func mapFromListeners(
+	listenerSet []brightbox.LoadBalancerListener,
+) []map[string]interface{} {
+	listeners := make([]map[string]interface{}, len(listenerSet))
+	for i, listener := range listenerSet {
+		listeners[i] = map[string]interface{}{
+			"protocol":       listener.Protocol.String(),
+			"in":             listener.In,
+			"out":            listener.Out,
+			"timeout":        listener.Timeout,
+			"proxy_protocol": listener.ProxyProtocol.String(),
+		}
+	}
+	return listeners
+}
+
+func mapFromHealthcheck(
+	healthcheck *brightbox.LoadBalancerHealthcheck,
+) []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"type":           healthcheck.Type.String(),
+			"port":           healthcheck.Port,
+			"request":        healthcheck.Request,
+			"interval":       healthcheck.Interval,
+			"timeout":        healthcheck.Timeout,
+			"threshold_up":   healthcheck.ThresholdUp,
+			"threshold_down": healthcheck.ThresholdDown,
+		},
+	}
+
 }
 
 func resourceBrightboxLoadBalancerCreateAndWait(
@@ -451,76 +518,6 @@ func resourceBrightboxLoadBalancerCreateAndWait(
 	}
 
 	return resourceBrightboxSetLoadBalancerLockState(ctx, d, meta)
-}
-
-var resourceBrightboxSetLoadBalancerLockState = resourceBrightboxSetLockState(
-	(*brightbox.Client).LockLoadBalancer,
-	(*brightbox.Client).UnlockLoadBalancer,
-	setLoadBalancerAttributes,
-)
-
-var resourceBrightboxLoadBalancerRead = resourceBrightboxReadStatus(
-	(*brightbox.Client).LoadBalancer,
-	"Load Balancer",
-	setLoadBalancerAttributes,
-	loadBalancerUnavailable,
-)
-
-var resourceBrightboxLoadBalancerUpdate = resourceBrightboxUpdateWithLock(
-	(*brightbox.Client).UpdateLoadBalancer,
-	"Load Balancer",
-	loadBalancerFromID,
-	addUpdateableLoadBalancerOptions,
-	setLoadBalancerAttributes,
-	resourceBrightboxSetLoadBalancerLockState,
-)
-
-func loadBalancerFromID(id string) *brightbox.LoadBalancerOptions {
-	return &brightbox.LoadBalancerOptions{
-		ID: id,
-	}
-}
-
-func loadBalancerUnavailable(obj *brightbox.LoadBalancer) bool {
-	return obj.Status == loadBalancerConst.Deleted ||
-		obj.Status == loadBalancerConst.Failed
-}
-
-var resourceBrightboxLoadBalancerDelete = resourceBrightboxDelete(
-	(*brightbox.Client).DestroyLoadBalancer,
-	"Load Balancer",
-)
-
-var resourceBrightboxLoadBalancerDeleteAndWait = resourceBrightboxDeleteAndWait(
-	(*brightbox.Client).DestroyLoadBalancer,
-	"Load Balancer",
-	[]string{
-		loadBalancerConst.Deleting.String(),
-		loadBalancerConst.Active.String(),
-	},
-	[]string{
-		loadBalancerConst.Deleted.String(),
-	},
-	loadBalancerStateRefresh,
-)
-
-func addUpdateableLoadBalancerOptions(
-	d *schema.ResourceData,
-	opts *brightbox.LoadBalancerOptions,
-) diag.Diagnostics {
-	assignString(d, &opts.Name, "name")
-	assignEnum(d, &opts.Policy, "policy")
-	assignString(d, &opts.CertificatePem, "certificate_pem")
-	assignString(d, &opts.CertificatePrivateKey, "certificate_private_key")
-	assignString(d, &opts.SslMinimumVersion, "ssl_minimum_version")
-	assignBool(d, &opts.HTTPSRedirect, "https_redirect")
-	if d.HasChange("domains") {
-		temp := sliceFromStringSet(d, "domains")
-		opts.Domains = &temp
-	}
-	assignListeners(d, &opts.Listeners)
-	assignNodes(d, &opts.Nodes)
-	return assignHealthCheck(d, &opts.Healthcheck)
 }
 
 func assignHealthCheck(d *schema.ResourceData, target **brightbox.LoadBalancerHealthcheck) diag.Diagnostics {

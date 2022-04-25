@@ -14,26 +14,11 @@ import (
 
 func resourceBrightboxServerGroup() *schema.Resource {
 	return &schema.Resource{
-		Description: "Provides a Brightbox Server Group resource",
-		CreateContext: resourceBrightboxCreate(
-			(*brightbox.Client).CreateServerGroup,
-			"Server Group",
-			addUpdateableServerGroupOptions,
-			setServerGroupAttributes,
-		),
-		ReadContext: resourceBrightboxRead(
-			(*brightbox.Client).ServerGroup,
-			"Server Group",
-			setServerGroupAttributes,
-		),
-		UpdateContext: resourceBrightboxUpdate(
-			(*brightbox.Client).UpdateServerGroup,
-			"Server Group",
-			serverGroupFromID,
-			addUpdateableServerGroupOptions,
-			setServerGroupAttributes,
-		),
-		DeleteContext: resourceBrightboxServerGroupDelete,
+		Description:   "Provides a Brightbox Server Group resource",
+		CreateContext: resourceBrightboxServerGroupCreate,
+		ReadContext:   resourceBrightboxServerGroupRead,
+		UpdateContext: resourceBrightboxServerGroupUpdate,
+		DeleteContext: resourceBrightboxServerGroupClearAndDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -71,31 +56,31 @@ func resourceBrightboxServerGroup() *schema.Resource {
 	}
 }
 
-func resourceBrightboxServerGroupDelete(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
+var (
+	resourceBrightboxServerGroupCreate = resourceBrightboxCreate(
+		(*brightbox.Client).CreateServerGroup,
+		"Server Group",
+		addUpdateableServerGroupOptions,
+		setServerGroupAttributes,
+	)
+	resourceBrightboxServerGroupRead = resourceBrightboxRead(
+		(*brightbox.Client).ServerGroup,
+		"Server Group",
+		setServerGroupAttributes,
+	)
+	resourceBrightboxServerGroupUpdate = resourceBrightboxUpdate(
+		(*brightbox.Client).UpdateServerGroup,
+		"Server Group",
+		serverGroupFromID,
+		addUpdateableServerGroupOptions,
+		setServerGroupAttributes,
+	)
 
-	serverGroup, err := client.ServerGroup(ctx, d.Id())
-	if err != nil {
-		return diag.Errorf("Error retrieving Server Group details: %s", err)
-	}
-	if len(serverGroup.Servers) > 0 {
-		err := clearServerList(ctx, client, serverGroup, d.Timeout(schema.TimeoutDelete))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	log.Printf("[INFO] Deleting Server Group %s", d.Id())
-	_, err = client.DestroyServerGroup(ctx, d.Id())
-	if err != nil {
-		return diag.Errorf("Error deleting Server Group (%s): %s", d.Id(), err)
-	}
-	return nil
-}
+	resourceBrightboxServerGroupDelete = resourceBrightboxDelete(
+		(*brightbox.Client).DestroyServerGroup,
+		"Server Group",
+	)
+)
 
 func serverGroupFromID(id string) *brightbox.ServerGroupOptions {
 	return &brightbox.ServerGroupOptions{
@@ -137,6 +122,26 @@ func setServerGroupAttributes(
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
 	return diags
+}
+
+func resourceBrightboxServerGroupClearAndDelete(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+
+	serverGroup, err := client.ServerGroup(ctx, d.Id())
+	if err != nil {
+		return diag.Errorf("Error retrieving Server Group details: %s", err)
+	}
+	if len(serverGroup.Servers) > 0 {
+		err := clearServerList(ctx, client, serverGroup, d.Timeout(schema.TimeoutDelete))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return resourceBrightboxServerGroupDelete(ctx, d, meta)
 }
 
 func clearServerList(ctx context.Context, client *brightbox.Client, iniitialServerGroup *brightbox.ServerGroup, timeout time.Duration) error {
