@@ -164,9 +164,7 @@ func resourceBrightboxFirewallPolicyUpdateAndRemap(
 	return append(diags, resourceBrightboxFirewallPolicyUpdate(ctx, d, meta)...)
 }
 
-func firewallPolicyFromID(
-	id string,
-) *brightbox.FirewallPolicyOptions {
+func firewallPolicyFromID(id string) *brightbox.FirewallPolicyOptions {
 	return &brightbox.FirewallPolicyOptions{
 		ID: id,
 	}

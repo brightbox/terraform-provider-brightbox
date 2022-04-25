@@ -97,9 +97,7 @@ func resourceBrightboxServerGroupDelete(
 	return nil
 }
 
-func serverGroupFromID(
-	id string,
-) *brightbox.ServerGroupOptions {
+func serverGroupFromID(id string) *brightbox.ServerGroupOptions {
 	return &brightbox.ServerGroupOptions{
 		ID: id,
 	}

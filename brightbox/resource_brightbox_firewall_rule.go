@@ -155,9 +155,7 @@ func resourceBrightboxFirewallRuleUpdateAndRegenerate(
 	return resourceBrightboxFirewallRuleUpdate(ctx, d, meta)
 }
 
-func firewallRuleFromID(
-	id string,
-) *brightbox.FirewallRuleOptions {
+func firewallRuleFromID(id string) *brightbox.FirewallRuleOptions {
 	return &brightbox.FirewallRuleOptions{
 		ID: id,
 	}
