@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"regexp"
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -14,10 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
-
-var imageRe = regexp.MustCompile("^img-.....$")
-var zoneRe = regexp.MustCompile("^gb1s?-[ab]$")
-var typeRe = regexp.MustCompile("^typ-.....$")
 
 func TestAccBrightboxServer_Basic(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
@@ -44,13 +39,13 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_encrypted", "true"),
 					resource.TestMatchResourceAttr(
-						resourceName, "image", imageRe),
+						resourceName, "image", imageRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckResourceAttr(
 						resourceName, "type", "1gb.ssd"),
 					resource.TestMatchResourceAttr(
-						resourceName, "zone", zoneRe),
+						resourceName, "zone", zoneRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
 				),
@@ -102,13 +97,13 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_encrypted", "true"),
 					resource.TestMatchResourceAttr(
-						resourceName, "image", imageRe),
+						resourceName, "image", imageRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestCheckResourceAttr(
 						resourceName, "type", "1gb.ssd"),
 					resource.TestMatchResourceAttr(
-						resourceName, "zone", zoneRe),
+						resourceName, "zone", zoneRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "user_data", "3dc39dda39be1205215e776bad998da361a5955d"),
 				),
@@ -379,7 +374,7 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if !imageRe.MatchString(server.Image.ID) {
+		if !imageRegexp.MatchString(server.Image.ID) {
 			return fmt.Errorf("Bad image id: %s", server.Image.ID)
 		}
 
@@ -387,7 +382,7 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 			return fmt.Errorf("Bad server type: %s", server.ServerType.ID)
 		}
 
-		if !zoneRe.MatchString(server.Zone.Handle) {
+		if !zoneRegexp.MatchString(server.Zone.Handle) {
 			return fmt.Errorf("Bad zone: %s", server.Zone.Handle)
 		}
 
@@ -510,13 +505,13 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_encrypted", "false"),
 					resource.TestMatchResourceAttr(
-						resourceName, "image", imageRe),
+						resourceName, "image", imageRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestMatchResourceAttr(
-						resourceName, "type", typeRe),
+						resourceName, "type", serverTypeRegexp),
 					resource.TestMatchResourceAttr(
-						resourceName, "zone", zoneRe),
+						resourceName, "zone", zoneRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_size", "40960"),
 				),
@@ -535,13 +530,13 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_encrypted", "false"),
 					resource.TestMatchResourceAttr(
-						resourceName, "image", imageRe),
+						resourceName, "image", imageRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
 					resource.TestMatchResourceAttr(
-						resourceName, "type", typeRe),
+						resourceName, "type", serverTypeRegexp),
 					resource.TestMatchResourceAttr(
-						resourceName, "zone", zoneRe),
+						resourceName, "zone", zoneRegexp),
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_size", "61440"),
 				),

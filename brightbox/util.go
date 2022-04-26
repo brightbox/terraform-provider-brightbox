@@ -41,6 +41,7 @@ var (
 	firewallRuleRegexp     = regexp.MustCompile("^fwr-.....$")
 	interfaceRegexp        = regexp.MustCompile("^int-.....$")
 	imageRegexp            = regexp.MustCompile("^img-.....$")
+	volumeRegexp           = regexp.MustCompile("^vol-.....$")
 	dnsNameRegexp          = regexp.MustCompile("^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$")
 	unreadable             = map[string]bool{
 		"deleted": true,
@@ -62,14 +63,6 @@ func timeFromFloat(timeFloat float64) time.Time {
 	sec, dec := math.Modf(timeFloat)
 	return time.Unix(int64(sec), int64(dec*(1e9)))
 }
-
-// func timeFromFloat(timeFloat float64) time.Time {
-// 	cs := fmt.Sprintf("%.9f", timeFloat)
-// 	v := strings.Split(cs, ".")
-// 	a, _ := strconv.ParseInt(v[0], 10, 64)
-// 	b, _ := strconv.ParseInt(padRight(v[1], "0", 9), 10, 64)
-// 	return time.Unix(a, b)
-// }
 
 func hashString(
 	v interface{},
@@ -491,9 +484,9 @@ func serverGroupMemberListFromNodes(
 ) brightbox.ServerGroupMemberList {
 	groupList := make([]brightbox.ServerGroupMember, len(nodes))
 	for i, node := range nodes {
-		groupList[i] = brightbox.ServerGroupMember{node.ID}
+		groupList[i] = brightbox.ServerGroupMember{Server: node.ID}
 	}
-	return brightbox.ServerGroupMemberList{groupList}
+	return brightbox.ServerGroupMemberList{Servers: groupList}
 }
 
 // Returns the most recent item out of a slice of items with Dates

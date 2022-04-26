@@ -81,6 +81,7 @@ func Provider() *schema.Provider {
 			"brightbox_orbit_container": resourceBrightboxContainer(),
 			"brightbox_api_client":      resourceBrightboxAPIClient(),
 			"brightbox_config_map":      resourceBrightboxConfigMap(),
+			"brightbox_volume":          resourceBrightboxVolume(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

@@ -454,55 +454,30 @@ func resourceBrightboxServerUpdate(
 	}
 	var server *brightbox.Server
 	var err error
+	var diags diag.Diagnostics
 
 	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64") {
-		errs := addUpdateableServerOptions(d, &serverOpts)
-		if errs.HasError() {
-			return errs
+		diags = append(diags, addUpdateableServerOptions(d, &serverOpts)...)
+		if diags.HasError() {
+			return diags
 		}
-
 		log.Printf("[DEBUG] Server update configuration: %+v", serverOpts)
 
 		server, err = client.UpdateServer(ctx, serverOpts)
 		if err != nil {
-			return diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	} else {
 		server, err = client.Server(ctx, d.Id())
 		if err != nil {
-			return diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
 	if d.HasChange("disk_size") {
-		volumeID := server.Volumes[0].ID
-		oldSize, newSize := d.GetChange("disk_size")
-		oldSizeInt, ok := oldSize.(int)
-		if !ok {
-			return diag.Errorf("expected type of old disk size to be Integer")
-		}
-		newSizeInt, ok := newSize.(int)
-		if !ok {
-			return diag.Errorf("expected type of new disk size to be Integer")
-		}
-		if oldSizeInt > newSizeInt {
-			return diag.Errorf("expected new disk size (%v) to be bigger than old disk size (%v)", newSizeInt, oldSizeInt)
-
-		}
-		log.Printf("[INFO] Resizing volume %v from %v to %v", volumeID, oldSizeInt, newSizeInt)
-		_, err = client.ResizeVolume(
-			ctx,
-			volumeID,
-			brightbox.VolumeNewSize{
-				From: uint(oldSizeInt),
-				To:   uint(newSizeInt),
-			},
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		diags = append(diags, resizeBrightboxVolume(ctx, d, meta, server.Volumes[0].ID, "disk_size")...)
 		server, err = client.Server(ctx, d.Id())
 		if err != nil {
-			return diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
 	if d.HasChange("type") {
@@ -514,8 +489,11 @@ func resourceBrightboxServerUpdate(
 			brightbox.ServerNewSize{NewType: newServerType},
 		)
 		if err != nil {
-			return diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
 		}
+	}
+	if diags.HasError() {
+		return diags
 	}
 	if d.HasChange("locked") {
 		return resourceBrightboxSetServerLockState(ctx, d, meta)
@@ -535,8 +513,8 @@ func addBlockStorageOptions(
 	} else {
 		opts.Volumes = []brightbox.VolumeOptions{
 			brightbox.VolumeOptions{
-				Image: image,
-				Size:  *diskSize,
+				Image: &image,
+				Size:  diskSize,
 			},
 		}
 	}
