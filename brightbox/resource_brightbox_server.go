@@ -2,6 +2,7 @@ package brightbox
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -36,11 +37,12 @@ func resourceBrightboxServer() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"disk_encrypted": {
-				Description: "Is true if the server has been built with an encrypted disk",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				Description:  "Is true if the server has been built with an encrypted disk",
+				Type:         schema.TypeBool,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				RequiredWith: []string{"image"},
 			},
 
 			"disk_size": {
@@ -49,6 +51,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.IntAtLeast(0),
+				RequiredWith: []string{"image"},
 			},
 
 			"fqdn": {
@@ -66,9 +69,11 @@ func resourceBrightboxServer() *schema.Resource {
 			"image": {
 				Description:  "Image used to create the server",
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
+				Computed:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringMatch(imageRegexp, "must be a valid image ID"),
+				ExactlyOneOf: []string{"image", "volume"},
 			},
 
 			"interface": {
@@ -191,6 +196,15 @@ func resourceBrightboxServer() *schema.Resource {
 				Description: "Username to use when logging into a server",
 				Type:        schema.TypeString,
 				Computed:    true,
+			},
+
+			"volume": {
+				Description:  "Volume used to boot the server",
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: validation.StringMatch(volumeRegexp, "must be a valid volume ID"),
+				ExactlyOneOf: []string{"image", "volume"},
 			},
 
 			"zone": {
@@ -326,11 +340,6 @@ func setServerAttributes(
 		if err != nil {
 			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 		}
-	} else {
-		err = d.Set("disk_size", server.Volumes[0].Size)
-		if err != nil {
-			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
-		}
 	}
 
 	if len(server.Interfaces) > 0 {
@@ -359,6 +368,30 @@ func setServerAttributes(
 
 	if len(server.CloudIPs) > 0 {
 		setPrimaryCloudIP(d, &server.CloudIPs[0])
+	}
+
+	bootVolumes := filter(server.Volumes, func(v brightbox.Volume) bool { return v.Boot })
+
+	if len(bootVolumes) > 0 {
+		bootVolume := &bootVolumes[0]
+		err = d.Set("volume", bootVolume.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("disk_size", bootVolume.Size)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+		err = d.Set("disk_encrypted", bootVolume.Encrypted)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	} else {
+		diags = append(diags,
+			diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("No boot volume detected in volume list"),
+			})
 	}
 
 	err = d.Set("server_groups", serverGroupIDListFromGroups(server.ServerGroups))
@@ -505,19 +538,25 @@ func addBlockStorageOptions(
 	d *schema.ResourceData,
 	opts *brightbox.ServerOptions,
 ) {
-	var diskSize *uint
+	if volume, ok := d.GetOk("volume"); ok {
+		opts.Volumes = []brightbox.VolumeEntry{
+			brightbox.VolumeEntry{
+				Volume: volume.(string),
+			},
+		}
+		return
+	}
 	image := d.Get("image").(string)
-	assignInt(d, &diskSize, "disk_size")
-	if diskSize == nil {
-		opts.Image = &image
-	} else {
-		opts.Volumes = []brightbox.VolumeOptions{
-			brightbox.VolumeOptions{
-				Image: &image,
-				Size:  diskSize,
+	diskSize, ok := d.GetOk("disk_size")
+	if ok {
+		opts.Volumes = []brightbox.VolumeEntry{
+			brightbox.VolumeEntry{
+				Image: image,
+				Size:  uint(diskSize.(int)),
 			},
 		}
 	}
+	opts.Image = &image
 }
 
 func serverGroupIDListFromGroups(

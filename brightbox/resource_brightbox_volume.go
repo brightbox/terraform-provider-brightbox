@@ -52,6 +52,7 @@ func resourceBrightboxVolume() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[\w-]{0,12}$`), "must be a valid filesystem label"),
+				RequiredWith: []string{"filesystem_type"},
 			},
 
 			"filesystem_type": {
@@ -62,15 +63,17 @@ func resourceBrightboxVolume() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(
 					filesystemtype.ValidStrings,
 					false),
+				ConflictsWith: []string{"image", "source"},
 			},
 
 			"image": {
-				Description:  "Image used to create the volume",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringMatch(imageRegexp, "must be a valid image ID"),
+				Description:   "Image used to create the volume",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ForceNew:      true,
+				ValidateFunc:  validation.StringMatch(imageRegexp, "must be a valid image ID"),
+				ConflictsWith: []string{"filesystem_type", "source"},
 			},
 
 			"locked": {
@@ -104,12 +107,13 @@ func resourceBrightboxVolume() *schema.Resource {
 			},
 
 			"source": {
-				Description:  "ID of the source volume for this image",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringMatch(volumeRegexp, "must be a valid volume ID"),
+				Description:   "ID of the source volume for this image",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ForceNew:      true,
+				ValidateFunc:  validation.StringMatch(volumeRegexp, "must be a valid volume ID"),
+				ConflictsWith: []string{"filesystem_type", "image"},
 			},
 
 			"source_type": {

@@ -287,6 +287,102 @@ func TestAccBrightboxVolume_resize(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxVolume_Formatted(t *testing.T) {
+	resourceName := "brightbox_volume.foobar"
+	var volume brightbox.Volume
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxVolumeConfig_rawFormatted(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Volume",
+						&volume,
+						(*brightbox.Client).Volume,
+					),
+					testAccCheckBrightboxVolumeAttributes(&volume),
+					resource.TestCheckResourceAttr(
+						resourceName, "filesystem_label", ""),
+					resource.TestCheckResourceAttr(
+						resourceName, "filesystem_type", "ext4"),
+					resource.TestCheckResourceAttr(
+						resourceName, "source", ""),
+					resource.TestMatchResourceAttr(
+						resourceName, "image", imageRegexp),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
+					resource.TestCheckResourceAttr(
+						resourceName, "description", ""),
+					resource.TestCheckResourceAttr(
+						resourceName, "size", "61440"),
+					resource.TestCheckResourceAttr(
+						resourceName, "source_type", volumetype.Raw.String()),
+					resource.TestCheckResourceAttr(
+						resourceName, "storage_type", storagetype.Network.String()),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+					resource.TestMatchResourceAttr(
+						resourceName, "serial", volumeRegexp),
+				),
+			},
+		},
+	})
+}
+
+func TestAccBrightboxVolume_FormattedLabelled(t *testing.T) {
+	resourceName := "brightbox_volume.foobar"
+	var volume brightbox.Volume
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxVolumeConfig_rawFormattedLabel(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Volume",
+						&volume,
+						(*brightbox.Client).Volume,
+					),
+					testAccCheckBrightboxVolumeAttributes(&volume),
+					resource.TestCheckResourceAttr(
+						resourceName, "filesystem_label", "123456789012"),
+					resource.TestCheckResourceAttr(
+						resourceName, "filesystem_type", "xfs"),
+					resource.TestCheckResourceAttr(
+						resourceName, "source", ""),
+					resource.TestMatchResourceAttr(
+						resourceName, "image", imageRegexp),
+					resource.TestCheckResourceAttr(
+						resourceName, "name", fmt.Sprintf("foo-%d", rInt)),
+					resource.TestCheckResourceAttr(
+						resourceName, "description", ""),
+					resource.TestCheckResourceAttr(
+						resourceName, "size", "61440"),
+					resource.TestCheckResourceAttr(
+						resourceName, "source_type", volumetype.Raw.String()),
+					resource.TestCheckResourceAttr(
+						resourceName, "storage_type", storagetype.Network.String()),
+					resource.TestCheckResourceAttr(
+						resourceName, "locked", "false"),
+					resource.TestMatchResourceAttr(
+						resourceName, "serial", volumeRegexp),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckBrightboxVolumeConfig_locked(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_volume" "foobar" {
@@ -342,6 +438,31 @@ resource "brightbox_volume" "foobar" {
 }
 
 `, rInt, rInt)
+
+}
+
+func testAccCheckBrightboxVolumeConfig_rawFormatted(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_volume" "foobar" {
+	name = "foo-%d"
+	size = 61440
+	filesystem_type = "ext4"
+}
+
+`, rInt)
+
+}
+
+func testAccCheckBrightboxVolumeConfig_rawFormattedLabel(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_volume" "foobar" {
+	name = "foo-%d"
+	size = 61440
+	filesystem_type = "xfs"
+	filesystem_label = "123456789012"
+}
+
+`, rInt)
 
 }
 

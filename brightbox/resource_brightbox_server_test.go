@@ -591,6 +591,71 @@ func TestAccBrightboxServer_ServerResize(t *testing.T) {
 	})
 }
 
+// func TestAccBrightboxServer_bootVolume(t *testing.T) {
+// 	resourceName := "brightbox_server.foobar"
+// 	var serverResource brightbox.Server
+// 	rInt := acctest.RandInt()
+
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:     func() { testAccPreCheck(t) },
+// 		Providers:    testAccProviders,
+// 		CheckDestroy: testAccCheckBrightboxServerDestroy,
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccCheckBrightboxServerConfig_bootVolume(rInt),
+// 				Check: resource.ComposeTestCheckFunc(
+// 					testAccCheckBrightboxObjectExists(
+// 						resourceName,
+// 						"Server",
+// 						&serverResource,
+// 						(*brightbox.Client).Server,
+// 					),
+// 					resource.TestMatchResourceAttr(
+// 						resourceName, "volume", volumeRegexp),
+// 					resource.TestMatchResourceAttr(
+// 						resourceName, "image", imageRegexp),
+// 					resource.TestCheckResourceAttr(
+// 						resourceName, "disk_size", "40960"),
+// 					resource.TestCheckResourceAttr(
+// 						resourceName, "encrypted", "false"),
+// 					resource.TestCheckResourceAttr(
+// 						resourceName, "encrypted", "false"),
+// 					testAccCheckBrightboxServerType(&serverResource.ServerType, 2, 4096),
+// 					resource.TestCheckResourceAttrSet(
+// 						resourceName, "type"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
+
+func TestAccBrightboxServer_DataDisk(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
+	var server brightbox.Server
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxServerConfig_networkDataDisk(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
+					resource.TestCheckResourceAttr(resourceName,
+						"data_volumes.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckBrightboxServerType(serverTypeRef **brightbox.ServerType, cores uint, ram uint) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		serverType := *serverTypeRef
@@ -825,6 +890,39 @@ resource "brightbox_server_group" "barfoo2" {
 }
 
 %s`, rInt, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
+}
+
+// func testAccCheckBrightboxServerConfig_bootVolume(rInt int) string {
+// 	return fmt.Sprintf(`
+// resource "brightbox_server" "foobar" {
+// 	name = "foo-%d"
+// 	type = data.brightbox_server_type.foobar.id
+// 	server_groups = [data.brightbox_server_group.default.id]
+// 	user_data = "foo:-with-character's"
+// 	volume = brightbox_volume.foobar.id
+// }
+
+// %s%s%s`, rInt, testAccCheckBrightboxVolumeConfig_basic(rInt),
+// 		TestAccBrightboxDataServerGroupConfig_default,
+// 		TestAccBrightboxDataServerTypeConfig_network_disk)
+// }
+
+func testAccCheckBrightboxServerConfig_networkDataDisk(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-%d"
+	type = data.brightbox_server_type.foobar.id
+	server_groups = [data.brightbox_server_group.default.id]
+	disk_size = 40960
+	data_volumes = [brightbox_volume.foobar.id]
+}
+
+%s%s%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default,
+		TestAccBrightboxDataServerTypeConfig_network_disk,
+		testAccCheckBrightboxVolumeConfig_basic(rInt),
+	)
 }
 
 // Sweeper
