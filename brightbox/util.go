@@ -508,3 +508,59 @@ func filter[T any](input []T, pred func(T) bool) (output []T) {
 	}
 	return output
 }
+
+// idList returns a list of identifiers from a list of identifiable objects
+func idList[O any](list []O, identify func(v O) string) []string {
+	ids := make([]string, len(list))
+	for i, v := range list {
+		ids[i] = identify(v)
+	}
+	return ids
+}
+
+// Generic Set Operations
+// Set Difference: A - B
+func Difference[O comparable](a, b []O) (diff []O) {
+	m := make(map[O]bool, len(b))
+
+	for _, item := range b {
+		m[item] = true
+	}
+
+	for _, item := range a {
+		if _, ok := m[item]; !ok {
+			diff = append(diff, item)
+		}
+	}
+	return
+}
+
+func Intersection[O comparable](a, b []O) (intersect []O) {
+	m := make(map[O]bool, len(a))
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			intersect = append(intersect, item)
+		}
+	}
+	return
+}
+
+func Union[O comparable](a, b []O) []O {
+	m := make(map[O]bool, len(a))
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; !ok {
+			a = append(a, item)
+		}
+	}
+	return a
+}

@@ -133,3 +133,15 @@ func TestFilter(t *testing.T) {
 
 	assert.DeepEqual(t, []int{30, 31, 32, 33}, output)
 }
+
+func TestIntersection(t *testing.T) {
+	assert.DeepEqual(t, []string{"c", "d"}, Intersection([]string{"a", "c", "d"}, []string{"b", "c", "d"}))
+}
+
+func TestUnion(t *testing.T) {
+	assert.DeepEqual(t, []string{"a", "c", "d", "b"}, Union([]string{"a", "c", "d"}, []string{"b", "c", "d"}))
+}
+
+func TestDifference(t *testing.T) {
+	assert.DeepEqual(t, []string{"a"}, Difference([]string{"a", "c", "d"}, []string{"b", "c", "d"}))
+}

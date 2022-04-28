@@ -36,6 +36,18 @@ func resourceBrightboxServer() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 
+			"data_volumes": {
+				Description: "List of volumes to attach to server",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				MinItems:    0,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringMatch(volumeRegexp, "must be a valid volume ID"),
+				},
+				Set: schema.HashString,
+			},
+
 			"disk_encrypted": {
 				Description:  "Is true if the server has been built with an encrypted disk",
 				Type:         schema.TypeBool,
@@ -126,7 +138,7 @@ func resourceBrightboxServer() *schema.Resource {
 			},
 
 			"server_groups": {
-				Description: "Array of server groups to add server to",
+				Description: "List of server groups to add server to",
 				Type:        schema.TypeSet,
 				Required:    true,
 				MinItems:    1,
@@ -394,7 +406,24 @@ func setServerAttributes(
 			})
 	}
 
-	err = d.Set("server_groups", serverGroupIDListFromGroups(server.ServerGroups))
+	err = d.Set(
+		"server_groups",
+		idList(
+			server.ServerGroups,
+			func(v brightbox.ServerGroup) string { return v.ID },
+		),
+	)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+
+	err = d.Set(
+		"data_volumes",
+		idList(
+			filter(server.Volumes, func(v brightbox.Volume) bool { return !v.Boot }),
+			func(v brightbox.Volume) string { return v.ID },
+		),
+	)
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
@@ -466,9 +495,15 @@ func resourceBrightboxServerCreateAndWait(
 		Delay:      checkDelay,
 		MinTimeout: minimumRefreshWait,
 	}
-	_, err = stateConf.WaitForStateContext(ctx)
+	result, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	server = result.(*brightbox.Server)
+
+	if errs := adjustDiskAttachment(ctx, d, meta, server.Volumes); errs.HasError() {
+		return errs
 	}
 
 	return resourceBrightboxSetServerLockState(ctx, d, meta)
@@ -528,10 +563,82 @@ func resourceBrightboxServerUpdate(
 	if diags.HasError() {
 		return diags
 	}
+
+	if errs := adjustDiskAttachment(ctx, d, meta, server.Volumes); errs.HasError() {
+		return errs
+	}
 	if d.HasChange("locked") {
 		return resourceBrightboxSetServerLockState(ctx, d, meta)
 	}
-	return setServerAttributes(d, server)
+	return resourceBrightboxServerRead(ctx, d, meta)
+}
+
+func adjustDiskAttachment(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+	currentVolumes []brightbox.Volume,
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+	log.Printf("[DEBUG] adjust Disks called for %s", d.Id())
+	var requiredVolumeList []string
+	assignStringSet(d, &requiredVolumeList, "data_volumes")
+
+	currentVolumeList := idList(
+		filter(currentVolumes, func(v brightbox.Volume) bool { return !v.Boot }),
+		func(v brightbox.Volume) string { return v.ID },
+	)
+	diags := attachDisks(
+		ctx,
+		client,
+		Difference(requiredVolumeList, currentVolumeList),
+		brightbox.VolumeAttachment{Server: d.Id()},
+	)
+	return append(diags, detachDisks(
+		ctx,
+		client,
+		Difference(currentVolumeList, requiredVolumeList),
+	)...)
+}
+
+func attachDisks(
+	ctx context.Context,
+	client *brightbox.Client,
+	volumeIDs []string,
+	attachment brightbox.VolumeAttachment,
+) diag.Diagnostics {
+	log.Printf("[DEBUG] attaching %v", volumeIDs)
+	var diags diag.Diagnostics
+	for _, id := range volumeIDs {
+		_, err := client.AttachVolume(
+			ctx,
+			id,
+			attachment,
+		)
+		if err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
+	}
+	return diags
+}
+
+func detachDisks(
+	ctx context.Context,
+	client *brightbox.Client,
+	volumeIDs []string,
+) diag.Diagnostics {
+	log.Printf("[DEBUG] detaching %v", volumeIDs)
+	var diags diag.Diagnostics
+	for _, id := range volumeIDs {
+		_, err := client.DetachVolume(
+			ctx,
+			id,
+		)
+		if err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		}
+	}
+	return diags
 }
 
 func addBlockStorageOptions(
@@ -547,26 +654,16 @@ func addBlockStorageOptions(
 		return
 	}
 	image := d.Get("image").(string)
-	diskSize, ok := d.GetOk("disk_size")
-	if ok {
+	if diskSize, ok := d.GetOk("disk_size"); ok {
 		opts.Volumes = []brightbox.VolumeEntry{
 			brightbox.VolumeEntry{
 				Image: image,
 				Size:  uint(diskSize.(int)),
 			},
 		}
+		return
 	}
 	opts.Image = &image
-}
-
-func serverGroupIDListFromGroups(
-	list []brightbox.ServerGroup,
-) []string {
-	srvGrpIds := make([]string, len(list))
-	for i, sg := range list {
-		srvGrpIds[i] = sg.ID
-	}
-	return srvGrpIds
 }
 
 func setUserDataDetails(d *schema.ResourceData, base64Userdata string) diag.Diagnostics {
