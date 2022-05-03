@@ -41,3 +41,4 @@ following attributes are exported:
 
 * `disk_size` - The disk size of the database server for this type
 * `ram` - The memory size of the database server for this type
+* `default` - Is this the default database type?

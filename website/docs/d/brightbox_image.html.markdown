@@ -35,6 +35,10 @@ returned by Brightbox Cloud.
 
 * `source_type` - (Optional) Either `upload` or `snapshot`.
 
+* `source` - (Optional) Name of the source for this image. Matches exactly. 
+
+* `source_trigger` - (Optional) Either `manual` or `schedule`.
+
 * `owner` - (Optional) The account id that owns the image. Matches
 exactly.
 
@@ -56,6 +60,8 @@ you are looking for.
 
 * `licence_name` - (Optional) The name of the licence for the
 image. Matches exactly.
+
+* `min_ram` - (Optional) The actual size of the data within the image in megabytes. Matches exactly.
 
 ~> **NOTE:** arguments form a conjunction. All arguments must match to
 select an image.

@@ -29,8 +29,9 @@ resource "brightbox_server" "web" {
 
 The following arguments are supported:
 
-* `image` - (Required) The Server image ID
-* `server_groups` (Required) - An array of server group ids the server
+* `image` - (Optional) The Server image ID. One of image or volume must be specified.
+* `volume` - (Optional) The volume to be used to boot the server. One of image or volume must be specified.
+* `server_groups` (Required) - List of server group ids the server
 should be added to. At least one server group must be specified.
 * `name` - (Optional) The Server name
 * `type` - (Optional) The handle the server type required (`1gb.ssd`, etc), or a Server Type ID. 
@@ -40,6 +41,12 @@ should be added to. At least one server group must be specified.
 'encrypted as rest' by the cloud.
 * `disk_size` - (Optional) The desired size of the disk storage for the
 Server. Only usable with types using network block storage.
+* `data_volumes` - (Optional) List of volumes to attach to server. Only
+usable with types using network block storage.
+* `snapshots_retention` - (Optional) Keep this number of scheduled
+snapshots. Keep all if unset.
+* `snapshots_schedule` - (Optional) Crontab pattern for scheduled
+snapshots. Must be no more frequent than hourly.
 * `user_data` (Optional) - A string of the desired User Data for the Server.
 * `user_data_base64` (Optional) - Already encrypted User Data - for use
 with the template provider.
@@ -61,6 +68,7 @@ The following attributes are exported:
 * `ipv4_address` - the public IPV4 address of the server. Appears if a cloud ip is mapped
 * `status` - Current state of the server, usually `active`, `inactive`
 or `deleted`
+* `snapshot_schedule_next_at` - Time in UTC of approximately when the next scheduled snapshot will run.
 * `username` - The username used to log onto the server
 
 ## Import

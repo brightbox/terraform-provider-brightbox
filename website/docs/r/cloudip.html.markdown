@@ -51,8 +51,12 @@ The following arguments are supported:
 
 * `name` - (Optional) a label to assign to the CloudIP
 * `reverse_dns` - (Optional) The reverse DNS entry for the CloudIP
-* `target` - (Optional) The CloudIP mapping target. This is the interface id from a server, or the id of a load balancer, server group or cloud sql resource.
-* `port_translator` - (Optional) An array of port translator blocks. The Port Translator block is descibed below
+* `target` - (Optional) The CloudIP mapping target. This is the interface
+id from a server, or the id of a load balancer, server group or cloud
+sql resource.
+* `mode` - (Optional) Type of CloudIP required, either `nat` or `route`.
+* `port_translator` - (Optional) An array of port translator blocks. The
+Port Translator block is descibed below
 
 Note that the default group for each account cannot be used as the target for a cloud ip.
 
@@ -67,7 +71,6 @@ The following attributes are exported:
 
 * `id` - The ID of the CloudIP
 * `fqdn` - Fully Qualified Domain Name of the CloudIP
-* `public_ip` - the public IPV4 address of the CloudIP
 * `public_ipv4` - the public IPV4 address of the CloudIP
 * `public_ipv6` - the public IPV6 address of the CloudIP
 * `status` - Current state of the CloudIP: `mapped` or `unmapped`

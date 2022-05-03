@@ -109,7 +109,6 @@ The following arguments are supported:
 * `policy` - (Optional) Method of load balancing to use, either `least-connections` or `round-robin`
 * `certificate_pem` - (Optional) A X509 SSL certificate in PEM format. Must be included along with `certificate_key`. If intermediate certificates are required they should be concatenated after the main certificate
 * `certificate_private_key` - (Optional) The RSA private key used to sign the certificate in PEM format. Must be included along with `certificate_pem`
-* `buffer_size` - (Optional) Buffer size in bytes
 * `https_redirect` - (Optional) Redirect any requests on port 80 automatically to port 443
 * `ssl_minimum_version` - (Optional) The minimum TLS/SSL version for the load balancer to accept. Supports `TLSv1.0`, `TLSv1.1`, `TLSv1.2`, `TLSv1.3` and `SSLv3`
 * `locked` - (Optional) Set to true to stop the load balancer from being deleted
