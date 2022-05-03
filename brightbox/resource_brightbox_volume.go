@@ -6,8 +6,8 @@ import (
 	"regexp"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/filesystemtype"
-	volumeConst "github.com/brightbox/gobrightbox/v2/status/volume"
+	"github.com/brightbox/gobrightbox/v2/enums/filesystemtype"
+	"github.com/brightbox/gobrightbox/v2/enums/volumestatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -260,9 +260,9 @@ func setVolumeAttributes(
 }
 
 func volumeUnavailable(obj *brightbox.Volume) bool {
-	return obj.Status == volumeConst.Deleted ||
-		obj.Status == volumeConst.Deleting ||
-		obj.Status == volumeConst.Failed
+	return obj.Status == volumestatus.Deleted ||
+		obj.Status == volumestatus.Deleting ||
+		obj.Status == volumestatus.Failed
 }
 
 func volumeStateRefresh(client *brightbox.Client, ctx context.Context, volumeID string) resource.StateRefreshFunc {
@@ -306,10 +306,10 @@ func resourceBrightboxVolumeCreateAndWait(
 
 	stateConf := resource.StateChangeConf{
 		Pending: []string{
-			volumeConst.Creating.String(),
+			volumestatus.Creating.String(),
 		},
 		Target: []string{
-			volumeConst.Detached.String(),
+			volumestatus.Detached.String(),
 		},
 		Refresh:    volumeStateRefresh(client, ctx, object.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),

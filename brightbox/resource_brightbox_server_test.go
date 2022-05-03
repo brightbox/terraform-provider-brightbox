@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	serverConst "github.com/brightbox/gobrightbox/v2/status/server"
+	"github.com/brightbox/gobrightbox/v2/enums/serverstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -330,7 +330,7 @@ func testAccCheckBrightboxServerDestroy(s *terraform.State) error {
 						rs.Primary.ID, err)
 				}
 			}
-		} else if server.Status != serverConst.Deleted {
+		} else if server.Status != serverstatus.Deleted {
 			return fmt.Errorf(
 				"Server %s not in deleted state. Status is %s", rs.Primary.ID, server.Status)
 		}
@@ -996,13 +996,14 @@ func init() {
 				if errors.As(err, &apierror) {
 					if apierror.StatusCode >= 200 && apierror.StatusCode <= 299 {
 						log.Printf("[DEBUG] Parse Error %+v", apierror.Unwrap())
-						return apierror.Unwrap()
+						fred := apierror.Unwrap()
+						return fred.(*brightbox.APIError)
 					}
 					return apierror
 				}
 			}
 			for _, object := range objects {
-				if object.Status != serverConst.Active {
+				if object.Status != serverstatus.Active {
 					continue
 				}
 				if isTestName(object.Name) {

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	databaseServerConst "github.com/brightbox/gobrightbox/v2/status/databaseserver"
+	"github.com/brightbox/gobrightbox/v2/enums/databaseserverstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -189,11 +189,11 @@ var (
 		(*brightbox.Client).DestroyDatabaseServer,
 		"Database Server",
 		[]string{
-			databaseServerConst.Deleting.String(),
-			databaseServerConst.Active.String(),
+			databaseserverstatus.Deleting.String(),
+			databaseserverstatus.Active.String(),
 		},
 		[]string{
-			databaseServerConst.Deleted.String(),
+			databaseserverstatus.Deleted.String(),
 		},
 		databaseServerStateRefresh,
 	)
@@ -301,8 +301,8 @@ func setDatabaseServerAttributes(
 }
 
 func databaseServerUnavailable(obj *brightbox.DatabaseServer) bool {
-	return obj.Status == databaseServerConst.Deleted ||
-		obj.Status == databaseServerConst.Failed
+	return obj.Status == databaseserverstatus.Deleted ||
+		obj.Status == databaseserverstatus.Failed
 }
 
 func databaseServerStateRefresh(client *brightbox.Client, ctx context.Context, databaseServerID string) resource.StateRefreshFunc {
@@ -362,10 +362,10 @@ func resourceBrightboxDatabaseServerCreateAndWait(
 
 	stateConf := resource.StateChangeConf{
 		Pending: []string{
-			databaseServerConst.Creating.String(),
+			databaseserverstatus.Creating.String(),
 		},
 		Target: []string{
-			databaseServerConst.Active.String(),
+			databaseserverstatus.Active.String(),
 		},
 		Refresh:    databaseServerStateRefresh(client, ctx, databaseServer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),

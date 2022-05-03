@@ -2,7 +2,7 @@ package brightbox
 
 import (
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/permissionsgroup"
+	"github.com/brightbox/gobrightbox/v2/enums/permissionsgroup"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"

@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/balancingpolicy"
-	loadBalancerConst "github.com/brightbox/gobrightbox/v2/status/loadbalancer"
-	loadbalancerConst "github.com/brightbox/gobrightbox/v2/status/loadbalancer"
+	"github.com/brightbox/gobrightbox/v2/enums/balancingpolicy"
+	"github.com/brightbox/gobrightbox/v2/enums/loadbalancerstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -248,7 +247,7 @@ func testAccCheckBrightboxEmptyLoadBalancerAttributes(loadBalancer *brightbox.Lo
 		if loadBalancer.Locked != false {
 			return fmt.Errorf("Bad locked: %v", loadBalancer.Locked)
 		}
-		if loadBalancer.Status != loadBalancerConst.Active {
+		if loadBalancer.Status != loadbalancerstatus.Active {
 			return fmt.Errorf("Bad status: %s", loadBalancer.Status)
 		}
 		if loadBalancer.Policy != balancingpolicy.LeastConnections {
@@ -626,7 +625,7 @@ func init() {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != loadbalancerConst.Active {
+				if object.Status != loadbalancerstatus.Active {
 					continue
 				}
 				if isTestName(object.Name) {

@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/balancingpolicy"
-	"github.com/brightbox/gobrightbox/v2/status/healthchecktype"
-	"github.com/brightbox/gobrightbox/v2/status/listenerprotocol"
-	loadBalancerConst "github.com/brightbox/gobrightbox/v2/status/loadbalancer"
-	"github.com/brightbox/gobrightbox/v2/status/proxyprotocol"
+	"github.com/brightbox/gobrightbox/v2/enums/balancingpolicy"
+	"github.com/brightbox/gobrightbox/v2/enums/healthchecktype"
+	"github.com/brightbox/gobrightbox/v2/enums/listenerprotocol"
+	"github.com/brightbox/gobrightbox/v2/enums/loadbalancerstatus"
+	"github.com/brightbox/gobrightbox/v2/enums/proxyprotocol"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -299,11 +299,11 @@ var (
 		(*brightbox.Client).DestroyLoadBalancer,
 		"Load Balancer",
 		[]string{
-			loadBalancerConst.Deleting.String(),
-			loadBalancerConst.Active.String(),
+			loadbalancerstatus.Deleting.String(),
+			loadbalancerstatus.Active.String(),
 		},
 		[]string{
-			loadBalancerConst.Deleted.String(),
+			loadbalancerstatus.Deleted.String(),
 		},
 		loadBalancerStateRefresh,
 	)
@@ -396,8 +396,8 @@ func loadBalancerFromID(id string) *brightbox.LoadBalancerOptions {
 }
 
 func loadBalancerUnavailable(obj *brightbox.LoadBalancer) bool {
-	return obj.Status == loadBalancerConst.Deleted ||
-		obj.Status == loadBalancerConst.Failed
+	return obj.Status == loadbalancerstatus.Deleted ||
+		obj.Status == loadbalancerstatus.Failed
 }
 
 func loadBalancerStateRefresh(client *brightbox.Client, ctx context.Context, loadBalancerID string) resource.StateRefreshFunc {
@@ -502,10 +502,10 @@ func resourceBrightboxLoadBalancerCreateAndWait(
 
 	stateConf := resource.StateChangeConf{
 		Pending: []string{
-			loadBalancerConst.Creating.String(),
+			loadbalancerstatus.Creating.String(),
 		},
 		Target: []string{
-			loadBalancerConst.Active.String(),
+			loadbalancerstatus.Active.String(),
 		},
 		Refresh:    loadBalancerStateRefresh(client, ctx, loadBalancer.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
@@ -528,7 +528,7 @@ func assignHealthCheck(d *schema.ResourceData, target **brightbox.LoadBalancerHe
 		temp := brightbox.LoadBalancerHealthcheck{
 			Port: uint16(check["port"].(int)),
 		}
-		if hctype, err := healthchecktype.ParseStatus(check["type"].(string)); err == nil {
+		if hctype, err := healthchecktype.ParseEnum(check["type"].(string)); err == nil {
 			temp.Type = hctype
 		} else {
 			diags = append(diags, diag.FromErr(err)...)

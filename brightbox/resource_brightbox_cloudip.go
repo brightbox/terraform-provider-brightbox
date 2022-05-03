@@ -9,9 +9,9 @@ import (
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/cloudip"
-	"github.com/brightbox/gobrightbox/v2/status/mode"
-	"github.com/brightbox/gobrightbox/v2/status/transportprotocol"
+	"github.com/brightbox/gobrightbox/v2/enums/cloudipstatus"
+	"github.com/brightbox/gobrightbox/v2/enums/mode"
+	"github.com/brightbox/gobrightbox/v2/enums/transportprotocol"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -441,8 +441,8 @@ func waitForMappedCloudIP(
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
 	return waitForCloudIP(ctx, client, cloudipID, timeout,
-		cloudip.Unmapped.String(),
-		cloudip.Mapped.String(),
+		cloudipstatus.Unmapped.String(),
+		cloudipstatus.Mapped.String(),
 	)
 }
 
@@ -453,8 +453,8 @@ func waitForUnmappedCloudIP(
 	timeout time.Duration,
 ) (*brightbox.CloudIP, error) {
 	return waitForCloudIP(ctx, client, cloudipID, timeout,
-		cloudip.Mapped.String(),
-		cloudip.Unmapped.String(),
+		cloudipstatus.Mapped.String(),
+		cloudipstatus.Unmapped.String(),
 	)
 }
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	serverConst "github.com/brightbox/gobrightbox/v2/status/server"
+	"github.com/brightbox/gobrightbox/v2/enums/serverstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -243,12 +243,12 @@ var (
 		(*brightbox.Client).DestroyServer,
 		"Server",
 		[]string{
-			serverConst.Deleting.String(),
-			serverConst.Active.String(),
-			serverConst.Inactive.String(),
+			serverstatus.Deleting.String(),
+			serverstatus.Active.String(),
+			serverstatus.Inactive.String(),
 		},
 		[]string{
-			serverConst.Deleted.String(),
+			serverstatus.Deleted.String(),
 		},
 		serverStateRefresh,
 	)
@@ -436,8 +436,8 @@ func setServerAttributes(
 }
 
 func serverUnavailable(obj *brightbox.Server) bool {
-	return obj.Status == serverConst.Deleted ||
-		obj.Status == serverConst.Failed
+	return obj.Status == serverstatus.Deleted ||
+		obj.Status == serverstatus.Failed
 }
 
 func serverStateRefresh(client *brightbox.Client, ctx context.Context, serverID string) resource.StateRefreshFunc {
@@ -484,11 +484,11 @@ func resourceBrightboxServerCreateAndWait(
 
 	stateConf := resource.StateChangeConf{
 		Pending: []string{
-			serverConst.Creating.String(),
+			serverstatus.Creating.String(),
 		},
 		Target: []string{
-			serverConst.Active.String(),
-			serverConst.Inactive.String(),
+			serverstatus.Active.String(),
+			serverstatus.Inactive.String(),
 		},
 		Refresh:    serverStateRefresh(client, ctx, server.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),

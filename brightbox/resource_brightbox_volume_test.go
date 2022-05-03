@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/storagetype"
-	volumeConst "github.com/brightbox/gobrightbox/v2/status/volume"
-	"github.com/brightbox/gobrightbox/v2/status/volumetype"
+	"github.com/brightbox/gobrightbox/v2/enums/storagetype"
+	"github.com/brightbox/gobrightbox/v2/enums/volumestatus"
+	"github.com/brightbox/gobrightbox/v2/enums/volumetype"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -499,8 +499,8 @@ func testAccCheckBrightboxVolumeDestroy(s *terraform.State) error {
 						rs.Primary.ID, err)
 				}
 			}
-		} else if volume.Status != volumeConst.Deleted &&
-			volume.Status != volumeConst.Deleting {
+		} else if volume.Status != volumestatus.Deleted &&
+			volume.Status != volumestatus.Deleting {
 			return fmt.Errorf(
 				"Volume %s not in deleted state. Status is %s", rs.Primary.ID, volume.Status)
 		}
@@ -524,7 +524,7 @@ func init() {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != volumeConst.Detached {
+				if object.Status != volumestatus.Detached {
 					continue
 				}
 				if isTestName(object.Name) {

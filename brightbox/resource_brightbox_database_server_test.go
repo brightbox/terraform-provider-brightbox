@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	databaseServerConst "github.com/brightbox/gobrightbox/v2/status/databaseserver"
+	"github.com/brightbox/gobrightbox/v2/enums/databaseserverstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -246,7 +246,7 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if databaseServer.Locked != false {
 			return fmt.Errorf("Bad locked: %v", databaseServer.Locked)
 		}
-		if databaseServer.Status != databaseServerConst.Active {
+		if databaseServer.Status != databaseserverstatus.Active {
 			return fmt.Errorf("Bad status: %s", databaseServer.Status)
 		}
 		if databaseServer.DatabaseEngine != "mysql" {
@@ -426,7 +426,7 @@ func init() {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != databaseServerConst.Active {
+				if object.Status != databaseserverstatus.Active {
 					continue
 				}
 				if isTestName(object.Name) {

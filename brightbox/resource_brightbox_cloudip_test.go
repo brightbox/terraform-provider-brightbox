@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/cloudip"
+	"github.com/brightbox/gobrightbox/v2/enums/cloudipstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -430,7 +430,7 @@ func init() {
 				return err
 			}
 			for _, object := range objects {
-				if object.Status != cloudip.Unmapped {
+				if object.Status != cloudipstatus.Unmapped {
 					continue
 				}
 				if isTestName(object.Name) {

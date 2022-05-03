@@ -5,19 +5,19 @@ import (
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
-	"github.com/brightbox/gobrightbox/v2/status/arch"
-	imageConst "github.com/brightbox/gobrightbox/v2/status/image"
-	"github.com/brightbox/gobrightbox/v2/status/sourcetrigger"
-	"github.com/brightbox/gobrightbox/v2/status/sourcetype"
+	"github.com/brightbox/gobrightbox/v2/enums/arch"
+	"github.com/brightbox/gobrightbox/v2/enums/imagestatus"
+	"github.com/brightbox/gobrightbox/v2/enums/sourcetrigger"
+	"github.com/brightbox/gobrightbox/v2/enums/sourcetype"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
-	validImageStatusMap = map[imageConst.Status]bool{
-		imageConst.Available:  true,
-		imageConst.Deprecated: true,
+	validImageStatusMap = map[imagestatus.Enum]bool{
+		imagestatus.Available:  true,
+		imagestatus.Deprecated: true,
 	}
 )
 
@@ -169,7 +169,7 @@ func dataSourceBrightboxImage() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ValidateFunc: validation.StringInSlice(
-					imageConst.ValidStrings,
+					imagestatus.ValidStrings,
 					false,
 				),
 			},
