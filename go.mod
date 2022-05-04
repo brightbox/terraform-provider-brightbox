@@ -12,8 +12,6 @@ require (
 	gotest.tools/v3 v3.2.0
 )
 
-replace github.com/brightbox/gobrightbox/v2 => /home/neil/Dev/gobrightbox/v2
-
 require (
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect

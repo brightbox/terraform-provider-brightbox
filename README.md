@@ -4,19 +4,19 @@ Terraform Provider for [Brightbox Cloud](https://www.brightbox.com)
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) >= 0.12.x
--	[Go](https://golang.org/doc/install) >= 1.17
+-	[Terraform](https://www.terraform.io/downloads.html) >= 1.0.0
+-	[Go](https://golang.org/doc/install) >= 1.18
 
 Usage
 ---------------------
 
 ```
-# For example, restrict brightbox version to 2.x.x
+# For example, restrict brightbox version to 3.x.x
 terraform {
   required_providers {
     brightbox = {
       source  = "brightbox/brightbox"
-      version = "~> 2.0"
+      version = "~> 3.0"
     }
   }
 }
@@ -49,6 +49,7 @@ This version supports managing:
 * [Cloud SQL Instances](https://www.brightbox.com/cloud/database/)
 * [Cloud IPs](https://www.brightbox.com/blog/2014/02/27/design-decisions-cloud-ip-policy/)
 * [Orbit Cloud Storage](https://www.brightbox.com/cloud/storage/) containers
+* [Volumes](https://www.brightbox.com/docs/guides/volumes/mounting/)
 
 Documentation
 -------------------------

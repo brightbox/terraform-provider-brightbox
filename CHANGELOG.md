@@ -1,3 +1,22 @@
+## 3.0.0 (May 4, 2022)
+
+IMPROVEMENTS:
+- resource/volume: Add volume as a resource
+- resource/server: Add ability to create servers from volumes and add data volumes to servers
+- resource/server: Add 'snapshot_retention' and 'snapshot_schedule' attributes
+- data/image - Add 'min_ram', 'source' and 'source_trigger' attributes
+- data/database_snapshot - Add database snapshot type as a data source
+- resource/cloudip: Add 'mode' attribute
+- resource/database_server: Add 'snapshot_retention' attribute
+
+NOTES:
+
+- Update to gobrightbox v2
+- Update Terraform SDK to 2.12.0
+- Added additional Terraform validation to several resources
+- Switch to context aware functions which respect cancellation timeouts
+- Switch to Terraform diagnostics for errors, allowing multiple errors to be reported in one go
+
 ## 2.1.1 (February 16, 2022)
 
 BUG FIXES:
