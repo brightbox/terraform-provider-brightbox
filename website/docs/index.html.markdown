@@ -20,10 +20,10 @@ terraform {
   required_providers {
     brightbox = {
       source = "brightbox/brightbox"
-      version = "~> 2.0"
+      version = "~> 3.0"
     }
   }
-  required_version = ">= 0.12.26"
+  required_version = ">= 1.0"
 }
 
 # Configure the Brightbox Provider
