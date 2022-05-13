@@ -82,7 +82,7 @@ In order to test the provider, you can simply run `make test`.
 $ make test
 ```
 
-In order to run the full suite of Acceptance tests, set the following evironment variables
+In order to run the full suite of Acceptance tests, set the following environment variables
 
 - BRIGHTBOX_CLIENT. The Client Id for an account
 - BRIGHTBOX_CLIENT_SECRET. The client secret for the Id.
