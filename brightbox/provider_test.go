@@ -136,11 +136,13 @@ func TestProvider_impl(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv("BRIGHTBOX_CLIENT"); v == "" {
-		t.Fatal("BRIGHTBOX_CLIENT must be set for acceptance tests")
+	if v := os.Getenv(clientEnvVar); v != "" {
+		if v := os.Getenv(clientSecretEnvVar); v == "" {
+			t.Fatalf("%s must be set for acceptance tests", clientSecretEnvVar)
+		}
 	}
-	if v := os.Getenv("BRIGHTBOX_CLIENT_SECRET"); v == "" {
-		t.Fatal("BRIGHTBOX_CLIENT_SECRET must be set for acceptance tests")
+	if v := os.Getenv(usernameEnvVar); v == "" {
+		t.Fatalf("%s or %s must be set for acceptance tests", clientEnvVar, usernameEnvVar)
 	}
 
 	// diags := testAccProvider.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
