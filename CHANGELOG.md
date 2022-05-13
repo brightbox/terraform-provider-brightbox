@@ -1,3 +1,8 @@
+## 3.0.1 (May 13, 2022)
+
+BUG FIXES:
+- Update to gobrightbox 2.0.1: corrects issue with passwordcredentials URL handling
+
 ## 3.0.0 (May 4, 2022)
 
 IMPROVEMENTS:
