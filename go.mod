@@ -3,7 +3,7 @@ module github.com/terraform-providers/terraform-provider-brightbox
 go 1.18
 
 require (
-	github.com/brightbox/gobrightbox/v2 v2.0.2
+	github.com/brightbox/gobrightbox/v2 v2.0.3
 	github.com/gophercloud/gophercloud v0.24.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/hashicorp/go-cleanhttp v0.5.2

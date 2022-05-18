@@ -1,7 +1,12 @@
+## 3.0.3 (May 18, 2022)
+
+BUG FIXES:
+- Update to gobrightbox 2.0.3: corrects issue with reading server snapshots
+
 ## 3.0.2 (May 18, 2022)
 
 BUG FIXES:
-- Remove erroneous default schedules for snapshots. Schedules have to be set explicity.
+- Remove erroneous default schedules for snapshots. Schedules have to be set explicity
 
 NOTES:
 
