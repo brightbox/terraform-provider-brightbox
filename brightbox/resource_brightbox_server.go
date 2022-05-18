@@ -153,6 +153,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Description:  "Keep this number of scheduled snapshots. Keep all if unset",
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 
@@ -160,7 +161,7 @@ func resourceBrightboxServer() *schema.Resource {
 				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "0 7 * * *",
+				Computed:     true,
 				ValidateFunc: ValidateCronString,
 			},
 
@@ -524,7 +525,7 @@ func resourceBrightboxServerUpdate(
 	var err error
 	var diags diag.Diagnostics
 
-	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64") {
+	if d.HasChanges("name", "server_groups", "user_data", "user_data_base64", "snapshots_retention", "snapshots_schedule") {
 		diags = append(diags, addUpdateableServerOptions(d, &serverOpts)...)
 		if diags.HasError() {
 			return diags

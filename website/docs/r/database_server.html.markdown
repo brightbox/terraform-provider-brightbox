@@ -54,8 +54,7 @@ The following arguments are supported:
 * `description` - (Optional) A further description of the Database Server
 * `maintenance_weekday` - (Optional) Numerical index of weekday (0 is Sunday, 1 is Monday...) to set when automatic updates may be performed. Default is 0 (Sunday). 
 * `maintenance_hour` - (Optional) Number representing 24hr time start of maintenance window hour for x:00-x:59 (0-23). Default is 6
-* `snapshots_retention` - (Optional) Keep this number of scheduled
-snapshots. Keep all if unset.
+* `snapshots_retention` - (Optional) Keep this number of scheduled snapshots. Keep all if unset.
 * `snapshots_schedule` - (Optional) A crontab pattern to determine approximately when scheduled snapshots will run (must be at least hourly)
 * `database_engine` - (Optional) Database engine to request. Default is mysql
 * `database_version` - (Optional) Database version to request. Default is 8.0

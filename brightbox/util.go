@@ -107,6 +107,8 @@ func assignString(d *schema.ResourceData, target **string, index string) {
 		}
 		if attr, ok := d.GetOk(index); ok {
 			**target = attr.(string)
+		} else {
+			**target = ""
 		}
 	}
 }

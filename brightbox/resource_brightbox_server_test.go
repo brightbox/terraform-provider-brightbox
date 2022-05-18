@@ -397,6 +397,56 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 	})
 }
 
+func TestAccBrightboxServer_Snapshots(t *testing.T) {
+	resourceName := "brightbox_server.foobar"
+	var server brightbox.Server
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
+					testAccCheckBrightboxServerAttributes(&server),
+				),
+			},
+
+			{
+				Config: testAccCheckBrightboxServerConfig_snapshots(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
+				),
+			},
+
+			{
+				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&server,
+						(*brightbox.Client).Server,
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
 	var afterCreate, afterUpdate brightbox.Server
@@ -756,6 +806,25 @@ resource "brightbox_server" "foobar" {
 	type = "1gb.ssd"
 	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-character's"
+}
+
+data "brightbox_server_group" "barfoo" {
+	name = "^default$"
+}
+
+%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default)
+}
+
+func testAccCheckBrightboxServerConfig_snapshots(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-%d"
+	type = "1gb.ssd"
+	server_groups = [data.brightbox_server_group.default.id]
+	user_data = "foo:-with-character's"
+	snapshots_schedule = "0 7 * * *"
 }
 
 data "brightbox_server_group" "barfoo" {

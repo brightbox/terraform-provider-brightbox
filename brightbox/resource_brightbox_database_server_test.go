@@ -279,8 +279,8 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if databaseServer.SnapshotsScheduleNextAt != nil {
 			return fmt.Errorf("Bad Snapshot Schedule Time: %#v", databaseServer.SnapshotsScheduleNextAt)
 		}
-		if databaseServer.SnapshotsSchedule != nil {
-			return fmt.Errorf("Bad Snapshot Schedule: %q", *databaseServer.SnapshotsSchedule)
+		if databaseServer.SnapshotsSchedule != "" {
+			return fmt.Errorf("Bad Snapshot Schedule: %q", databaseServer.SnapshotsSchedule)
 		}
 		return nil
 	}
