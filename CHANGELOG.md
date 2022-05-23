@@ -1,3 +1,8 @@
+## 3.0.4 (May 23, 2022)
+
+BUG FIXES:
+- Update to gobrightbox 2.0.4: corrects issue with JSON parsing error messages
+
 ## 3.0.3 (May 18, 2022)
 
 BUG FIXES:
