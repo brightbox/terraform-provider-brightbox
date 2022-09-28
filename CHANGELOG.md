@@ -1,3 +1,9 @@
+## 3.0.5 (September 28, 2022)
+
+BUG FIXES:
+- Update to gobrightbox 2.0.6
+- resource/orbit_container: Only escape non-UTF8 characters in metadata values
+
 ## 3.0.4 (May 23, 2022)
 
 BUG FIXES:

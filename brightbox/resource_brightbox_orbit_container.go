@@ -210,6 +210,27 @@ func containerPath(
 	return d.Get("name").(string)
 }
 
+func escapedString(attr interface{}) string {
+	return url.PathEscape(attr.(string))
+}
+
+func escapedStringList(source []string) []string {
+	dest := make([]string, len(source))
+	for i, v := range source {
+		dest[i] = escapedString(v)
+	}
+	return dest
+}
+
+func escapedStringMetadata(metadata interface{}) map[string]string {
+	source := metadata.(map[string]interface{})
+	dest := make(map[string]string, len(source))
+	for k, v := range source {
+		dest[strings.ToLower(k)] = escapedString(v)
+	}
+	return dest
+}
+
 func setUnescapedString(d *schema.ResourceData, elem string, inputString string) error {
 	temp, err := url.PathUnescape(inputString)
 	if err != nil {
@@ -255,26 +276,26 @@ func setContainerAttributes(
 ) diag.Diagnostics {
 	var diags diag.Diagnostics
 	log.Printf("[DEBUG] Setting Container details from %#v", attr)
-	if err := setUnescapedString(d, "name", d.Id()); err != nil {
+	if err := d.Set("name", d.Id()); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	if err := setUnescapedStringSet(d, "container_read", attr.Read); err != nil {
+	if err := d.Set("container_read", compactZero(attr.Read)); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	if err := setUnescapedStringSet(d, "container_write", attr.Write); err != nil {
+	if err := d.Set("container_write", compactZero(attr.Write)); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	if err := setUnescapedString(d, "versions_location", attr.VersionsLocation); err != nil {
+	if err := d.Set("versions_location", attr.VersionsLocation); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
-	if err := setUnescapedString(d, "history_location", attr.HistoryLocation); err != nil {
+	if err := d.Set("history_location", attr.HistoryLocation); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := setUnescapedStringMap(d, "metadata", metadata); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
 	//Computed
-	if err := setUnescapedString(d, "storage_policy", attr.StoragePolicy); err != nil {
+	if err := d.Set("storage_policy", attr.StoragePolicy); err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
 	if err := d.Set("object_count", attr.ObjectCount); err != nil {
@@ -289,16 +310,28 @@ func setContainerAttributes(
 	return diags
 }
 
+func removedMetadataKeys(old interface{}, new interface{}) []string {
+	oldMap := old.(map[string]interface{})
+	newMap := new.(map[string]interface{})
+	result := make([]string, 0, len(oldMap))
+	for key := range oldMap {
+		if newMap[key] == nil {
+			result = append(result, strings.ToLower(key))
+		}
+	}
+	return result
+}
+
 func getUpdateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.UpdateOpts {
 	opts := &containers.UpdateOpts{}
 	if d.HasChange("container_read") {
-		temp := strings.Join(escapedStringList(sliceFromStringSet(d, "container_read")), ",")
+		temp := strings.Join(sliceFromStringSet(d, "container_read"), ",")
 		opts.ContainerRead = &temp
 	}
 	if d.HasChange("container_write") {
-		temp := strings.Join(escapedStringList(sliceFromStringSet(d, "container_write")), ",")
+		temp := strings.Join(sliceFromStringSet(d, "container_write"), ",")
 		opts.ContainerWrite = &temp
 	}
 	if attr, ok := d.GetOk("metadata"); ok {
@@ -308,26 +341,20 @@ func getUpdateContainerOptions(
 		old, new := d.GetChange("metadata")
 		opts.RemoveMetadata = removedMetadataKeys(old, new)
 	}
-	if attr, ok := d.GetOk("container_sync_to"); ok {
-		temp := escapedString(attr)
-		opts.ContainerSyncTo = &temp
-	}
-	if attr, ok := d.GetOk("container_sync_key"); ok {
-		temp := escapedString(attr)
-		opts.ContainerSyncKey = &temp
-	}
+	assignString(d, &opts.ContainerSyncTo, "container_sync_to")
+	assignString(d, &opts.ContainerSyncKey, "container_sync_key")
 	if attr, ok := d.GetOk("versions_location"); ok {
 		if attr == "" {
 			opts.RemoveVersionsLocation = "yup"
 		} else {
-			opts.VersionsLocation = escapedString(attr)
+			opts.VersionsLocation = attr.(string)
 		}
 	}
 	if attr, ok := d.GetOk("history_location"); ok {
 		if attr == "" {
 			opts.RemoveHistoryLocation = "yup"
 		} else {
-			opts.HistoryLocation = escapedString(attr)
+			opts.HistoryLocation = attr.(string)
 		}
 	}
 	return opts
@@ -337,22 +364,22 @@ func getCreateContainerOptions(
 	d *schema.ResourceData,
 ) *containers.CreateOpts {
 	opts := &containers.CreateOpts{}
-	opts.ContainerRead = strings.Join(escapedStringList(sliceFromStringSet(d, "container_read")), ",")
-	opts.ContainerWrite = strings.Join(escapedStringList(sliceFromStringSet(d, "container_write")), ",")
+	opts.ContainerRead = strings.Join(sliceFromStringSet(d, "container_read"), ",")
+	opts.ContainerWrite = strings.Join(sliceFromStringSet(d, "container_write"), ",")
 	if attr, ok := d.GetOk("metadata"); ok {
 		opts.Metadata = escapedStringMetadata(attr)
 	}
 	if attr, ok := d.GetOk("container_sync_to"); ok {
-		opts.ContainerSyncTo = escapedString(attr)
+		opts.ContainerSyncTo = attr.(string)
 	}
 	if attr, ok := d.GetOk("container_sync_key"); ok {
-		opts.ContainerSyncKey = escapedString(attr)
+		opts.ContainerSyncKey = attr.(string)
 	}
 	if attr, ok := d.GetOk("versions_location"); ok {
-		opts.VersionsLocation = escapedString(attr)
+		opts.VersionsLocation = attr.(string)
 	}
 	if attr, ok := d.GetOk("history_location"); ok {
-		opts.HistoryLocation = escapedString(attr)
+		opts.HistoryLocation = attr.(string)
 	}
 	return opts
 }

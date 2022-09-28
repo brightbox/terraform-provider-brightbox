@@ -170,7 +170,7 @@ resource "brightbox_orbit_container" "foobar" {
 		"bar"= "foo"
 		"uni" = "€uro"
 	}
-	container_read = [ "acc-testy", "acc-12345", "acc-98765" ]
+	container_read = [ "-r:*", "acc-testy", "acc-12345", "acc-98765" ]
 }
 `
 
@@ -182,7 +182,7 @@ resource "brightbox_orbit_container" "foobar" {
 		"bar"= "foo"
 		"uni" = "€uro"
 	}
-	container_read = [ "acc-testy", "acc-12345", "acc-98765" ]
+	container_read = [ "-r:*", "acc-testy", "acc-12345", "acc-98765" ]
 }
 `
 

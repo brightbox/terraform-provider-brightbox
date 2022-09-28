@@ -7,8 +7,33 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"golang.org/x/exp/slices"
 	"gotest.tools/v3/assert"
 )
+
+func TestCompareZero(t *testing.T) {
+	testCases := []struct {
+		in  []string
+		out []string
+	}{
+		{[]string{}, []string{}},
+		{[]string{""}, []string{}},
+		{[]string{"a"}, []string{"a"}},
+		{[]string{"", "a"}, []string{"a"}},
+		{[]string{"", "", "a"}, []string{"a"}},
+		{[]string{"", "a", ""}, []string{"a"}},
+		{[]string{"a", "", ""}, []string{"a"}},
+		{[]string{"", "a", "a", ""}, []string{"a", "a"}},
+		{[]string{"", "a", "b", ""}, []string{"a", "b"}},
+		{[]string{"a", "b"}, []string{"a", "b"}},
+	}
+	for _, tcase := range testCases {
+		result := compactZero(tcase.in)
+		if !slices.Equal(tcase.out, result) {
+			t.Errorf("slice not compacted properly, expected %#v, got %#v", tcase.out, result)
+		}
+	}
+}
 
 func TestTimeFromFloat(t *testing.T) {
 	ts := "1564670787.9459848"

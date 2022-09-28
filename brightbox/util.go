@@ -9,11 +9,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"math"
-	"net/url"
 	"os"
 	"regexp"
 	"sort"
-	"strings"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -209,6 +207,18 @@ func stringValidateFunc(v interface{}, name string, failureTest func(string) boo
 	return
 }
 
+func compactZero[S ~[]E, E comparable](s S) S {
+	var zero E
+	i := 0
+	for _, v := range s {
+		if v != zero {
+			s[i] = v
+			i++
+		}
+	}
+	return s[:i]
+}
+
 // ValidateCronString checks if the string is a valid cron layout
 // An empty string is acceptable.
 func ValidateCronString(v interface{}, name string) (warns []string, errors []error) {
@@ -339,39 +349,6 @@ var isTokenTable = [127]bool{
 	'z':  true,
 	'|':  true,
 	'~':  true,
-}
-
-func escapedString(attr interface{}) string {
-	return url.PathEscape(attr.(string))
-}
-
-func escapedStringList(source []string) []string {
-	dest := make([]string, len(source))
-	for i, v := range source {
-		dest[i] = escapedString(v)
-	}
-	return dest
-}
-
-func escapedStringMetadata(metadata interface{}) map[string]string {
-	source := metadata.(map[string]interface{})
-	dest := make(map[string]string, len(source))
-	for k, v := range source {
-		dest[strings.ToLower(k)] = url.PathEscape(v.(string))
-	}
-	return dest
-}
-
-func removedMetadataKeys(old interface{}, new interface{}) []string {
-	oldMap := old.(map[string]interface{})
-	newMap := new.(map[string]interface{})
-	result := make([]string, 0, len(oldMap))
-	for key := range oldMap {
-		if newMap[key] == nil {
-			result = append(result, strings.ToLower(key))
-		}
-	}
-	return result
 }
 
 // CheckDeleted checks the error to see if it's a 404 (Not Found) and, if so,
