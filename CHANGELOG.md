@@ -1,3 +1,8 @@
+## 3.0.6 (December 5, 2022)
+
+BUG FIXES:
+- data/image - Fix 'most_recent' selection
+
 ## 3.0.5 (September 28, 2022)
 
 BUG FIXES:

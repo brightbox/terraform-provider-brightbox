@@ -152,14 +152,12 @@ func datasourceBrightboxRecentRead[O brightbox.CreateDated](
 
 		if len(results) > 1 {
 			recent, ok := d.GetOk("most_recent")
-			if ok {
-				if recent.(bool) {
-					log.Printf("[DEBUG] Multiple results found and `most_recent` is set")
-					result = mostRecent(results)
-				}
+			if !ok || !recent.(bool) {
+				return diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
+					"specific search criteria.", len(results))
 			}
-			return diag.Errorf("Your query returned more than one result (found %d entries). Please try a more "+
-				"specific search criteria.", len(results))
+			log.Printf("[DEBUG] Multiple results found and `most_recent` is set")
+			result = mostRecent(results)
 		} else if len(results) < 1 {
 			return diag.Errorf("Your query returned no results. " +
 				"Please change your search criteria and try again.")
