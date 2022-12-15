@@ -52,6 +52,11 @@ func resourceBrightboxServerGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
+			"firewall_policy": {
+				Description: "The firewall policy associated with this server group",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -118,6 +123,14 @@ func setServerGroupAttributes(
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
 	err = d.Set("fqdn", serverGroup.Fqdn)
+	if err != nil {
+		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+	}
+	firewallTarget := ""
+	if serverGroup.FirewallPolicy != nil {
+		firewallTarget = serverGroup.FirewallPolicy.ID
+	}
+	err = d.Set("firewall_policy", firewallTarget)
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}

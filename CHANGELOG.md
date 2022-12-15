@@ -1,3 +1,13 @@
+## 3.1.0 (December 15, 2022)
+
+IMPROVEMENTS:
+- resource/server_group: Add read-only firewall_policy field
+- data/server_group: Add firewall_policy field
+
+NOTES:
+- Update SDK to 2.24
+- Update oauth to 0.3.0
+
 ## 3.0.6 (December 5, 2022)
 
 BUG FIXES:

@@ -19,6 +19,8 @@ func TestAccBrightboxDataServerGroup_basic(t *testing.T) {
 						"data.brightbox_server_group.default", "name", "default"),
 					resource.TestCheckResourceAttr(
 						"data.brightbox_server_group.default", "default", "true"),
+					resource.TestMatchResourceAttr(
+						"data.brightbox_server_group.default", "firewall_policy", firewallPolicyRegexp),
 				),
 			},
 		},

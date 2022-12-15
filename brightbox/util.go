@@ -259,11 +259,12 @@ func validToken(tok string) bool {
 
 // validHeaderFieldByte reports whether b is a valid byte in a header
 // field name. RFC 7230 says:
-//   header-field   = field-name ":" OWS field-value OWS
-//   field-name     = token
-//   tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
-//           "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
-//   token = 1*tchar
+//
+//	header-field   = field-name ":" OWS field-value OWS
+//	field-name     = token
+//	tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
+//	        "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+//	token = 1*tchar
 //
 // Underscore isn't valid. Needs to be a hyphen as Swift silently
 // converts otherwise.
@@ -364,7 +365,7 @@ func CheckDeleted(d *schema.ResourceData, err error, msg string) error {
 
 // getEnvVarWithDefault retrieves the value of the environment variable
 // named by the key. If the variable is not present, return the default
-//value instead.
+// value instead.
 func getenvWithDefault(key string, defaultValue string) string {
 	if val, exists := os.LookupEnv(key); exists {
 		return val

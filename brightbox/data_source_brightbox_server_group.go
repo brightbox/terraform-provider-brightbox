@@ -44,6 +44,11 @@ func dataSourceBrightboxServerGroup() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 			},
+			"firewall_policy": {
+				Description: "The firewall policy associated with this server group",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 	}
 }
