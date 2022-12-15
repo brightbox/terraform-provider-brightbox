@@ -28,7 +28,7 @@ by Brightbox Cloud.
 returned by Brightbox Cloud.
 
 ~> **NOTE:** arguments form a conjunction. All arguments must match to
-select an image.
+select a server group.
 
 ~> **NOTE:** If more or less than a single match is returned by the
 search, Terraform will fail. Ensure that your search is specific enough
