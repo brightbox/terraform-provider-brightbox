@@ -26,12 +26,12 @@ resource "brightbox_volume" "data_disk" {
   serial = "TWS_DATA_DISK"
   filesystem_type = "xfs"
   filesystem_label = "data_area"
+  server = brightbox_server.web.id
 }
 
 resource "brightbox_server" "web" {
   name  = "Terraform web server example"
   volume = brightbox_volume.boot_disk.id
-  data_volumes = [brightbox_volume.data_disk.id]
   type  = data.brightbox_server_type.nbs_type.id
 }
 
@@ -48,6 +48,7 @@ The following arguments are supported:
 * `filesystem_type` - (Optional) Format of the filesystem on the volume. Either `ext4` or `xfs`. One of `image`, `filesystem_type` or `source` is required.
 * `image` - (Optional) Image used to create the volume. One of `image`, `filesystem_type` or `source` is required.
 * `serial` - (Optional) Volume Serial Number. Up to 20 characters.
+* `server` - (Optional) The ID of the server this volume should be attached to.
 * `size` - (Optional) Disk size in megabytes
 * `source` - (Optional) The ID of the source volume for this image. Defaults to the blank disk.
 

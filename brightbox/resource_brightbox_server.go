@@ -39,11 +39,10 @@ func resourceBrightboxServer() *schema.Resource {
 			"data_volumes": {
 				Description: "List of volumes to attach to server",
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Computed:    true,
 				MinItems:    0,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validation.StringMatch(volumeRegexp, "must be a valid volume ID"),
+					Type: schema.TypeString,
 				},
 				Set: schema.HashString,
 			},
@@ -503,10 +502,6 @@ func resourceBrightboxServerCreateAndWait(
 
 	server = result.(*brightbox.Server)
 
-	if errs := adjustDiskAttachment(ctx, d, meta, server.Volumes); errs.HasError() {
-		return errs
-	}
-
 	return resourceBrightboxSetServerLockState(ctx, d, meta)
 }
 
@@ -565,81 +560,10 @@ func resourceBrightboxServerUpdate(
 		return diags
 	}
 
-	if errs := adjustDiskAttachment(ctx, d, meta, server.Volumes); errs.HasError() {
-		return errs
-	}
 	if d.HasChange("locked") {
 		return resourceBrightboxSetServerLockState(ctx, d, meta)
 	}
 	return resourceBrightboxServerRead(ctx, d, meta)
-}
-
-func adjustDiskAttachment(
-	ctx context.Context,
-	d *schema.ResourceData,
-	meta interface{},
-	currentVolumes []brightbox.Volume,
-) diag.Diagnostics {
-	client := meta.(*CompositeClient).APIClient
-	log.Printf("[DEBUG] adjust Disks called for %s", d.Id())
-	var requiredVolumeList []string
-	assignStringSet(d, &requiredVolumeList, "data_volumes")
-
-	currentVolumeList := idList(
-		filter(currentVolumes, func(v brightbox.Volume) bool { return !v.Boot }),
-		func(v brightbox.Volume) string { return v.ID },
-	)
-	diags := attachDisks(
-		ctx,
-		client,
-		Difference(requiredVolumeList, currentVolumeList),
-		brightbox.VolumeAttachment{Server: d.Id()},
-	)
-	return append(diags, detachDisks(
-		ctx,
-		client,
-		Difference(currentVolumeList, requiredVolumeList),
-	)...)
-}
-
-func attachDisks(
-	ctx context.Context,
-	client *brightbox.Client,
-	volumeIDs []string,
-	attachment brightbox.VolumeAttachment,
-) diag.Diagnostics {
-	log.Printf("[DEBUG] attaching %v", volumeIDs)
-	var diags diag.Diagnostics
-	for _, id := range volumeIDs {
-		_, err := client.AttachVolume(
-			ctx,
-			id,
-			attachment,
-		)
-		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
-		}
-	}
-	return diags
-}
-
-func detachDisks(
-	ctx context.Context,
-	client *brightbox.Client,
-	volumeIDs []string,
-) diag.Diagnostics {
-	log.Printf("[DEBUG] detaching %v", volumeIDs)
-	var diags diag.Diagnostics
-	for _, id := range volumeIDs {
-		_, err := client.DetachVolume(
-			ctx,
-			id,
-		)
-		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
-		}
-	}
-	return diags
 }
 
 func addBlockStorageOptions(

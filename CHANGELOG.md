@@ -1,3 +1,9 @@
+## 3.2.0 (December 20, 2022)
+
+IMPROVEMENTS:
+- resource/volume: allow direct mapping of data volumes to servers
+- resource/server: data_volumes is now an attribute
+
 ## 3.1.0 (December 15, 2022)
 
 IMPROVEMENTS:

@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const latest = "focal-20.04"
+const latest = "jammy-22.04"
 
 var accountRe = regexp.MustCompile("acc-.....")
 var disktypeRe = regexp.MustCompile("disk1.img")
@@ -105,8 +105,8 @@ func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 						"data.brightbox_image.foobar", "disk_size"),
 					resource.TestCheckResourceAttrSet(
 						"data.brightbox_image.foobar", "virtual_size"),
-					resource.TestCheckNoResourceAttr(
-						"data.brightbox_image.foobar", "min_ram"),
+					resource.TestCheckResourceAttr(
+						"data.brightbox_image.foobar", "min_ram", "0"),
 					resource.TestMatchResourceAttr(
 						"data.brightbox_image.foobar", "owner", accountRe),
 					resource.TestCheckResourceAttr(

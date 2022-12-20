@@ -41,8 +41,6 @@ should be added to. At least one server group must be specified.
 'encrypted as rest' by the cloud.
 * `disk_size` - (Optional) The desired size of the disk storage for the
 Server. Only usable with types using network block storage.
-* `data_volumes` - (Optional) List of volumes to attach to server. Only
-usable with types using network block storage.
 * `snapshots_retention` - (Optional) Keep this number of scheduled
 snapshots. Keep all if unset.
 * `snapshots_schedule` - (Optional) Crontab pattern for scheduled
@@ -58,6 +56,7 @@ with the template provider.
 The following attributes are exported:
 
 * `id` - The ID of the Server
+* `data_volumes` - List of data volumes attached to server.
 * `fqdn` - Fully Qualified Domain Name of server
 * `hostname` - short name of server, usually the same as the `id`
 * `interface` - the id reference of the network interface. Used to target cloudips.

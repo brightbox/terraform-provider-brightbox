@@ -54,7 +54,7 @@ func TestAccBrightboxVolume_Image(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "description", ""),
 					resource.TestCheckResourceAttr(
-						resourceName, "size", "40960"),
+						resourceName, "size", "20480"),
 					resource.TestCheckResourceAttr(
 						resourceName, "serial", fmt.Sprintf("%020d", rInt)),
 					resource.TestCheckResourceAttr(
@@ -85,7 +85,7 @@ func TestAccBrightboxVolume_Image(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "description", ""),
 					resource.TestCheckResourceAttr(
-						resourceName, "size", "40960"),
+						resourceName, "size", "20480"),
 					resource.TestCheckResourceAttr(
 						resourceName, "serial", fmt.Sprintf("%020d", rInt)),
 					resource.TestCheckResourceAttr(
@@ -154,7 +154,7 @@ func TestAccBrightboxVolume_rawDefault(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "description", "Hello"),
 					resource.TestCheckResourceAttr(
-						resourceName, "size", "40960"),
+						resourceName, "size", "20480"),
 					resource.TestMatchResourceAttr(
 						resourceName, "serial", volumeRegexp),
 					resource.TestCheckResourceAttr(
@@ -260,7 +260,7 @@ func TestAccBrightboxVolume_resize(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "description", ""),
 					resource.TestCheckResourceAttr(
-						resourceName, "size", "40960"),
+						resourceName, "size", "20480"),
 				),
 			},
 			{
@@ -390,6 +390,7 @@ resource "brightbox_volume" "foobar" {
 	name = "foo-%d"
 	serial = "%020d"
 	locked = true
+	size = 20480
 }
 
 %s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official)
@@ -402,6 +403,7 @@ resource "brightbox_volume" "foobar" {
 	image = data.brightbox_image.foobar.id
 	name = "foo-%d"
 	serial = "%020d"
+	size = 20480
 }
 
 %s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official)
@@ -413,6 +415,7 @@ func testAccCheckBrightboxVolumeConfig_rawDefault(rInt int) string {
 resource "brightbox_volume" "foobar" {
 	name = "foo-%d"
 	description = "Hello"
+	size = 20480
 }
 
 `, rInt)
@@ -423,6 +426,7 @@ func testAccCheckBrightboxVolumeConfig_rawMinimal(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_volume" "foobar" {
 	name = "foo-%d"
+	size = 20480
 }
 
 `, rInt)

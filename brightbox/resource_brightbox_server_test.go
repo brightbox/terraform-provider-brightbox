@@ -580,7 +580,7 @@ func TestAccBrightboxServer_ServerResize(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						resourceName, "disk_size", "40960"),
-					testAccCheckBrightboxServerType(&serverResource.ServerType, 2, 8192),
+					testAccCheckBrightboxServerType(&serverResource.ServerType, 4, 8192),
 					resource.TestCheckResourceAttrSet(
 						resourceName, "type"),
 				),
@@ -588,44 +588,6 @@ func TestAccBrightboxServer_ServerResize(t *testing.T) {
 		},
 	})
 }
-
-// func TestAccBrightboxServer_bootVolume(t *testing.T) {
-// 	resourceName := "brightbox_server.foobar"
-// 	var serverResource brightbox.Server
-// 	rInt := acctest.RandInt()
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccCheckBrightboxServerDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccCheckBrightboxServerConfig_bootVolume(rInt),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckBrightboxObjectExists(
-// 						resourceName,
-// 						"Server",
-// 						&serverResource,
-// 						(*brightbox.Client).Server,
-// 					),
-// 					resource.TestMatchResourceAttr(
-// 						resourceName, "volume", volumeRegexp),
-// 					resource.TestMatchResourceAttr(
-// 						resourceName, "image", imageRegexp),
-// 					resource.TestCheckResourceAttr(
-// 						resourceName, "disk_size", "40960"),
-// 					resource.TestCheckResourceAttr(
-// 						resourceName, "encrypted", "false"),
-// 					resource.TestCheckResourceAttr(
-// 						resourceName, "encrypted", "false"),
-// 					testAccCheckBrightboxServerType(&serverResource.ServerType, 2, 4096),
-// 					resource.TestCheckResourceAttrSet(
-// 						resourceName, "type"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
 
 func TestAccBrightboxServer_DataDisk(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
@@ -664,7 +626,7 @@ func TestAccBrightboxServer_DataDisk(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckBrightboxServerConfig_specialDataDisk(rInt),
+				Config: testAccCheckBrightboxServerConfig_unmapDataDisk(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBrightboxObjectExists(
 						resourceName,
@@ -684,7 +646,7 @@ func TestAccBrightboxServer_DataDisk(t *testing.T) {
 						&server,
 						(*brightbox.Client).Server,
 					),
-					testAccCheckBrightboxServerType(&server.ServerType, 2, 8192),
+					testAccCheckBrightboxServerType(&server.ServerType, 4, 8192),
 					resource.TestCheckResourceAttrSet(
 						resourceName, "type"),
 					testAccCheckBrightboxVolumes(&server.Volumes, 0),
@@ -966,20 +928,16 @@ resource "brightbox_server_group" "barfoo2" {
 %s`, rInt, rInt, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk)
 }
 
-// func testAccCheckBrightboxServerConfig_bootVolume(rInt int) string {
-// 	return fmt.Sprintf(`
-// resource "brightbox_server" "foobar" {
-// 	name = "foo-%d"
-// 	type = data.brightbox_server_type.foobar.id
-// 	server_groups = [data.brightbox_server_group.default.id]
-// 	user_data = "foo:-with-character's"
-// 	volume = brightbox_volume.foobar.id
-// }
+func testAccCheckBrightboxVolumeConfig_rawMinimalMapped(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_volume" "foobar" {
+	name = "foo-%d"
+	server = brightbox_server.foobar.id
+}
 
-// %s%s%s`, rInt, testAccCheckBrightboxVolumeConfig_basic(rInt),
-// 		TestAccBrightboxDataServerGroupConfig_default,
-// 		TestAccBrightboxDataServerTypeConfig_network_disk)
-// }
+`, rInt)
+
+}
 
 func testAccCheckBrightboxServerConfig_networkDataDisk(rInt int) string {
 	return fmt.Sprintf(`
@@ -989,13 +947,12 @@ resource "brightbox_server" "foobar" {
 	type = data.brightbox_server_type.foobar.id
 	server_groups = [data.brightbox_server_group.default.id]
 	disk_size = 40960
-	data_volumes = [brightbox_volume.foobar.id]
 }
 
 %s%s%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,
 		TestAccBrightboxDataServerGroupConfig_default,
 		TestAccBrightboxDataServerTypeConfig_network_disk,
-		testAccCheckBrightboxVolumeConfig_rawMinimal(rInt),
+		testAccCheckBrightboxVolumeConfig_rawMinimalMapped(rInt),
 	)
 }
 
@@ -1007,23 +964,23 @@ resource "brightbox_server" "foobar" {
 	type = data.brightbox_server_type.foobar.id
 	server_groups = [data.brightbox_server_group.default.id]
 	disk_size = 40960
-	data_volumes = [brightbox_volume.barfoo.id, brightbox_volume.foobar.id]
 }
 
 resource "brightbox_volume" "barfoo" {
 	name = "foo-%d"
 	size = 61440
 	filesystem_type = "ext4"
+	server = brightbox_server.foobar.id
 }
 
 %s%s%s%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,
 		TestAccBrightboxDataServerGroupConfig_default,
 		TestAccBrightboxDataServerTypeConfig_network_disk,
-		testAccCheckBrightboxVolumeConfig_rawMinimal(rInt),
+		testAccCheckBrightboxVolumeConfig_rawMinimalMapped(rInt),
 	)
 }
 
-func testAccCheckBrightboxServerConfig_specialDataDisk(rInt int) string {
+func testAccCheckBrightboxServerConfig_unmapDataDisk(rInt int) string {
 	return fmt.Sprintf(`
 resource "brightbox_server" "foobar" {
 	image = data.brightbox_image.foobar.id
@@ -1031,19 +988,19 @@ resource "brightbox_server" "foobar" {
 	type = data.brightbox_server_type.foobar.id
 	server_groups = [data.brightbox_server_group.default.id]
 	disk_size = 40960
-	data_volumes = [brightbox_volume.barfoo.id]
 }
 
 resource "brightbox_volume" "barfoo" {
 	name = "foo-%d"
 	size = 61440
 	filesystem_type = "ext4"
+	server = ""
 }
 
 %s%s%s%s`, rInt, rInt, TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,
 		TestAccBrightboxDataServerGroupConfig_default,
 		TestAccBrightboxDataServerTypeConfig_network_disk,
-		testAccCheckBrightboxVolumeConfig_rawMinimal(rInt),
+		testAccCheckBrightboxVolumeConfig_rawMinimalMapped(rInt),
 	)
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"regexp"
+	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/brightbox/gobrightbox/v2/enums/filesystemtype"
@@ -20,7 +21,7 @@ func resourceBrightboxVolume() *schema.Resource {
 		CreateContext: resourceBrightboxVolumeCreateAndWait,
 		ReadContext:   resourceBrightboxVolumeRead,
 		UpdateContext: resourceBrightboxVolumeUpdateAndResize,
-		DeleteContext: resourceBrightboxVolumeDelete,
+		DeleteContext: resourceBrightboxVolumeDetachAndDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -98,6 +99,16 @@ func resourceBrightboxVolume() *schema.Resource {
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[\w.+-]{0,20}$`), "must be a valid serial number"),
 			},
 
+			"server": {
+				Description: "ID of the server this volume is to be mapped to",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ValidateFunc: validation.Any(
+					validation.StringMatch(serverRegexp, "must be a valid server ID"),
+					validation.StringIsEmpty,
+				),
+			},
+
 			"size": {
 				Description:  "Disk size in megabytes",
 				Type:         schema.TypeInt,
@@ -165,6 +176,18 @@ var (
 		setVolumeAttributes,
 	)
 )
+
+func resourceBrightboxVolumeDetachAndDelete(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	err := detachVolume(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))
+	if err != nil {
+		log.Printf("[INFO] Detach on delete issue: %s", err)
+	}
+	return resourceBrightboxVolumeDelete(ctx, d, meta)
+}
 
 func volumeFromID(id string) *brightbox.VolumeOptions {
 	return &brightbox.VolumeOptions{
@@ -250,8 +273,18 @@ func setVolumeAttributes(
 	if err != nil {
 		diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 	}
-	if volume.Image != nil {
+	if volume.Image == nil {
+		d.Set("image", "")
+	} else {
 		err = d.Set("image", volume.Image.ID)
+		if err != nil {
+			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
+		}
+	}
+	if volume.Server == nil {
+		d.Set("server", "")
+	} else {
+		err = d.Set("server", volume.Server.ID)
 		if err != nil {
 			diags = append(diags, diag.Errorf("unexpected: %s", err)...)
 		}
@@ -321,6 +354,14 @@ func resourceBrightboxVolumeCreateAndWait(
 		return diag.FromErr(err)
 	}
 
+	if serverID, ok := d.GetOk("server"); ok {
+		if target := serverID.(string); target != "" {
+			if err := attachVolume(ctx, d, meta, target, d.Timeout(schema.TimeoutUpdate)); err != nil {
+				diags = append(diags, diag.FromErr(err)...)
+			}
+		}
+	}
+
 	return resourceBrightboxSetVolumeLockState(ctx, d, meta)
 }
 
@@ -334,8 +375,87 @@ func resourceBrightboxVolumeUpdateAndResize(
 	if d.HasChange("size") {
 		diags = append(diags, resizeBrightboxVolume(ctx, d, meta, d.Id(), "size")...)
 	}
+	log.Printf("[DEBUG] Checking if server attachment has changed")
+	if d.HasChange("server") {
+		log.Printf("[INFO] Volume server attachment has changed, updating...")
+		err := detachVolume(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			diags = append(diags, diag.FromErr(err)...)
+		} else if serverID, ok := d.GetOk("server"); ok {
+			if target := serverID.(string); target != "" {
+				err := attachVolume(ctx, d, meta, target, d.Timeout(schema.TimeoutUpdate))
+				if err != nil {
+					diags = append(diags, diag.FromErr(err)...)
+				}
+			}
+		}
+	}
 	log.Printf("[DEBUG] Updating volume")
 	return append(diags, resourceBrightboxVolumeUpdate(ctx, d, meta)...)
+}
+
+func attachVolume(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+	server string,
+	timeout time.Duration,
+) error {
+	log.Printf("[DEBUG] attaching %v to %v", d.Id(), server)
+	client := meta.(*CompositeClient).APIClient
+	_, err := client.AttachVolume(
+		ctx,
+		d.Id(),
+		brightbox.VolumeAttachment{Server: server},
+	)
+	if err != nil {
+		return err
+	}
+	stateConf := resource.StateChangeConf{
+		Pending: []string{
+			volumestatus.Detached.String(),
+		},
+		Target: []string{
+			volumestatus.Attached.String(),
+		},
+		Refresh:    volumeStateRefresh(client, ctx, d.Id()),
+		Timeout:    timeout,
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
+	}
+	_, err = stateConf.WaitForStateContext(ctx)
+	return err
+}
+
+func detachVolume(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+	timeout time.Duration,
+) error {
+	log.Printf("[DEBUG] detaching %v", d.Id())
+	client := meta.(*CompositeClient).APIClient
+	_, err := client.DetachVolume(
+		ctx,
+		d.Id(),
+	)
+	if err != nil {
+		return err
+	}
+	stateConf := resource.StateChangeConf{
+		Pending: []string{
+			volumestatus.Attached.String(),
+		},
+		Target: []string{
+			volumestatus.Detached.String(),
+		},
+		Refresh:    volumeStateRefresh(client, ctx, d.Id()),
+		Timeout:    timeout,
+		Delay:      checkDelay,
+		MinTimeout: minimumRefreshWait,
+	}
+	_, err = stateConf.WaitForStateContext(ctx)
+	return err
 }
 
 func resizeBrightboxVolume(
