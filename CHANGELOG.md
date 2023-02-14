@@ -1,3 +1,8 @@
+## 3.2.1 (February 14, 2023)
+
+BUG FIXES:
+- resource/server - Allow userdata to be changed back to empty
+
 ## 3.2.0 (December 20, 2022)
 
 IMPROVEMENTS:
