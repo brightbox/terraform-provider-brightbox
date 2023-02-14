@@ -65,23 +65,16 @@ func timeFromFloat(timeFloat float64) time.Time {
 func hashString(
 	v interface{},
 ) string {
-	switch v.(type) {
-	case string:
-		return userDataHashSum(v.(string))
-	default:
-		return ""
+	if str, ok := v.(string); ok {
+		return userDataHashSum(str)
 	}
+	return ""
 }
 
 func userDataHashSum(userData string) string {
-	// Check whether the userData is not Base64 encoded.
 	// Always calculate hash of base64 decoded value since we
 	// check against double-encoding when setting it
-	v, base64DecodeError := base64Decode(userData)
-	if base64DecodeError != nil {
-		v = userData
-	}
-	hash := sha1.Sum([]byte(v))
+	hash := sha1.Sum([]byte(userData))
 	return hex.EncodeToString(hash[:])
 }
 

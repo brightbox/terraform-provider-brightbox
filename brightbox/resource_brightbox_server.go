@@ -268,6 +268,10 @@ func addUpdateableServerOptions(
 	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
 	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
 	assignStringSet(d, &opts.ServerGroups, "server_groups")
+	if !d.HasChanges("user_data", "user_data_base64") {
+		return nil
+	}
+	// Definitely have user data changes that need sending
 	encodedUserData := ""
 	if d.HasChange("user_data") {
 		if userData, ok := d.GetOk("user_data"); ok {
@@ -288,9 +292,7 @@ func addUpdateableServerOptions(
 			userdataSizeLimit,
 		)
 	}
-	if encodedUserData != "" {
-		opts.UserData = &encodedUserData
-	}
+	opts.UserData = &encodedUserData
 	return nil
 }
 
@@ -592,10 +594,6 @@ func addBlockStorageOptions(
 }
 
 func setUserDataDetails(d *schema.ResourceData, base64Userdata string) diag.Diagnostics {
-	if len(base64Userdata) <= 0 {
-		log.Printf("[DEBUG] No user data found, skipping set")
-		return nil
-	}
 	_, b64 := d.GetOk("user_data_base64")
 	if b64 {
 		log.Printf("[DEBUG] encoded user_data requested, setting user_data_base64")
@@ -603,8 +601,18 @@ func setUserDataDetails(d *schema.ResourceData, base64Userdata string) diag.Diag
 			return diag.FromErr(err)
 		}
 	} else {
-		log.Printf("[DEBUG] decrypted user_data requested, setting user_data")
-		if err := d.Set("user_data", userDataHashSum(base64Userdata)); err != nil {
+		var hash string
+		if base64Userdata == "" {
+			hash = ""
+		} else {
+			userData, err := base64Decode(base64Userdata)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			hash = userDataHashSum(userData)
+		}
+		log.Printf("[DEBUG] decrypted user_data requested, setting user_data to %q", hash)
+		if err := d.Set("user_data", hash); err != nil {
 			return diag.FromErr(err)
 		}
 	}

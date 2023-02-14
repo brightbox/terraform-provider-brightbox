@@ -449,7 +449,7 @@ func TestAccBrightboxServer_Snapshots(t *testing.T) {
 
 func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 	resourceName := "brightbox_server.foobar"
-	var afterCreate, afterUpdate brightbox.Server
+	var afterCreate, afterUpdate, afterZero, afterReset brightbox.Server
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
@@ -481,6 +481,32 @@ func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 					),
 					testAccCheckBrightboxServerRecreated(
 						t, &afterCreate, &afterUpdate),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_noUserData(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&afterZero,
+						(*brightbox.Client).Server,
+					),
+					testAccCheckBrightboxServerRecreated(
+						t, &afterCreate, &afterZero),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxServerConfig_basic(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Server",
+						&afterReset,
+						(*brightbox.Client).Server,
+					),
+					testAccCheckBrightboxServerRecreated(
+						t, &afterCreate, &afterZero),
 				),
 			},
 		},
@@ -768,6 +794,23 @@ resource "brightbox_server" "foobar" {
 	type = "1gb.ssd"
 	server_groups = [data.brightbox_server_group.default.id]
 	user_data = "foo:-with-character's"
+}
+
+data "brightbox_server_group" "barfoo" {
+	name = "^default$"
+}
+
+%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
+		TestAccBrightboxDataServerGroupConfig_default)
+}
+
+func testAccCheckBrightboxServerConfig_noUserData(rInt int) string {
+	return fmt.Sprintf(`
+resource "brightbox_server" "foobar" {
+	image = data.brightbox_image.foobar.id
+	name = "foo-%d"
+	type = "1gb.ssd"
+	server_groups = [data.brightbox_server_group.default.id]
 }
 
 data "brightbox_server_group" "barfoo" {
