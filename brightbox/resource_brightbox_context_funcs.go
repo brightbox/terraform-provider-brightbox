@@ -7,7 +7,7 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -235,7 +235,7 @@ func resourceBrightboxDeleteAndWait[O any](
 	objectName string,
 	pending []string,
 	target []string,
-	refresher func(*brightbox.Client, context.Context, string) resource.StateRefreshFunc,
+	refresher func(*brightbox.Client, context.Context, string) retry.StateRefreshFunc,
 ) schema.DeleteContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		diags := resourceBrightboxDelete(deleter, objectName)(ctx, d, meta)
@@ -244,7 +244,7 @@ func resourceBrightboxDeleteAndWait[O any](
 		}
 
 		client := meta.(*CompositeClient).APIClient
-		stateConf := resource.StateChangeConf{
+		stateConf := retry.StateChangeConf{
 			Pending:    pending,
 			Target:     target,
 			Refresh:    refresher(client, ctx, d.Id()),

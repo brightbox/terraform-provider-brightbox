@@ -9,7 +9,7 @@ import (
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/brightbox/gobrightbox/v2/enums/serverstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -442,7 +442,7 @@ func serverUnavailable(obj *brightbox.Server) bool {
 		obj.Status == serverstatus.Failed
 }
 
-func serverStateRefresh(client *brightbox.Client, ctx context.Context, serverID string) resource.StateRefreshFunc {
+func serverStateRefresh(client *brightbox.Client, ctx context.Context, serverID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		serverInstance, err := client.Server(ctx, serverID)
 		if err != nil {
@@ -484,7 +484,7 @@ func resourceBrightboxServerCreateAndWait(
 
 	log.Printf("[INFO] Waiting for Server (%s) to become available", d.Id())
 
-	stateConf := resource.StateChangeConf{
+	stateConf := retry.StateChangeConf{
 		Pending: []string{
 			serverstatus.Creating.String(),
 		},

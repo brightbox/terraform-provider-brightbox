@@ -9,6 +9,7 @@ import (
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -169,15 +170,15 @@ func clearServerList(ctx context.Context, client *brightbox.Client, iniitialServ
 	// Wait for group to empty
 	return resource.Retry(
 		timeout,
-		func() *resource.RetryError {
+		func() *retry.RetryError {
 			serverGroup, err := client.ServerGroup(ctx, serverID)
 			if err != nil {
-				return resource.NonRetryableError(
+				return retry.NonRetryableError(
 					fmt.Errorf("Error retrieving Server Group details: %s", err),
 				)
 			}
 			if len(serverGroup.Servers) > 0 {
-				return resource.RetryableError(
+				return retry.RetryableError(
 					fmt.Errorf("Error: servers %v still in server group %s", serverIDListFromNodes(serverGroup.Servers), serverGroup.ID),
 				)
 			}

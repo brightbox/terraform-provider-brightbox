@@ -10,7 +10,7 @@ import (
 	"github.com/brightbox/gobrightbox/v2/enums/filesystemtype"
 	"github.com/brightbox/gobrightbox/v2/enums/volumestatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -298,7 +298,7 @@ func volumeUnavailable(obj *brightbox.Volume) bool {
 		obj.Status == volumestatus.Failed
 }
 
-func volumeStateRefresh(client *brightbox.Client, ctx context.Context, volumeID string) resource.StateRefreshFunc {
+func volumeStateRefresh(client *brightbox.Client, ctx context.Context, volumeID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		volume, err := client.Volume(ctx, volumeID)
 		if err != nil {
@@ -337,7 +337,7 @@ func resourceBrightboxVolumeCreateAndWait(
 
 	log.Printf("[INFO] Waiting for Volume (%s) to become available", d.Id())
 
-	stateConf := resource.StateChangeConf{
+	stateConf := retry.StateChangeConf{
 		Pending: []string{
 			volumestatus.Creating.String(),
 		},
@@ -411,7 +411,7 @@ func attachVolume(
 	if err != nil {
 		return err
 	}
-	stateConf := resource.StateChangeConf{
+	stateConf := retry.StateChangeConf{
 		Pending: []string{
 			volumestatus.Detached.String(),
 		},
@@ -442,7 +442,7 @@ func detachVolume(
 	if err != nil {
 		return err
 	}
-	stateConf := resource.StateChangeConf{
+	stateConf := retry.StateChangeConf{
 		Pending: []string{
 			volumestatus.Attached.String(),
 		},
