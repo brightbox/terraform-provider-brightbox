@@ -1,3 +1,15 @@
+## 3.3.0 (March 20, 2023)
+
+IMPROVEMENTS:
+- resource/database_server: allow resizes
+- resource/server: allow resizes
+- resoure/volume: allow resizes
+
+NOTES:
+- Update SDK to 2.26
+- Update gobrightbox to 2.1.0
+- Update oauth to 0.6.0
+
 ## 3.2.1 (February 14, 2023)
 
 BUG FIXES:
