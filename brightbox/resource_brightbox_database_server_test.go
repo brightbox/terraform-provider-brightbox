@@ -15,7 +15,7 @@ import (
 )
 
 func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
-	var databaseServer brightbox.DatabaseServer
+	var databaseServer, afterChange brightbox.DatabaseServer
 	rInt := acctest.RandInt()
 	name := fmt.Sprintf("bar-%d", rInt)
 	updatedName := fmt.Sprintf("baz-%d", rInt)
@@ -137,6 +137,21 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 						resourceName, "database_version", "8.0"),
 					resource.TestCheckResourceAttr(
 						resourceName, "allow_access.#", "1"),
+				),
+			},
+			{
+				Config: testAccCheckBrightboxDatabaseServerConfigChangeType(updatedName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBrightboxObjectExists(
+						resourceName,
+						"Database Server",
+						&afterChange,
+						(*brightbox.Client).DatabaseServer,
+					),
+					testAccCheckBrightboxDatabaseServerType(&databaseServer.DatabaseServerType, 2048),
+					testAccCheckBrightboxDatabaseServerRecreated(
+						t, &databaseServer, &afterChange),
+					testAccCheckBrightboxDatabaseServerType(&afterChange.DatabaseServerType, 4096),
 				),
 			},
 			{
@@ -286,6 +301,29 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 	}
 }
 
+func testAccCheckBrightboxDatabaseServerType(serverTypeRef **brightbox.DatabaseServerType, ram uint) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		serverType := *serverTypeRef
+		if serverType == nil {
+			return fmt.Errorf("Expected a server Type, got nil")
+		}
+		if serverType.RAM != ram {
+			return fmt.Errorf("Expected ram size of %v , got %v", ram, serverType.RAM)
+		}
+		return nil
+	}
+}
+
+func testAccCheckBrightboxDatabaseServerRecreated(t *testing.T,
+	before, after *brightbox.DatabaseServer) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if before.ID != after.ID {
+			t.Fatalf("ID changed to %v, but expected in place update", after.ID)
+		}
+		return nil
+	}
+}
+
 func testAccCheckBrightboxDatabaseServerConfig_basic(name string) string {
 	return fmt.Sprintf(`
 
@@ -305,7 +343,7 @@ resource "brightbox_database_server" "default" {
 }
 
 data "brightbox_database_type" "foobar" {
-	name = "^SSD 4GB$"
+	name = "^SSD 2GB$"
 }
 %s
 `, name, name, TestAccBrightboxDataServerGroupConfig_default)
@@ -332,13 +370,39 @@ resource "brightbox_database_server" "default" {
 }
 
 data "brightbox_database_type" "foobar" {
-	name = "^SSD 4GB$"
+	name = "^SSD 2GB$"
 }
 %s
 `, name, name, TestAccBrightboxDataServerGroupConfig_default)
 }
 
 func testAccCheckBrightboxDatabaseServerConfig_update_maintenance(name string) string {
+	return fmt.Sprintf(`
+
+resource "brightbox_database_server" "default" {
+	name = "%s"
+	description = "%s"
+	database_engine = "mysql"
+	database_version = "8.0"
+	database_type = data.brightbox_database_type.foobar.id
+	maintenance_weekday = 5
+	maintenance_hour = 4
+	snapshots_schedule = "4 5 * * *"
+	snapshots_retention = 5
+	allow_access = [ data.brightbox_server_group.default.id ]
+	timeouts {
+	  create = "60m"
+	}
+}
+
+data "brightbox_database_type" "foobar" {
+	name = "^SSD 2GB$"
+}
+%s
+`, name, name, TestAccBrightboxDataServerGroupConfig_default)
+}
+
+func testAccCheckBrightboxDatabaseServerConfigChangeType(name string) string {
 	return fmt.Sprintf(`
 
 resource "brightbox_database_server" "default" {

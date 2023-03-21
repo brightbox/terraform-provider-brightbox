@@ -18,7 +18,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 		Description:   "Provides a Brightbox Database Server resource",
 		CreateContext: resourceBrightboxDatabaseServerCreateAndWait,
 		ReadContext:   resourceBrightboxDatabaseServerRead,
-		UpdateContext: resourceBrightboxDatabaseServerUpdate,
+		UpdateContext: resourceBrightboxDatabaseServerResizeAndUpdate,
 		DeleteContext: resourceBrightboxDatabaseServerDeleteAndWait,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -73,7 +73,6 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringMatch(databaseTypeRegexp, "must be a valid database type ID"),
 			},
 
@@ -315,6 +314,29 @@ func databaseServerStateRefresh(client *brightbox.Client, ctx context.Context, d
 		}
 		return databaseServer, databaseServer.Status.String(), nil
 	}
+}
+
+func resourceBrightboxDatabaseServerResizeAndUpdate(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+
+	log.Printf("[DEBUG] Database Resize and Update called for %s", d.Id())
+	if d.HasChange("database_type") {
+		newDatabaseType := d.Get("database_type").(string)
+		log.Printf("[INFO] Changing database type to %v", newDatabaseType)
+		_, err := client.ResizeDatabaseServer(
+			ctx,
+			d.Id(),
+			brightbox.DatabaseServerNewSize{NewType: newDatabaseType},
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return resourceBrightboxDatabaseServerUpdate(ctx, d, meta)
 }
 
 func resourceBrightboxDatabaseServerCreateAndWait(
