@@ -67,8 +67,8 @@ The following arguments are supported:
 
 No additional attributes are exported.
 
-[1]: ../server_group
-[2]: ../server
+[1]: server_group
+[2]: server
 
 ## Import
 
