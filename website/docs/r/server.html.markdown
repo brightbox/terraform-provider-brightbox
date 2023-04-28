@@ -31,8 +31,7 @@ The following arguments are supported:
 
 * `image` - (Optional) The Server image ID. One of image or volume must be specified.
 * `volume` - (Optional) The volume to be used to boot the server. One of image or volume must be specified.
-* `server_groups` (Required) - List of server group ids the server
-should be added to. At least one server group must be specified.
+* `server_groups` (Optional) - List of server group ids the server should be added to.
 * `name` - (Optional) The Server name
 * `type` - (Optional) The handle the server type required (`1gb.ssd`, etc), or a Server Type ID. 
 * `zone` - (Optional) The handle of the zone required (`gb1-a`, `gb1-b`)
