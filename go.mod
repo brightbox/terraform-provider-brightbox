@@ -15,9 +15,7 @@ require (
 
 require (
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -39,6 +37,8 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.1.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
+	github.com/imdario/mergo v0.3.13 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
