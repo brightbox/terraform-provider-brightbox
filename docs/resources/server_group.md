@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_server_group"
-sidebar_current: "docs-brightbox-resource-server-group"
-description: |-
-  Provides a Brightbox Server Group resource. This can be used to create, modify, and delete Server Groups.
----
-
-# brightbox\_server\_group
+# brightbox\_server\_group Resource
 
 Provides a Brightbox Server Group resource. This can be used to create,
 modify, and delete Server Groups.

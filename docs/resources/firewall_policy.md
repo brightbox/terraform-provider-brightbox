@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_firewall_policy"
-sidebar_current: "docs-brightbox-resource-firewall-policy"
-description: |-
-  Provides a Brightbox Firewall Policy resource.
----
-
-# brightbox\_firewall\_policy
+# brightbox\_firewall\_policy Resource
 
 Provides a Brightbox Firewall Policy resource.
 

@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_server"
-sidebar_current: "docs-brightbox-resource-server"
-description: |-
-  Provides a Brightbox Server resource. This can be used to create, modify, and delete Servers. Servers also support provisioning.
----
-
-# brightbox\_server
+# brightbox\_server Resource
 
 Provides a Brightbox Server resource. This can be used to create,
 modify, and delete Servers. Servers also support

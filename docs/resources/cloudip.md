@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_cloudip"
-sidebar_current: "docs-brightbox-resource-cloudip"
-description: |-
-  Provides a Brightbox CloudIP resource.
----
-
-# brightbox\_cloudip
+# brightbox\_cloudip Resource
 
 Provides a Brightbox CloudIP resource.
 

@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_config_map"
-sidebar_current: "docs-brightbox-resource-config-map"
-description: |-
-  Provides a Brightbox Config Map resource. This can be used to create, modify, and delete Config Maps.
----
-
-# brightbox\_config\_map
+# brightbox\_config\_map Resource
 
 Provides a Brightbox Config Map resource. This can be used to create,
 modify, and delete Config Maps.

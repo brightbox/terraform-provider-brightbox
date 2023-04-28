@@ -1,14 +1,6 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_server_group_membership"
-sidebar_current: "docs-brightbox-resource-server-group-membership"
-description: |-
-  Provides a resource for adding servers to server groups without conflicting with itself.
----
+# brightbox\_server\_group\_membership Resource
 
-# brightbox\_server\_group\_membership
-
-Provides a resource for adding an [Servers][2] to [Server Groups][1]. This
+Provides a resource for adding [Servers][2] to [Server Groups][1]. This
 resource can be used multiple times with the same group for non-overlapping servers.
 
 To exclusively manage the groups, use the `server_groups` attribute within [Servers.][2]
@@ -75,8 +67,8 @@ The following arguments are supported:
 
 No additional attributes are exported.
 
-[1]: /docs/providers/brightbox/r/server_group.html
-[2]: /docs/providers/brightbox/r/server.html
+[1]: ../server_group
+[2]: ../server
 
 ## Import
 

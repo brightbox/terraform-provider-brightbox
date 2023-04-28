@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_database_server"
-sidebar_current: "docs-brightbox-resource-database-server"
-description: |-
-  Provides a Brightbox Database Server resource. This can be used to create, modify, and delete Database Servers.
----
-
-# brightbox\_database\_server
+# brightbox\_database\_server Resource
 
 Provides a Brightbox Database Server resource. This can be used to create,
 modify, and delete Database Servers.

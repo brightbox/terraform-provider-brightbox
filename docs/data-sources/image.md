@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_image"
-sidebar_current: "docs-brightbox-datasource-image"
-description: |-
-  Get information about a Brightbox Image.
----
-
-# brightbox\_image
+# brightbox\_image Data Source
 
 Use this data source to get the ID of a Brightbox Image for use in other
 resources.

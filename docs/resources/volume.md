@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_volume"
-sidebar_current: "docs-brightbox-resource-volume"
-description: |-
-  Provides a Brightbox Volume resource. This can be used to create, modify, and delete Volumes.
----
-
-# brightbox\_volume
+# brightbox\_volume Resource
 
 Provides a Brightbox Volume resource. This can be used to create,
 modify, and delete Volumes.

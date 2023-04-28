@@ -1,8 +1,10 @@
-## 3.4.0 (April 28, 2023)
+## 3.4.1 (April 28, 2023)
 IMPROVEMENTS:
 - resource/server_group_membership: non-overlapping server group management
 - resource/server: server_groups are now optional and computed
 
+NOTES
+- Moved documentation to new layout
 
 ## 3.3.0 (March 20, 2023)
 

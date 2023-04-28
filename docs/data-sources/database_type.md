@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_database_type"
-sidebar_current: "docs-brightbox-datasource-database-type"
-description: |-
-  Get information about a Brightbox Database Type.
----
-
-# brightbox\_database\_type
+# brightbox\_database\_type Data Source
 
 Use this data source to get the ID of a Brightbox Database Type for use in other
 resources.

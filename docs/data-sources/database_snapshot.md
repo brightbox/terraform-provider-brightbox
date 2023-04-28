@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_database_snapshot"
-sidebar_current: "docs-brightbox-datasource-image"
-description: |-
-  Get information about a Brightbox Database Snapshot.
----
-
-# brightbox\_database\_snapshot
+# brightbox\_database\_snapshot Data Source
 
 Use this data source to get the ID of a Brightbox Database Snapshot for
 use in other resources.

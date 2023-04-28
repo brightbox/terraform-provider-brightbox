@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_server_group"
-sidebar_current: "docs-brightbox-datasource-server-group"
-description: |-
-  Get information about a Brightbox Server Group
----
-
-# brightbox\_server\_group
+# brightbox\_server\_group Data Source
 
 Use this data source to get the ID of a Brightbox Server Group for use in other
 resources.

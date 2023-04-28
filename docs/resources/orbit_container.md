@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_orbit_container"
-sidebar_current: "docs-brightbox-resource-orbit-container"
-description: |-
-  Provides a Brightbox Orbit Container resource. This can be used to create, modify, and delete Containers in Orbit.
----
-
-# brightbox\_orbit\_container
+# brightbox\_orbit\_container Resource
 
 Provides a Brightbox Orbit Container resource. This can be used to create,
 modify, and delete Containers in Orbit.

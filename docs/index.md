@@ -1,11 +1,3 @@
----
-layout: "brightbox"
-page_title: "Provider: Brightbox"
-sidebar_current: "docs-brightbox-index"
-description: |-
-  The Brightbox provider is used to interact with services on Brightbox. The provider needs to be configured with the proper credentials before it can be used.
----
-
 # Brightbox Provider
 
 The Brightbox provider is used to interact with services on [Brightbox](https://www.brightbox.com/).

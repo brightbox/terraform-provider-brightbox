@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_load_balancer"
-sidebar_current: "docs-brightbox-resource-load-balancer"
-description: |-
-  Provides a Brightbox Load Balancer resource. This can be used to create, modify, and delete Load Balancers.
----
-
-# brightbox\_load\_balancer
+# brightbox\_load\_balancer Resource
 
 Provides a Brightbox Load Balancer resource. This can be used to create,
 modify, and delete Load Balancers.

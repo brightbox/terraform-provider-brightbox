@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_api_client"
-sidebar_current: "docs-brightbox-resource-api-client"
-description: |-
-  Provides a Brightbox API Client resource.
----
-
-# brightbox\_api\_client
+# brightbox\_api\_client Resource
 
 Provides a Brightbox API Client resource.
 

@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_server_type"
-sidebar_current: "docs-brightbox-datasource-server-type"
-description: |-
-  Get information about a Brightbox Server Type.
----
-
-# brightbox\_server\_type
+# brightbox\_server\_type Data Source
 
 Use this data source to get the ID of a Brightbox Server Type for use in other
 resources.

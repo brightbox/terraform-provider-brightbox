@@ -1,12 +1,4 @@
----
-layout: "brightbox"
-page_title: "Brightbox: brightbox_firewall_rule"
-sidebar_current: "docs-brightbox-resource-firewall-rule"
-description: |-
-  Provides a Brightbox Firewall Rule resource.
----
-
-# brightbox\_firewall\_rule
+# brightbox\_firewall\_rule Resource
 
 Provides a Brightbox Firewall Rule resource.
 
