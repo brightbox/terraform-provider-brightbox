@@ -139,13 +139,12 @@ func resourceBrightboxServer() *schema.Resource {
 			"server_groups": {
 				Description: "List of server groups to add server to",
 				Type:        schema.TypeSet,
-				Required:    true,
-				MinItems:    1,
+				Optional:    true,
+				Computed:    true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
 					ValidateFunc: validation.StringMatch(serverGroupRegexp, "must be a valid server group ID"),
 				},
-				Set: schema.HashString,
 			},
 
 			"snapshots_retention": {

@@ -58,16 +58,17 @@ func resourceBrightboxReadStatus[O any](
 	missing func(*O) bool,
 ) schema.ReadContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+		target := d.Id()
 		client := meta.(*CompositeClient).APIClient
 
-		log.Printf("[DEBUG] %s resource read called for %s", objectName, d.Id())
+		log.Printf("[DEBUG] %s resource read called for %s", objectName, target)
 
-		object, err := reader(client, ctx, d.Id())
+		object, err := reader(client, ctx, target)
 		if err != nil {
 			var apierror *brightbox.APIError
-			if errors.As(err, &apierror) {
+			if !d.IsNewResource() && errors.As(err, &apierror) {
 				if apierror.StatusCode == 404 {
-					log.Printf("[WARN] %s not found, removing from state: %s", objectName, d.Id())
+					log.Printf("[WARN] %s not found, removing from state: %s", objectName, target)
 					d.SetId("")
 					return nil
 				}
@@ -75,7 +76,7 @@ func resourceBrightboxReadStatus[O any](
 			return diag.FromErr(err)
 		}
 		if missing(object) {
-			log.Printf("[WARN] %s not found, removing from state: %s", objectName, d.Id())
+			log.Printf("[WARN] %s not found, removing from state: %s", objectName, target)
 			d.SetId("")
 			return nil
 		}

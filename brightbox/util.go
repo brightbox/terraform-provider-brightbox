@@ -111,12 +111,20 @@ func assignStringSet(d *schema.ResourceData, target *[]string, index string) {
 }
 
 func sliceFromStringSet(d *schema.ResourceData, index string) []string {
-	configured := d.Get(index).(*schema.Set).List()
-	slice := make([]string, len(configured))
-	for i, data := range configured {
-		slice[i] = data.(string)
+	return expandStringValueList(d.Get(index).(*schema.Set).List())
+}
+
+// ExpandStringValueList takes the result of flatmap.Expand for an array of strings
+// and returns a []string
+func expandStringValueList(configured []interface{}) []string {
+	vs := make([]string, 0, len(configured))
+	for _, v := range configured {
+		val, ok := v.(string)
+		if ok && val != "" {
+			vs = append(vs, v.(string))
+		}
 	}
-	return slice
+	return vs
 }
 
 func flattenStringSlice(list []string) []interface{} {
