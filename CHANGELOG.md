@@ -1,4 +1,19 @@
+## 3.4.2 (July 12, 2023)
+
+BUG FIXES:
+- auth: check credentials have access to account before running plan
+
+NOTES
+- Use hashicorp github action
+- Update gobrightbox to 2.1.1
+- Update gophercloud to 1.5.0
+- Update SDK to 2.27.0
+- Update oauth to 0.10.0
+- Update test tools to 3.5.0
+- build with go v1.20
+
 ## 3.4.1 (April 28, 2023)
+
 IMPROVEMENTS:
 - resource/server_group_membership: non-overlapping server group management
 - resource/server: server_groups are now optional and computed
