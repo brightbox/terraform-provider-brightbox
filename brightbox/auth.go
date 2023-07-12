@@ -36,6 +36,13 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 		}
 		authd.Account = accounts[0].ID
 		log.Printf("[DEBUG] default account is %v", authd.Account)
+	} else {
+		log.Printf("[INFO] Checking credentials have access to %v", authd.Account)
+		_, err := client.Account(authCtx, authd.Account)
+		if err != nil {
+			return nil, nil, diag.Errorf("Unable to access account %v with supplied credentials", authd.Account)
+		}
+		log.Printf("[DEBUG] account check passsed")
 	}
 
 	log.Printf("[DEBUG] Building Orbit Client")
