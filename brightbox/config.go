@@ -66,7 +66,7 @@ func obtainCloudClient() (*CompositeClient, diag.Diagnostics) {
 
 // Validate account config entries
 func validateConfig(authd authdetails) diag.Diagnostics {
-	var result []diag.Diagnostic
+	var result diag.Diagnostics
 	log.Printf("[DEBUG] Validating Config")
 	if strings.HasPrefix(authd.APIClient, appPrefix) {
 		log.Printf("[DEBUG] Detected OAuth Application. Validating User details.")
@@ -91,10 +91,7 @@ func configureClient(ctx context.Context, authd authdetails) (*CompositeClient, 
 		return nil, err
 	}
 
-	apiclient, orbitclient, err := authenticatedClients(ctx, authd)
-	if err.HasError() {
-		return nil, err
-	}
+	apiclient, orbitclient, diags := authenticatedClients(ctx, authd)
 
 	if apiclient != nil {
 		log.Printf("[INFO] Brightbox Client configured for URL: %s", apiclient.ResourceBaseURL())
@@ -108,5 +105,5 @@ func configureClient(ctx context.Context, authd authdetails) (*CompositeClient, 
 		OrbitClient: orbitclient,
 	}
 
-	return composite, nil
+	return composite, diags
 }

@@ -1,3 +1,8 @@
+## 3.4.3 (July 14, 2023)
+
+BUG FIXES:
+- auth: emit warning if account is not active during plan
+
 ## 3.4.2 (July 12, 2023)
 
 BUG FIXES:
