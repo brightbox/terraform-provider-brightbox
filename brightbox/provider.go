@@ -23,7 +23,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc(accountEnvVar, nil),
-				Description: "Brightbox Cloud Account to operate on",
+				Description: "Brightbox Cloud Account to operate upon",
 			},
 			"apiclient": {
 				Type:        schema.TypeString,
