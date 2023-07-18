@@ -1,4 +1,4 @@
-module github.com/terraform-providers/terraform-provider-brightbox
+module github.com/brightbox/terraform-provider-brightbox
 
 go 1.20
 
