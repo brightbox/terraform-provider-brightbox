@@ -333,7 +333,7 @@ func resourceBrightboxDatabaseServerResizeAndUpdate(
 			brightbox.DatabaseServerNewSize{NewType: newDatabaseType},
 		)
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 	}
 	return resourceBrightboxDatabaseServerUpdate(ctx, d, meta)
@@ -370,7 +370,7 @@ func resourceBrightboxDatabaseServerCreateAndWait(
 
 	databaseServer, err := client.CreateDatabaseServer(ctx, databaseServerOpts)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	d.SetId(databaseServer.ID)
@@ -397,7 +397,7 @@ func resourceBrightboxDatabaseServerCreateAndWait(
 	}
 	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	return resourceBrightboxSetDatabaseServerLockState(ctx, d, meta)

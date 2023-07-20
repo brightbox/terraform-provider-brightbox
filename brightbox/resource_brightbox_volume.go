@@ -330,7 +330,7 @@ func resourceBrightboxVolumeCreateAndWait(
 
 	object, err := client.CreateVolume(ctx, volumeOpts)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	d.SetId(object.ID)
@@ -351,13 +351,13 @@ func resourceBrightboxVolumeCreateAndWait(
 	}
 	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	if serverID, ok := d.GetOk("server"); ok {
 		if target := serverID.(string); target != "" {
 			if err := attachVolume(ctx, d, meta, target, d.Timeout(schema.TimeoutUpdate)); err != nil {
-				diags = append(diags, diag.FromErr(err)...)
+				diags = append(diags, brightboxFromErr(err))
 			}
 		}
 	}
@@ -380,12 +380,12 @@ func resourceBrightboxVolumeUpdateAndResize(
 		log.Printf("[INFO] Volume server attachment has changed, updating...")
 		err := detachVolume(ctx, d, meta, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
+			diags = append(diags, brightboxFromErr(err))
 		} else if serverID, ok := d.GetOk("server"); ok {
 			if target := serverID.(string); target != "" {
 				err := attachVolume(ctx, d, meta, target, d.Timeout(schema.TimeoutUpdate))
 				if err != nil {
-					diags = append(diags, diag.FromErr(err)...)
+					diags = append(diags, brightboxFromErr(err))
 				}
 			}
 		}
@@ -495,7 +495,7 @@ func resizeBrightboxVolume(
 		},
 	)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	return diags
 }

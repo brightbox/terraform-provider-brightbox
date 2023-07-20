@@ -29,7 +29,7 @@ func resourceBrightboxCreate[O, I any](
 		log.Printf("[INFO] %s create configuration: %+v", objectName, objectOptions)
 		object, err := creator(client, ctx, objectOptions)
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		return setter(d, object)
@@ -73,7 +73,7 @@ func resourceBrightboxReadStatus[O any](
 					return nil
 				}
 			}
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		if missing(object) {
 			log.Printf("[WARN] %s not found, removing from state: %s", objectName, target)
@@ -99,7 +99,7 @@ func datasourceBrightboxRead[O any](
 
 		objects, err := reader(client, ctx)
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 
 		findFunc, errs := finderGenerator(d)
@@ -139,7 +139,7 @@ func datasourceBrightboxRecentRead[O brightbox.CreateDated](
 
 		objects, err := reader(client, ctx)
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 
 		findFunc, errs := finderGenerator(d)
@@ -204,7 +204,7 @@ func resourceBrightboxUpdateWithLock[O, I any](
 
 		object, err := putter(client, ctx, *objectOpts)
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		if locksetter != nil && d.HasChange("locked") {
@@ -224,7 +224,7 @@ func resourceBrightboxDelete[O any](
 		log.Printf("[INFO] Deleting %s %s", objectName, d.Id())
 		_, err := deleter(client, ctx, d.Id())
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		log.Printf("[DEBUG] Deleted cleanly")
 		return nil
@@ -255,7 +255,7 @@ func resourceBrightboxDeleteAndWait[O any](
 		}
 		_, err := stateConf.WaitForStateContext(ctx)
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		d.SetId("")
 		return nil
@@ -280,7 +280,7 @@ func resourceBrightboxSetLockState[O any](
 			object, err = unlocker(client, ctx, d.Id())
 		}
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		log.Printf("[DEBUG] setting details from returned object: %+v", *object)
 		return setter(d, object)

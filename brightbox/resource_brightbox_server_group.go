@@ -152,7 +152,7 @@ func resourceBrightboxServerGroupClearAndDelete(
 	if len(serverGroup.Servers) > 0 {
 		err := clearServerList(ctx, client, serverGroup, d.Timeout(schema.TimeoutDelete))
 		if err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 	}
 	return resourceBrightboxServerGroupDelete(ctx, d, meta)

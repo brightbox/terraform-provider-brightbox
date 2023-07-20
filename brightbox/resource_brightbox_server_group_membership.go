@@ -76,7 +76,7 @@ func resourceBrightboxServerGroupMembershipRead(
 				return nil
 			}
 		}
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	log.Printf("[DEBUG] setting details from returned object: %+v", *object)
@@ -95,7 +95,7 @@ func resourceBrightboxServerGroupMembershipCreate(
 
 	object, err := client.AddServersToServerGroup(ctx, group, mapServerGroupMemberList(serverList))
 	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	d.SetId(id.UniqueId())
 	return append(diags, setServerGroupMembershipAttributes(d, object)...)
@@ -162,13 +162,13 @@ func resourceBrightboxServerGroupMembershipUpdate(
 		if len(remove) > 0 {
 			object, err = client.RemoveServersFromServerGroup(ctx, group, mapServerGroupMemberList(remove))
 			if err != nil {
-				diags = append(diags, diag.FromErr(err)...)
+				diags = append(diags, brightboxFromErr(err))
 			}
 		}
 		if len(add) > 0 {
 			object, err = client.AddServersToServerGroup(ctx, group, mapServerGroupMemberList(add))
 			if err != nil {
-				diags = append(diags, diag.FromErr(err)...)
+				diags = append(diags, brightboxFromErr(err))
 			}
 		}
 		return append(diags, setServerGroupMembershipAttributes(d, object)...)
@@ -188,7 +188,7 @@ func resourceBrightboxServerGroupMembershipDelete(
 
 	_, err := client.RemoveServersFromServerGroup(ctx, group, mapServerGroupMemberList(serverList))
 	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	return diags
 }

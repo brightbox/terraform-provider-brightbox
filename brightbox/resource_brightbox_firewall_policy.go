@@ -138,7 +138,7 @@ func resourceBrightboxFirewallPolicyCreateAndAssign(
 	}
 	FirewallPolicyInstance, err := assignFirewallPolicy(ctx, d, meta, targetID.(string))
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	log.Printf("[DEBUG] setting details from returned object")
 	return setFirewallPolicyAttributes(d, FirewallPolicyInstance)
@@ -183,7 +183,7 @@ func unassignFirewallPolicy(
 			return diag.FromErr(readerr)
 		}
 		if !detachedFirewallPolicy(instance) {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		log.Printf("[DEBUG] detached out of band")
 	}
@@ -208,7 +208,7 @@ func resourceBrightboxFirewallPolicyUpdateAndRemap(
 			if target := targetID.(string); target != "" {
 				_, err := assignFirewallPolicy(ctx, d, meta, target)
 				if err != nil {
-					diags = append(diags, diag.FromErr(err)...)
+					diags = append(diags, brightboxFromErr(err))
 				}
 			}
 		}

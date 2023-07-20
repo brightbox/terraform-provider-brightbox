@@ -476,7 +476,7 @@ func resourceBrightboxServerCreateAndWait(
 
 	server, err := client.CreateServer(ctx, serverOpts)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	d.SetId(server.ID)
@@ -498,7 +498,7 @@ func resourceBrightboxServerCreateAndWait(
 	}
 	result, err := stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	server = result.(*brightbox.Server)
@@ -530,19 +530,19 @@ func resourceBrightboxServerUpdate(
 
 		server, err = client.UpdateServer(ctx, serverOpts)
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
+			diags = append(diags, brightboxFromErr(err))
 		}
 	} else {
 		server, err = client.Server(ctx, d.Id())
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
+			diags = append(diags, brightboxFromErr(err))
 		}
 	}
 	if d.HasChange("disk_size") {
 		diags = append(diags, resizeBrightboxVolume(ctx, d, meta, server.Volumes[0].ID, "disk_size")...)
 		server, err = client.Server(ctx, d.Id())
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
+			diags = append(diags, brightboxFromErr(err))
 		}
 	}
 	if d.HasChange("type") {
@@ -554,7 +554,7 @@ func resourceBrightboxServerUpdate(
 			brightbox.ServerNewSize{NewType: newServerType},
 		)
 		if err != nil {
-			diags = append(diags, diag.FromErr(err)...)
+			diags = append(diags, brightboxFromErr(err))
 		}
 	}
 	if diags.HasError() {
@@ -597,7 +597,7 @@ func setUserDataDetails(d *schema.ResourceData, base64Userdata string) diag.Diag
 	if b64 {
 		log.Printf("[DEBUG] encoded user_data requested, setting user_data_base64")
 		if err := d.Set("user_data_base64", base64Userdata); err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 	} else {
 		var hash string
@@ -606,13 +606,13 @@ func setUserDataDetails(d *schema.ResourceData, base64Userdata string) diag.Diag
 		} else {
 			userData, err := base64Decode(base64Userdata)
 			if err != nil {
-				return diag.FromErr(err)
+				return brightboxFromErrSlice(err)
 			}
 			hash = userDataHashSum(userData)
 		}
 		log.Printf("[DEBUG] decrypted user_data requested, setting user_data to %q", hash)
 		if err := d.Set("user_data", hash); err != nil {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 	}
 	return nil
@@ -644,13 +644,13 @@ func setServerTypeDetails(d *schema.ResourceData, serverType *brightbox.ServerTy
 	if currentType, ok := d.GetOk("type"); ok {
 		if !serverTypeRegexp.MatchString(currentType.(string)) {
 			if err := d.Set("type", serverType.Handle); err != nil {
-				return diag.FromErr(err)
+				return brightboxFromErrSlice(err)
 			}
 			return nil
 		}
 	}
 	if err := d.Set("type", serverType.ID); err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	return nil
 }

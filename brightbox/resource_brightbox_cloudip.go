@@ -292,7 +292,7 @@ func resourceBrightboxCloudIPCreateAndAssign(
 		d.Timeout(schema.TimeoutCreate),
 	)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	log.Printf("[DEBUG] setting details from returned object")
 	return setCloudIPAttributes(d, cloudIPInstance)
@@ -342,7 +342,7 @@ func unassignCloudIP(
 			return diag.FromErr(readerr)
 		}
 		if !detachedCloudIP(instance) {
-			return diag.FromErr(err)
+			return brightboxFromErrSlice(err)
 		}
 		log.Printf("[DEBUG] detached out of band")
 	}
@@ -371,7 +371,7 @@ func resourceBrightboxCloudIPUpdateAndRemap(
 			if target := targetID.(string); target != "" {
 				_, err := assignCloudIP(ctx, d, meta, target, d.Timeout(schema.TimeoutUpdate))
 				if err != nil {
-					diags = append(diags, diag.FromErr(err)...)
+					diags = append(diags, brightboxFromErr(err))
 				}
 			}
 		}

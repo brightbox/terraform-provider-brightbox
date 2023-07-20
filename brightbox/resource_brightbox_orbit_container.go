@@ -141,7 +141,7 @@ func resourceBrightboxContainerCreate(
 	log.Printf("[DEBUG] Create path is: %s", currentContainerPath)
 	container, err := containers.Create(client, currentContainerPath, createOpts).Extract()
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	log.Printf("[INFO] Container created with TransID %s", container.TransID)
 	d.SetId(currentContainerPath)
@@ -159,7 +159,7 @@ func resourceBrightboxContainerDelete(
 	log.Printf("[INFO] Deleting Container")
 	container, err := containers.Delete(client, d.Id()).Extract()
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	log.Printf("[INFO] Container deleted with TransID %s", container.TransID)
 	return nil
@@ -178,7 +178,7 @@ func resourceBrightboxContainerUpdate(
 	log.Printf("[INFO] Container update configuration: %#v", updateOpts)
 	container, err := containers.Update(client, d.Id(), updateOpts).Extract()
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 	log.Printf("[INFO] Container updated with TransID %s", container.TransID)
 	return resourceBrightboxContainerRead(ctx, d, meta)
@@ -277,35 +277,35 @@ func setContainerAttributes(
 	var diags diag.Diagnostics
 	log.Printf("[DEBUG] Setting Container details from %#v", attr)
 	if err := d.Set("name", d.Id()); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("container_read", compactZero(attr.Read)); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("container_write", compactZero(attr.Write)); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("versions_location", attr.VersionsLocation); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("history_location", attr.HistoryLocation); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := setUnescapedStringMap(d, "metadata", metadata); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	//Computed
 	if err := d.Set("storage_policy", attr.StoragePolicy); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("object_count", attr.ObjectCount); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("created_at", timeFromFloat(attr.Timestamp).Format(time.RFC3339)); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	if err := d.Set("bytes_used", attr.BytesUsed); err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	return diags
 }

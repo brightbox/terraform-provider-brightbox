@@ -493,7 +493,7 @@ func resourceBrightboxLoadBalancerCreateAndWait(
 
 	loadBalancer, err := client.CreateLoadBalancer(ctx, loadBalancerOpts)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	d.SetId(loadBalancer.ID)
@@ -514,7 +514,7 @@ func resourceBrightboxLoadBalancerCreateAndWait(
 	}
 	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return brightboxFromErrSlice(err)
 	}
 
 	return resourceBrightboxSetLoadBalancerLockState(ctx, d, meta)
@@ -531,7 +531,7 @@ func assignHealthCheck(d *schema.ResourceData, target **brightbox.LoadBalancerHe
 		if hctype, err := healthchecktype.ParseEnum(check["type"].(string)); err == nil {
 			temp.Type = hctype
 		} else {
-			diags = append(diags, diag.FromErr(err)...)
+			diags = append(diags, brightboxFromErr(err))
 		}
 		if attr, ok := check["request"]; ok {
 			temp.Request = attr.(string)

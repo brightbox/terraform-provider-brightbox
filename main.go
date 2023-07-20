@@ -38,7 +38,7 @@ func main() {
 	}
 
 	err = tf5server.Serve(
-		"registry.terraform.io/brightbox/terraform-provider-brightbox",
+		"registry.terraform.io/brightbox/brightbox",
 		muxServer.ProviderServer,
 		opts...,
 	)

@@ -26,7 +26,7 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 	log.Printf("[DEBUG] Fetching Infrastructure Client")
 	client, err := brightbox.Connect(apiContext, confFromAuthd(authd))
 	if err != nil {
-		return nil, nil, diag.FromErr(err)
+		return nil, nil, brightboxFromErrSlice(err)
 	}
 
 	var diags diag.Diagnostics
@@ -36,7 +36,7 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 
 		accounts, err := client.Accounts(authCtx)
 		if err != nil {
-			return nil, nil, diag.FromErr(err)
+			return nil, nil, brightboxFromErrSlice(err)
 		}
 		authd.Account = accounts[0].ID
 		log.Printf("[DEBUG] default account is %v", authd.Account)
@@ -54,7 +54,7 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 	log.Printf("[DEBUG] Building Orbit Client")
 	oe, err := orbitEndpointFromAuthd(authd)
 	if err != nil {
-		return nil, nil, append(diags, diag.FromErr(err)...)
+		return nil, nil, append(diags, brightboxFromErr(err))
 	}
 
 	storageContext, storageCancel := context.WithCancel(context.Background())
@@ -62,7 +62,7 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 	storageContext = contextWithLoggedHTTPClient(storageContext)
 	orbit, err := orbitServiceClient(storageContext, client, oe)
 	if err != nil {
-		diags = append(diags, diag.FromErr(err)...)
+		diags = append(diags, brightboxFromErr(err))
 	}
 	return client, orbit, diags
 }
