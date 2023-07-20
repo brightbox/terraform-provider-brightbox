@@ -1,6 +1,8 @@
 package provider
 
-import "github.com/brightbox/gobrightbox/v2/endpoint"
+import (
+	"github.com/brightbox/gobrightbox/v2/endpoint"
+)
 
 const (
 	defaultClientID     = "app-dkmch"

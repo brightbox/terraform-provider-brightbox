@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -35,6 +36,40 @@ func addDefaultsToConfig(data BrightboxProviderModel) BrightboxProviderModel {
 	setEnv(&data.UserName, usernameEnvVar)
 	setEnv(&data.password, passwordEnvVar)
 	return data
+}
+
+func providerModelToAuthDetails(data BrightboxProviderModel) authdetails {
+	return authdetails{
+		APIClient: data.APIClient.String(),
+		APISecret: data.APISecret.String(),
+		UserName:  data.UserName.String(),
+		password:  data.password.String(),
+		Account:   data.Account.String(),
+		APIURL:    data.APIURL.String(),
+		OrbitURL:  data.OrbitURL.String(),
+	}
+}
+
+func configureClient(ctx context.Context, data BrightboxProviderModel) (*CompositeClient, diag.Diagnostics) {
+	tflog.Debug(ctx, "Configuring Brightbox Clients")
+
+	authd := providerModelToAuthDetails(data)
+
+	apiclient, orbitclient, diags := authenticatedClients(ctx, authd)
+
+	if apiclient != nil {
+		tflog.Info(ctx, fmt.Sprintf("Brightbox Client configured for URL: %s", apiclient.ResourceBaseURL()))
+	}
+	if orbitclient != nil {
+		tflog.Info(ctx, fmt.Sprintf("Orbit Client configured for URL: %s", orbitclient.ResourceBaseURL()))
+	}
+
+	composite := &CompositeClient{
+		APIClient:   apiclient,
+		OrbitClient: orbitclient,
+	}
+
+	return composite, diags
 }
 
 func validateConfig(ctx context.Context, data BrightboxProviderModel) diag.Diagnostics {

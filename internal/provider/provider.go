@@ -36,12 +36,14 @@ type BrightboxProviderModel struct {
 // Metadata should return the metadata for the provider, such as
 // a type name and version data.
 func (p *BrightboxProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	tflog.Debug(ctx, "Brightbox Metadata called")
 	resp.TypeName = "brightbox"
 	resp.Version = p.version
 }
 
 // Schema should return the schema for this provider.
 func (p *BrightboxProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+	tflog.Debug(ctx, "Brightbox Schema called")
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"account": schema.StringAttribute{
@@ -84,9 +86,9 @@ func (p *BrightboxProvider) Schema(ctx context.Context, req provider.SchemaReque
 func (p *BrightboxProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data BrightboxProviderModel
 
-	tflog.Debug(ctx, "Configure")
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	tflog.Debug(ctx, "Brightbox Configure called")
 
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -94,29 +96,33 @@ func (p *BrightboxProvider) Configure(ctx context.Context, req provider.Configur
 	data = addDefaultsToConfig(data)
 
 	resp.Diagnostics.Append(validateConfig(ctx, data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	client, diags := configureClient(ctx, data)
+
+	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
-
-	// Example client configuration for data sources and resources
-	// client := configureClient(ctx, data)
-	// resp.DataSourceData = client
-	// resp.ResourceData = client
+	resp.DataSourceData = client
+	resp.ResourceData = client
 }
 
 // Resources returns a slice of functions to instantiate each Resource
 // implementation.
 func (p *BrightboxProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	tflog.Debug(ctx, "Brightbox Resources called")
+	return nil
 }
 
 // DataSources returns a slice of functions to instantiate each datasource
 func (p *BrightboxProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	tflog.Debug(ctx, "Brightbox DataSources called")
+	return nil
 }
 
 // New returns a versioned provider

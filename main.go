@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	sdkprovider "github.com/brightbox/terraform-provider-brightbox/brightbox"
+	// sdkprovider "github.com/brightbox/terraform-provider-brightbox/brightbox"
 	"github.com/brightbox/terraform-provider-brightbox/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -30,7 +30,7 @@ func main() {
 
 	providers := []func() tfprotov5.ProviderServer{
 		providerserver.NewProtocol5(provider.New(version)),
-		sdkprovider.Provider().GRPCProvider,
+		// sdkprovider.Provider().GRPCProvider,
 	}
 
 	// use the muxer
