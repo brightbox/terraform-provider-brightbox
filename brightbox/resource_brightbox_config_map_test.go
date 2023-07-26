@@ -20,9 +20,9 @@ func TestAccBrightboxConfigMap_Basic(t *testing.T) {
 	updatedName := fmt.Sprintf("bar-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxConfigMapDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxConfigMapDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
@@ -71,9 +71,9 @@ func TestAccBrightboxConfigMap_clear_entries(t *testing.T) {
 	name := fmt.Sprintf("foo-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxConfigMapDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxConfigMapDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_basic(rInt),
@@ -165,9 +165,9 @@ func TestAccBrightboxConfigMap_blank(t *testing.T) {
 	resourceName := "brightbox_config_map.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxConfigMapDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxConfigMapDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxConfigMapConfig_blank,

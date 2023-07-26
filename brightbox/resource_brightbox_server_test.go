@@ -20,9 +20,9 @@ func TestAccBrightboxServer_Basic(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_locked(rInt),
@@ -111,9 +111,9 @@ func TestAccBrightboxServer_Blank(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
@@ -131,9 +131,9 @@ func TestAccBrightboxServer_userDataBase64(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_base64_userdata(rInt),
@@ -158,9 +158,9 @@ func TestAccBrightboxServer_serverGroup(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
@@ -199,9 +199,9 @@ func TestAccBrightboxServer_multiServerGroupUp(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_serverGroup(rInt),
@@ -254,9 +254,9 @@ func TestAccBrightboxServer_multiServerGroupDown(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerAndGroupDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_multiServerGroup(rInt),
@@ -364,9 +364,9 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
@@ -403,9 +403,9 @@ func TestAccBrightboxServer_Snapshots(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
@@ -453,9 +453,9 @@ func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_basic(rInt),
@@ -519,9 +519,9 @@ func TestAccBrightboxServer_DiskResize(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_networkdisk40G(rInt),
@@ -575,9 +575,9 @@ func TestAccBrightboxServer_ServerResize(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_networkdisk40G(rInt),
@@ -621,9 +621,9 @@ func TestAccBrightboxServer_DataDisk(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerConfig_networkDataDisk(rInt),

@@ -27,9 +27,9 @@ func TestAccBrightboxServerGroupMembership_basic(t *testing.T) {
 	serverName3 := acctest.RandomWithPrefix("foo")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerGroupMembershipDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerGroupMembershipDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerGroupMembershipConfig_init(

@@ -21,9 +21,9 @@ func TestAccBrightboxFirewallRule_Basic(t *testing.T) {
 	resourceName := "brightbox_firewall_rule.rule1"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
@@ -76,9 +76,9 @@ func TestAccBrightboxFirewallRule_clear_names(t *testing.T) {
 	resourceName := "brightbox_firewall_rule.rule1"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_basic(rInt),
@@ -122,9 +122,9 @@ func TestAccBrightboxFirewallRule_mappings(t *testing.T) {
 	resourceName := "brightbox_firewall_rule.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallRuleAndPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallRuleConfig_mapped(rInt),

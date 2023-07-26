@@ -25,9 +25,9 @@ func TestAccBrightboxVolume_Image(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxVolumeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxVolumeConfig_locked(rInt),
@@ -123,9 +123,9 @@ func TestAccBrightboxVolume_rawDefault(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxVolumeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxVolumeConfig_rawDefault(rInt),
@@ -191,9 +191,9 @@ func TestAccBrightboxVolume_raw(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxVolumeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxVolumeConfig_rawSized(rInt),
@@ -241,9 +241,9 @@ func TestAccBrightboxVolume_resize(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxVolumeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxVolumeConfig_rawMinimal(rInt),
@@ -293,9 +293,9 @@ func TestAccBrightboxVolume_Formatted(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxVolumeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxVolumeConfig_rawFormatted(rInt),
@@ -341,9 +341,9 @@ func TestAccBrightboxVolume_FormattedLabelled(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxVolumeDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxVolumeDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxVolumeConfig_rawFormattedLabel(rInt),

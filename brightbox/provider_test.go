@@ -3,6 +3,7 @@ package brightbox
 import (
 	"context"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -10,13 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var testAccProviders map[string]*schema.Provider
-var testAccProvider *schema.Provider
-
-func init() {
-	testAccProvider = Provider()
-	testAccProviders = map[string]*schema.Provider{
-		"brightbox": testAccProvider,
+func testAccProviders() map[string]func() (*schema.Provider, error) {
+	return map[string]func() (*schema.Provider, error){
+		"brightbox": func() (*schema.Provider, error) { return Provider(), nil },
 	}
 }
 
@@ -135,19 +132,43 @@ func TestProvider_impl(t *testing.T) {
 	var _ *schema.Provider = Provider()
 }
 
-func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv(clientEnvVar); v != "" {
-		if v := os.Getenv(clientSecretEnvVar); v == "" {
-			t.Fatalf("%s must be set for acceptance tests", clientSecretEnvVar)
-		}
-	} else if v := os.Getenv(usernameEnvVar); v == "" {
-		t.Fatalf("%s or %s must be set for acceptance tests", clientEnvVar, usernameEnvVar)
-	}
+// testAccProvider is the "main" provider instance
+//
+// This Provider can be used in testing code for API calls without requiring
+// the use of saving and referencing specific ProviderFactories instances.
+//
+// testAccPreCheck(t) must be called before using this provider instance.
+var testAccProvider *schema.Provider
 
-	// diags := testAccProvider.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
-	// if diags.HasError() {
-	// 	t.Fatal(diags[0].Summary)
-	// }
+// testAccProviderConfigure ensures testAccProvider is only configured once
+//
+// The testAccPreCheck(t) function is invoked for every test and this prevents
+// extraneous reconfiguration to the same values each time. However, this does
+// not prevent reconfiguration that may happen should the address of
+// testAccProvider be errantly reused in ProviderFactories.
+var testAccProviderConfigure sync.Once
+
+func init() {
+	testAccProvider = Provider()
+}
+
+func testAccPreCheck(t *testing.T) {
+	testAccProviderConfigure.Do(
+		func() {
+			if v := os.Getenv(clientEnvVar); v != "" {
+				if v := os.Getenv(clientSecretEnvVar); v == "" {
+					t.Fatalf("%s must be set for acceptance tests", clientSecretEnvVar)
+				}
+			} else if v := os.Getenv(usernameEnvVar); v == "" {
+				t.Fatalf("%s or %s must be set for acceptance tests", clientEnvVar, usernameEnvVar)
+			}
+
+			diags := testAccProvider.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
+			if diags.HasError() {
+				t.Fatal(diags[0].Summary)
+			}
+		},
+	)
 }
 
 // This delegation activates the sweepers

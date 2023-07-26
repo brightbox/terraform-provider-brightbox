@@ -18,9 +18,9 @@ func TestAccBrightboxCloudip_Basic(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
@@ -52,9 +52,9 @@ func TestAccBrightboxCloudip_clear_name(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
@@ -101,9 +101,9 @@ func TestAccBrightboxCloudip_Mapped(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mapped(rInt),
@@ -134,9 +134,9 @@ func TestAccBrightboxCloudip_PortMapped(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_port_mapped(rInt),
@@ -169,9 +169,9 @@ func TestAccBrightboxCloudip_RemappedSingle(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_remapped(rInt),
@@ -201,9 +201,9 @@ func TestAccBrightboxCloudip_Remapped(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_basic(rInt),
@@ -271,9 +271,9 @@ func TestAccBrightboxCloudip_MappedGroup(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mappedGroup(rInt),
@@ -293,9 +293,9 @@ func TestAccBrightboxCloudip_MappedLb(t *testing.T) {
 	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxCloudIPDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxCloudIPDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxCloudipConfig_mappedLb(rInt),

@@ -23,9 +23,9 @@ func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	var cloudip brightbox.CloudIP
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxDatabaseServerAndOthersDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxDatabaseServerAndOthersDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxDatabaseServerConfig_locked(name),

@@ -15,8 +15,8 @@ var disktypeRe = regexp.MustCompile("disk1.img")
 
 func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
 		Steps: []resource.TestStep{
 			{
 				Config: TestAccBrightboxImageDataSourceConfig_blank_disk,
@@ -68,8 +68,8 @@ func TestAccBrightboxImageDataSource_blank_disk(t *testing.T) {
 
 func TestAccBrightboxImageDataSource_ubuntu_latest_official(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
 		Steps: []resource.TestStep{
 			{
 				Config: TestAccBrightboxImageDataSourceConfig_ubuntu_latest_official,

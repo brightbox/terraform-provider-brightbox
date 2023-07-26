@@ -18,9 +18,9 @@ func TestAccBrightboxLoadBalancer_BasicUpdates(t *testing.T) {
 	var loadBalancer brightbox.LoadBalancer
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxLoadBalancerAndServerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxLoadBalancerAndServerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxLoadBalancerConfig_locked,

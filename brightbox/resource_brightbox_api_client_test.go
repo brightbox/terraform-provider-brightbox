@@ -20,9 +20,9 @@ func TestAccBrightboxAPIClient_Basic(t *testing.T) {
 	resourceName := "brightbox_api_client.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxAPIClientDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxAPIClientDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxAPIClientConfig_basic(rInt),
@@ -72,9 +72,9 @@ func TestAccBrightboxAPIClient_clear_names(t *testing.T) {
 	resourceName := "brightbox_api_client.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxAPIClientDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxAPIClientDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxAPIClientConfig_basic(rInt),

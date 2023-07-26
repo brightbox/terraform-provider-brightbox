@@ -20,9 +20,9 @@ func TestAccBrightboxServerGroup_Basic(t *testing.T) {
 	updatedName := fmt.Sprintf("bar-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerGroupDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),
@@ -75,9 +75,9 @@ func TestAccBrightboxServerGroup_clear_names(t *testing.T) {
 	name := fmt.Sprintf("foo-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxServerGroupDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxServerGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxServerGroupConfig_basic(rInt),

@@ -19,9 +19,9 @@ func TestAccBrightboxOrbitContainer_Basic(t *testing.T) {
 	resourceName := "brightbox_orbit_container.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxOrbitContainerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxOrbitContainerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxOrbitContainerConfig_basic,
@@ -52,9 +52,9 @@ func TestAccBrightboxOrbitContainer_metadata(t *testing.T) {
 	resourceName := "brightbox_orbit_container.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxOrbitContainerDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxOrbitContainerDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxOrbitContainerConfig_metadata,

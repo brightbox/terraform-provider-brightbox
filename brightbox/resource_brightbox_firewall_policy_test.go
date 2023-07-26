@@ -20,9 +20,9 @@ func TestAccBrightboxFirewallPolicy_Basic(t *testing.T) {
 	updatedName := fmt.Sprintf("bar-%d", rInt)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallPolicyDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
@@ -71,9 +71,9 @@ func TestAccBrightboxFirewallPolicy_clear_names(t *testing.T) {
 	resourceName := "brightbox_firewall_policy.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallPolicyDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_basic(rInt),
@@ -122,9 +122,9 @@ func TestAccBrightboxFirewallPolicy_Mapped(t *testing.T) {
 	var serverGroup brightbox.ServerGroup
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallPolicyDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
@@ -161,9 +161,9 @@ func TestAccBrightboxFirewallPolicy_mappings(t *testing.T) {
 	resourceName := "brightbox_firewall_policy.foobar"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBrightboxFirewallPolicyAndGroupDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders(),
+		CheckDestroy:      testAccCheckBrightboxFirewallPolicyAndGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckBrightboxFirewallPolicyConfig_mapped(rInt),
