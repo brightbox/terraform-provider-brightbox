@@ -2,14 +2,10 @@ package brightbox
 
 import (
 	"context"
-	"errors"
 	"log"
-	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -214,23 +210,4 @@ func resourceBrightboxFirewallPolicyUpdateAndRemap(
 		}
 	}
 	return append(diags, resourceBrightboxFirewallPolicyUpdate(ctx, d, meta)...)
-}
-
-func retryServerGroupChange(changeFunc func() error, timeout time.Duration) error {
-	// Wait for group to change
-	return resource.Retry(
-		timeout,
-		func() *retry.RetryError {
-			if err := changeFunc(); err != nil {
-				var apierror *brightbox.APIError
-				if errors.As(err, &apierror) {
-					if apierror.StatusCode == 409 {
-						return retry.RetryableError(err)
-					}
-				}
-				return retry.NonRetryableError(err)
-			}
-			return nil
-		},
-	)
 }
