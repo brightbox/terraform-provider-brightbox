@@ -8,8 +8,8 @@ import (
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
 	"github.com/brightbox/gobrightbox/v2/enums/cloudipstatus"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccBrightboxCloudip_Basic(t *testing.T) {
