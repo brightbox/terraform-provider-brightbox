@@ -14,6 +14,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/oauth2"
 )
@@ -52,7 +53,12 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 
 		accounts, err := client.Accounts(authCtx)
 		if err != nil {
-			diags.Append(diagerrors.FromErr(err))
+			diags.Append(
+				diag.WithPath(
+					path.Root("Account"),
+					diagerrors.FromErr(err),
+				),
+			)
 			return nil, nil, diags
 		}
 		authd.Account = accounts[0].ID
@@ -62,7 +68,12 @@ func authenticatedClients(authCtx context.Context, authd authdetails) (*brightbo
 		tflog.Info(authCtx, fmt.Sprintf("Checking credentials have access to %v", authd.Account))
 		account, err := client.Account(authCtx, authd.Account)
 		if err != nil {
-			diags.Append(diagerrors.FromErr(err))
+			diags.Append(
+				diag.WithPath(
+					path.Root("Account"),
+					diagerrors.FromErr(err),
+				),
+			)
 			return nil, nil, diags
 		}
 		tflog.Debug(authCtx, "account check passsed")
@@ -92,7 +103,8 @@ func checkIsActive(diags diag.Diagnostics, account *brightbox.Account) diag.Diag
 		return diags
 	}
 	return append(diags,
-		diag.NewWarningDiagnostic(
+		diag.NewAttributeWarningDiagnostic(
+			path.Root("Account"),
 			fmt.Sprintf("Account %v is not active", account.ID),
 			fmt.Sprintf("The account %v is showing state %v\nIf this is unexpected, please use the GUI to contact Brightbox Support", account.ID, account.Status),
 		),
