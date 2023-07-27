@@ -1,16 +1,11 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 
-	// sdkprovider "github.com/brightbox/terraform-provider-brightbox/brightbox"
 	"github.com/brightbox/terraform-provider-brightbox/internal/provider"
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 )
 
 var (
@@ -28,20 +23,14 @@ func main() {
 		opts = append(opts, tf5server.WithManagedDebug())
 	}
 
-	providers := []func() tfprotov5.ProviderServer{
-		providerserver.NewProtocol5(provider.New(version)),
-		// sdkprovider.Provider().GRPCProvider,
-	}
-
-	// use the muxer
-	muxServer, err := tf5muxserver.NewMuxServer(context.Background(), providers...)
+	providerServerCreator, err := provider.BrightboxTF5ProviderServerCreatorFactory(version)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
 	err = tf5server.Serve(
 		"registry.terraform.io/brightbox/brightbox",
-		muxServer.ProviderServer,
+		providerServerCreator,
 		opts...,
 	)
 	if err != nil {
