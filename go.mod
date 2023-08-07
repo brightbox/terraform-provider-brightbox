@@ -7,6 +7,7 @@ require (
 	github.com/gophercloud/gophercloud v1.5.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/hashicorp/go-cleanhttp v0.5.2
+	github.com/hashicorp/terraform-plugin-framework v1.3.4
 	github.com/hashicorp/terraform-plugin-go v0.18.0
 	github.com/hashicorp/terraform-plugin-mux v0.11.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
