@@ -7,8 +7,8 @@ github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki
 github.com/apparentlymart/go-textseg/v12 v12.0.0/go.mod h1:S/4uRK2UtaQttw1GenVJEynmyUenKwP++x/+DdGV/Ec=
 github.com/apparentlymart/go-textseg/v13 v13.0.0 h1:Y+KvPE1NYz0xl601PVImeQfFyEy6iT90AvPUL1NNfNw=
 github.com/apparentlymart/go-textseg/v13 v13.0.0/go.mod h1:ZK2fH7c4NqDTLtiYLvIkEghdlcqw7yxLeM89kiTRPUo=
-github.com/brightbox/gobrightbox/v2 v2.1.1 h1:sDtIgSceiInZq3QETYZ4L2s8K7bRQaXH6AB7bQm6NUA=
-github.com/brightbox/gobrightbox/v2 v2.1.1/go.mod h1:k+1ANjwIoRyjLj1k+SL0jOSxVOmj7tOmu3xVlplKWCU=
+github.com/brightbox/gobrightbox/v2 v2.1.2 h1:8y98lGlNhg6nwsaJwQ7ejVnQ5nsJxi+hQP1K0s2BMfk=
+github.com/brightbox/gobrightbox/v2 v2.1.2/go.mod h1:nc0jycuVPWGv/DJmJw35lrPAujjK3kdi/w3MvWk7tM4=
 github.com/bwesterb/go-ristretto v1.2.0/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/cloudflare/circl v1.1.0/go.mod h1:prBCrKB9DV4poKZY1l9zBXg2QJY7mvgRvtMxxK7fi4I=
 github.com/cloudflare/circl v1.3.3 h1:fE/Qz0QdIGqeWfnwq0RE0R7MI51s0M2E4Ga9kq5AEMs=
@@ -66,8 +66,6 @@ github.com/hashicorp/terraform-exec v0.18.1 h1:LAbfDvNQU1l0NOQlTuudjczVhHj061fNX
 github.com/hashicorp/terraform-exec v0.18.1/go.mod h1:58wg4IeuAJ6LVsLUeD2DWZZoc/bYi6dzhLHzxM41980=
 github.com/hashicorp/terraform-json v0.17.0 h1:EiA1Wp07nknYQAiv+jIt4dX4Cq5crgP+TsTE45MjMmM=
 github.com/hashicorp/terraform-json v0.17.0/go.mod h1:Huy6zt6euxaY9knPAFKjUITn8QxUFIe9VuSzb4zn/0o=
-github.com/hashicorp/terraform-plugin-framework v1.3.4 h1:dOTLsALgmQu+PawAvhfGQ04H0MeIz3EZmBw7OFvj7qs=
-github.com/hashicorp/terraform-plugin-framework v1.3.4/go.mod h1:2gGDpWiTI0irr9NSTLFAKlTi6KwGti3AoU19rFqU30o=
 github.com/hashicorp/terraform-plugin-go v0.18.0 h1:IwTkOS9cOW1ehLd/rG0y+u/TGLK9y6fGoBjXVUquzpE=
 github.com/hashicorp/terraform-plugin-go v0.18.0/go.mod h1:l7VK+2u5Kf2y+A+742GX0ouLut3gttudmvMgN0PA74Y=
 github.com/hashicorp/terraform-plugin-log v0.9.0 h1:i7hOA+vdAItN1/7UrfBqBwvYPQ9TFvymaRGZED3FCV0=
