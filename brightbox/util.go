@@ -471,7 +471,7 @@ func serverGroupMemberListFromNodes(
 }
 
 // Returns the most recent item out of a slice of items with Dates
-func mostRecent[I brightbox.CreateDated](items []I) *I {
+func mostRecent[S ~[]I, I brightbox.CreateDated](items S) *I {
 	sortedItems := items
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].CreatedAtUnix() > items[j].CreatedAtUnix()
@@ -481,7 +481,7 @@ func mostRecent[I brightbox.CreateDated](items []I) *I {
 
 // filter returns a new slice with all elements from the from the
 // input elements for which the provided predicate function returns true.
-func filter[T any](input []T, pred func(T) bool) (output []T) {
+func filter[S ~[]T, T any](input S, pred func(T) bool) (output S) {
 	for _, v := range input {
 		if pred(v) {
 			output = append(output, v)
@@ -491,7 +491,7 @@ func filter[T any](input []T, pred func(T) bool) (output []T) {
 }
 
 // idList returns a list of identifiers from a list of identifiable objects
-func idList[O any](list []O, identify func(v O) string) []string {
+func idList[S ~[]O, O any](list S, identify func(v O) string) []string {
 	ids := make([]string, len(list))
 	for i, v := range list {
 		ids[i] = identify(v)
@@ -501,7 +501,7 @@ func idList[O any](list []O, identify func(v O) string) []string {
 
 // Generic Set Operations
 // Set Difference: A - B
-func Difference[O comparable](a, b []O) (diff []O) {
+func Difference[S ~[]O, O comparable](a, b S) (diff S) {
 	m := make(map[O]bool, len(b))
 
 	for _, item := range b {
@@ -516,7 +516,7 @@ func Difference[O comparable](a, b []O) (diff []O) {
 	return
 }
 
-func Intersection[O comparable](a, b []O) (intersect []O) {
+func Intersection[S ~[]O, O comparable](a, b S) (intersect S) {
 	m := make(map[O]bool, len(a))
 
 	for _, item := range a {
@@ -531,7 +531,7 @@ func Intersection[O comparable](a, b []O) (intersect []O) {
 	return
 }
 
-func Union[O comparable](a, b []O) []O {
+func Union[S ~[]O, O comparable](a, b S) S {
 	m := make(map[O]bool, len(a))
 
 	for _, item := range a {
