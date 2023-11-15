@@ -8,8 +8,8 @@ github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki
 github.com/apparentlymart/go-textseg/v12 v12.0.0/go.mod h1:S/4uRK2UtaQttw1GenVJEynmyUenKwP++x/+DdGV/Ec=
 github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew1u1fNQOlOtuGxQY=
 github.com/apparentlymart/go-textseg/v15 v15.0.0/go.mod h1:K8XmNZdhEBkdlyDdvbmmsvpAG721bKi0joRfFdHIWJ4=
-github.com/brightbox/gobrightbox/v2 v2.1.2 h1:8y98lGlNhg6nwsaJwQ7ejVnQ5nsJxi+hQP1K0s2BMfk=
-github.com/brightbox/gobrightbox/v2 v2.1.2/go.mod h1:nc0jycuVPWGv/DJmJw35lrPAujjK3kdi/w3MvWk7tM4=
+github.com/brightbox/gobrightbox/v2 v2.2.0 h1:JCPuAaBSvHI6FoUqbm99ccrMAZ/nJVxFj9jjghBC7Ww=
+github.com/brightbox/gobrightbox/v2 v2.2.0/go.mod h1:rsW/MRrDarDbSyID2p6VUeuJZ4GI6S+ezcW46fbFmUM=
 github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZlaQsNA=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
 github.com/cloudflare/circl v1.3.3 h1:fE/Qz0QdIGqeWfnwq0RE0R7MI51s0M2E4Ga9kq5AEMs=
