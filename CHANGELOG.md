@@ -1,3 +1,8 @@
+## 3.4.4 (November 16, 2023)
+
+NOTES
+- Updates of dependencies
+
 ## 3.4.3 (July 14, 2023)
 
 BUG FIXES:
