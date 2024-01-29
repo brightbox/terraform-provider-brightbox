@@ -21,11 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-// const (
-// 	maxPort = 65535
-// 	minPort = 1
-// )
-
 var (
 	serverRegexp           = regexp.MustCompile("^srv-.....$")
 	serverGroupRegexp      = regexp.MustCompile("^grp-.....$")
@@ -47,15 +42,6 @@ var (
 	}
 	validDatabaseEngines = []string{"mysql", "postgresql"}
 )
-
-func padRight(str, pad string, length int) string {
-	for {
-		if len(str) >= length {
-			return str
-		}
-		str += pad
-	}
-}
 
 func timeFromFloat(timeFloat float64) time.Time {
 	sec, dec := math.Modf(timeFloat)
@@ -127,14 +113,6 @@ func expandStringValueList(configured []interface{}) []string {
 	return vs
 }
 
-func flattenStringSlice(list []string) []interface{} {
-	temp := make([]interface{}, len(list))
-	for i, v := range list {
-		temp[i] = v
-	}
-	return temp
-}
-
 func assignInt(d *schema.ResourceData, target **uint, index string) {
 	if d.HasChange(index) {
 		var temp uint
@@ -198,14 +176,6 @@ func isBase64Encoded(data string) bool {
 func base64Decode(data string) (string, error) {
 	result, err := base64.StdEncoding.DecodeString(data)
 	return string(result), err
-}
-
-func stringValidateFunc(v interface{}, name string, failureTest func(string) bool, formatString string) (warns []string, errors []error) {
-	value := v.(string)
-	if failureTest(value) {
-		errors = append(errors, fmt.Errorf(formatString, name))
-	}
-	return
 }
 
 func compactZero[S ~[]E, E comparable](s S) S {
@@ -373,14 +343,6 @@ func getenvWithDefault(key string, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-// set the lock state of a resource based upon a boolean
-// func setLockState(client *brightbox.Client, isLocked bool, resource interface{}) error {
-// 	if isLocked {
-// 		return client.LockResource(resource)
-// 	}
-// 	return client.UnLockResource(resource)
-// }
 
 // strSliceContains checks if a given string is contained in a slice
 // When anybody asks why Go needs generics, here you go.

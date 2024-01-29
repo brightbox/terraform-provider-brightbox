@@ -214,14 +214,6 @@ func escapedString(attr interface{}) string {
 	return url.PathEscape(attr.(string))
 }
 
-func escapedStringList(source []string) []string {
-	dest := make([]string, len(source))
-	for i, v := range source {
-		dest[i] = escapedString(v)
-	}
-	return dest
-}
-
 func escapedStringMetadata(metadata interface{}) map[string]string {
 	source := metadata.(map[string]interface{})
 	dest := make(map[string]string, len(source))
@@ -229,30 +221,6 @@ func escapedStringMetadata(metadata interface{}) map[string]string {
 		dest[strings.ToLower(k)] = escapedString(v)
 	}
 	return dest
-}
-
-func setUnescapedString(d *schema.ResourceData, elem string, inputString string) error {
-	temp, err := url.PathUnescape(inputString)
-	if err != nil {
-		return err
-	}
-	//lintignore:R001
-	return d.Set(elem, temp)
-}
-
-func setUnescapedStringSet(d *schema.ResourceData, elem string, inputStringSet []string) error {
-	var tempSet []string
-	for _, str := range inputStringSet {
-		if str != "" {
-			temp, err := url.PathUnescape(str)
-			if err != nil {
-				return err
-			}
-			tempSet = append(tempSet, temp)
-		}
-	}
-	//lintignore:R001
-	return d.Set(elem, tempSet)
 }
 
 func setUnescapedStringMap(d *schema.ResourceData, elem string, inputMap map[string]string) error {
