@@ -346,8 +346,8 @@ func testAccCheckBrightboxServerAttributes(server *brightbox.Server) resource.Te
 			return fmt.Errorf("Bad image id: %s", server.Image.ID)
 		}
 
-		if server.ServerType.ID != "typ-8985i" {
-			return fmt.Errorf("Bad server type: %s", server.ServerType.ID)
+		if server.ServerType.Handle != "1gb.ssd" {
+			return fmt.Errorf("Bad server type: %s", server.ServerType.Handle)
 		}
 
 		if !zoneRegexp.MatchString(server.Zone.Handle) {
@@ -938,7 +938,7 @@ resource "brightbox_server" "foobar" {
 	name = "foo-%d"
 	image = data.brightbox_image.foobar.id
 	server_groups = [brightbox_server_group.barfoo.id]
-	type = "typ-n0977"
+	type = "1gb.ssd"
 }
 
 resource "brightbox_server_group" "barfoo" {
@@ -957,7 +957,7 @@ resource "brightbox_server" "foobar" {
 	  brightbox_server_group.barfoo.id,
 	  brightbox_server_group.barfoo2.id
 	  ]
-	type = "typ-n0977"
+	type = "1gb.ssd"
 }
 
 resource "brightbox_server_group" "barfoo" {
