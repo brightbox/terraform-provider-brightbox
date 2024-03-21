@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.22.0
 
 require (
-	github.com/brightbox/gobrightbox/v2 v2.2.1
+	github.com/brightbox/gobrightbox/v2 v2.2.2
 	github.com/gophercloud/gophercloud v1.11.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/hashicorp/go-cleanhttp v0.5.2
