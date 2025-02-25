@@ -1,7 +1,6 @@
 module github.com/brightbox/terraform-provider-brightbox
 
 go 1.22.0
-
 toolchain go1.23.1
 
 require (
@@ -13,7 +12,7 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.16.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	golang.org/x/exp v0.0.0-20220927162542-c76eaa363f9d
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/oauth2 v0.27.0
 	gotest.tools/v3 v3.5.2
 )
 
