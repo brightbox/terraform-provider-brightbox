@@ -34,7 +34,7 @@ func main() {
 	// use the muxer
 	muxServer, err := tf5muxserver.NewMuxServer(context.Background(), providers...)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 
 	err = tf5server.Serve(

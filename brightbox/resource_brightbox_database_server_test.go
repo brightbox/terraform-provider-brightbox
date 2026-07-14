@@ -483,7 +483,7 @@ func init() {
 			defer cancel()
 			client, errs := obtainCloudClient()
 			if errs != nil {
-				return fmt.Errorf(errs[0].Summary)
+				return fmt.Errorf("%s", errs[0].Summary)
 			}
 			objects, err := client.APIClient.DatabaseServers(ctx)
 			if err != nil {
