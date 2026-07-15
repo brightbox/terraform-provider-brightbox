@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -84,4 +85,20 @@ func testAccCheckBrightboxObjectExists[O any](
 		*object = *retrieveobject
 		return nil
 	}
+}
+
+// fullSchemaObject builds a cty.Value of ty's exact object type, defaulting
+// every attribute to null and overriding the ones given. Needed because
+// cty.ObjectVal requires every attribute of the target type to be present.
+// Shared by the per-resource *_snapshots_test.go Plan->Apply tests.
+func fullSchemaObject(ty cty.Type, overrides map[string]cty.Value) cty.Value {
+	vals := map[string]cty.Value{}
+	for k, at := range ty.AttributeTypes() {
+		if v, ok := overrides[k]; ok {
+			vals[k] = v
+		} else {
+			vals[k] = cty.NullVal(at)
+		}
+	}
+	return cty.ObjectVal(vals)
 }

@@ -3,6 +3,7 @@ package brightbox
 import (
 	"context"
 	"log"
+	"path"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -129,17 +130,19 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			},
 
 			"snapshots_retention": {
-				Description:  "Keep this number of scheduled snapshots. Keep all if unset",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
+				Description:      "Keep this number of scheduled snapshots. Keep all if unset; set to \"\" to clear a previously configured value",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateFunc:     validateOptionalNonBlankString,
+				DiffSuppressFunc: suppressUnconfiguredSnapshotField,
 			},
 
 			"snapshots_schedule": {
-				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: ValidateCronString,
+				Description:      "Crontab pattern for scheduled snapshots. Must be at least hourly; set to \"\" to clear a previously configured value",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateFunc:     ValidateCronString,
+				DiffSuppressFunc: suppressUnconfiguredSnapshotField,
 			},
 
 			"snapshots_schedule_next_at": {
@@ -172,15 +175,6 @@ var (
 		"Load Balancer",
 		setDatabaseServerAttributes,
 		databaseServerUnavailable,
-	)
-
-	resourceBrightboxDatabaseServerUpdate = resourceBrightboxUpdateWithLock(
-		(*brightbox.Client).UpdateDatabaseServer,
-		"Database Server",
-		databaseServerFromID,
-		addUpdateableDatabaseServerOptions,
-		setDatabaseServerAttributes,
-		resourceBrightboxSetDatabaseServerLockState,
 	)
 
 	resourceBrightboxDatabaseServerDeleteAndWait = resourceBrightboxDeleteAndWait(
@@ -219,12 +213,60 @@ func addUpdateableDatabaseServerOptions(
 	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
 	assignCreateByte(d, &opts.MaintenanceWeekday, opts.ID, "maintenance_weekday")
 	assignCreateByte(d, &opts.MaintenanceHour, opts.ID, "maintenance_hour")
-	// Always set snapshot schedule to get around default issue
-	schedule := d.Get("snapshots_schedule").(string)
-	opts.SnapshotsSchedule = &schedule
+	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
 	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
 	assignStringSet(d, &opts.AllowAccess, "allow_access")
 	return nil
+}
+
+// updateDatabaseServerWithNullFields performs the update via a raw PUT
+// carrying explicit JSON nulls for nullFields, rather than gobrightbox's
+// UpdateDatabaseServer, which can only send "" for a cleared *string. See
+// requestBodyWithNullField.
+func updateDatabaseServerWithNullFields(
+	ctx context.Context,
+	client *brightbox.Client,
+	databaseServerOpts brightbox.DatabaseServerOptions,
+	nullFields ...string,
+) (*brightbox.DatabaseServer, error) {
+	requestBody, err := requestBodyWithNullField(databaseServerOpts, nullFields...)
+	if err != nil {
+		return nil, err
+	}
+	return brightboxAPIRequest[brightbox.DatabaseServer](ctx, client, "PUT", path.Join("database_servers", databaseServerOpts.ID), requestBody)
+}
+
+func resourceBrightboxDatabaseServerUpdate(
+	ctx context.Context,
+	d *schema.ResourceData,
+	meta interface{},
+) diag.Diagnostics {
+	client := meta.(*CompositeClient).APIClient
+
+	databaseServerOpts := databaseServerFromID(d.Id())
+	errs := addUpdateableDatabaseServerOptions(d, databaseServerOpts)
+	if errs.HasError() {
+		return errs
+	}
+	log.Printf("[DEBUG] Database Server update configuration: %+v", databaseServerOpts)
+
+	nullFields := snapshotNullFields(d)
+
+	var databaseServer *brightbox.DatabaseServer
+	var err error
+	if len(nullFields) > 0 {
+		databaseServer, err = updateDatabaseServerWithNullFields(ctx, client, *databaseServerOpts, nullFields...)
+	} else {
+		databaseServer, err = client.UpdateDatabaseServer(ctx, *databaseServerOpts)
+	}
+	if err != nil {
+		return brightboxFromErrSlice(err)
+	}
+	log.Printf("[DEBUG] setting details from returned object: %+v", *databaseServer)
+	if d.HasChange("locked") {
+		return resourceBrightboxSetDatabaseServerLockState(ctx, d, meta)
+	}
+	return setDatabaseServerAttributes(d, databaseServer)
 }
 
 func setDatabaseServerAttributes(

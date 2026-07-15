@@ -12,6 +12,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -213,6 +214,70 @@ func ValidateCronString(v interface{}, name string) (warns []string, errors []er
 		errors = append(errors, fmt.Errorf("%q not a valid Cron: %s", name, err))
 	}
 	return
+}
+
+// suppressUnconfiguredSnapshotField is the DiffSuppressFunc for
+// snapshots_schedule/snapshots_retention on both server and
+// database_server. These stay Optional-only, never Computed - see
+// TestUnitBrightboxDatabaseServer_SnapshotsScheduleSurvivesPlanAndApply.
+//
+// An omitted attribute and an explicit "" both flatten to the same zero
+// value in the SDK's diff, so GetRawConfig distinguishes them: suppress
+// the diff (keep the API-assigned value) unless the attribute is present
+// and explicitly "" in config. "" is the only clear signal available -
+// HCL decodes `= null` identically to an omitted attribute.
+func suppressUnconfiguredSnapshotField(k, _, new string, d *schema.ResourceData) bool {
+	if new != "" {
+		return false
+	}
+	raw := d.GetRawConfig()
+	if raw.IsNull() || !raw.Type().HasAttribute(k) {
+		return true
+	}
+	return raw.GetAttr(k).IsNull()
+}
+
+// validateOptionalNonBlankString is like validation.StringIsNotWhiteSpace,
+// except it tolerates "" - required for snapshots_retention, where an
+// explicit "" is the practitioner's only way to clear the attribute (see
+// suppressUnconfiguredSnapshotField). It still rejects a whitespace-only
+// string, which is never a meaningful value.
+func validateOptionalNonBlankString(v interface{}, name string) (warns []string, errs []error) {
+	s := v.(string)
+	if s == "" {
+		return
+	}
+	if strings.TrimSpace(s) == "" {
+		errs = append(errs, fmt.Errorf("%q must not be entirely whitespace", name))
+	}
+	return
+}
+
+// snapshotsScheduleCleared and snapshotsRetentionCleared report whether the
+// practitioner explicitly cleared the attribute. suppressUnconfiguredSnapshotField
+// only suppresses the diff when the attribute is unconfigured, so a
+// surviving HasChange to "" unambiguously means "clear". Shared by the
+// server and database_server resources.
+func snapshotsScheduleCleared(d *schema.ResourceData) bool {
+	return d.HasChange("snapshots_schedule") && d.Get("snapshots_schedule").(string) == ""
+}
+
+func snapshotsRetentionCleared(d *schema.ResourceData) bool {
+	return d.HasChange("snapshots_retention") && d.Get("snapshots_retention").(string) == ""
+}
+
+// snapshotNullFields returns the JSON field names that must be sent as an
+// explicit null on update, i.e. those snapshots_* attributes the
+// practitioner just cleared. See requestBodyWithNullField.
+func snapshotNullFields(d *schema.ResourceData) []string {
+	var nullFields []string
+	if snapshotsRetentionCleared(d) {
+		nullFields = append(nullFields, "snapshots_retention")
+	}
+	if snapshotsScheduleCleared(d) {
+		nullFields = append(nullFields, "snapshots_schedule")
+	}
+	return nullFields
 }
 
 func http1Keys(v interface{}, name string) (warns []string, errors []error) {

@@ -397,54 +397,40 @@ func TestAccBrightboxServer_Update(t *testing.T) {
 	})
 }
 
-func TestAccBrightboxServer_Snapshots(t *testing.T) {
-	resourceName := "brightbox_server.foobar"
-	var server brightbox.Server
-	rInt := acctest.RandInt()
+// TestUnitBrightboxServer_SnapshotsNoDriftWhenUnconfigured is the
+// resource_brightbox_server counterpart to
+// TestUnitBrightboxDatabaseServer_SnapshotsNoDriftWhenUnconfigured.
+func TestUnitBrightboxServer_SnapshotsNoDriftWhenUnconfigured(t *testing.T) {
+	r := resourceBrightboxServer()
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders(),
-		CheckDestroy:      testAccCheckBrightboxServerDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckBrightboxServerConfig_basic(rInt),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxObjectExists(
-						resourceName,
-						"Server",
-						&server,
-						(*brightbox.Client).Server,
-					),
-					testAccCheckBrightboxServerAttributes(&server),
-				),
-			},
-
-			{
-				Config: testAccCheckBrightboxServerConfig_snapshots(rInt),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxObjectExists(
-						resourceName,
-						"Server",
-						&server,
-						(*brightbox.Client).Server,
-					),
-				),
-			},
-
-			{
-				Config: testAccCheckBrightboxServerConfig_basic(rInt),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckBrightboxObjectExists(
-						resourceName,
-						"Server",
-						&server,
-						(*brightbox.Client).Server,
-					),
-				),
-			},
+	state := &terraform.InstanceState{
+		ID: "srv-testt",
+		Attributes: map[string]string{
+			"name":                "srv server",
+			"snapshots_retention": "7",
+			"snapshots_schedule":  "0 7 * * *",
+			"server_groups.#":     "0",
 		},
+	}
+
+	config := terraform.NewResourceConfigRaw(map[string]interface{}{
+		"name":          "srv server",
+		"server_groups": []interface{}{},
 	})
+
+	diff, err := r.Diff(context.Background(), state, config, nil)
+	if err != nil {
+		t.Fatalf("unexpected error computing diff: %s", err)
+	}
+
+	for _, attr := range []string{"snapshots_retention", "snapshots_schedule"} {
+		if diff == nil {
+			continue
+		}
+		if attrDiff, ok := diff.Attributes[attr]; ok {
+			t.Errorf("unexpected plan diff for %q: %#v - an API-assigned value should be preserved when the config omits the attribute, not planned to null", attr, attrDiff)
+		}
+	}
 }
 
 func TestAccBrightboxServer_UpdateUserData(t *testing.T) {
@@ -811,25 +797,6 @@ resource "brightbox_server" "foobar" {
 	name = "foo-%d"
 	type = "1gb.ssd"
 	server_groups = [data.brightbox_server_group.default.id]
-}
-
-data "brightbox_server_group" "barfoo" {
-	name = "^default$"
-}
-
-%s%s`, rInt, TestAccBrightboxImageDataSourceConfig_blank_disk,
-		TestAccBrightboxDataServerGroupConfig_default)
-}
-
-func testAccCheckBrightboxServerConfig_snapshots(rInt int) string {
-	return fmt.Sprintf(`
-resource "brightbox_server" "foobar" {
-	image = data.brightbox_image.foobar.id
-	name = "foo-%d"
-	type = "1gb.ssd"
-	server_groups = [data.brightbox_server_group.default.id]
-	user_data = "foo:-with-character's"
-	snapshots_schedule = "0 7 * * *"
 }
 
 data "brightbox_server_group" "barfoo" {

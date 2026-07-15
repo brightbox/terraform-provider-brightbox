@@ -33,9 +33,13 @@ The following arguments are supported:
 * `disk_size` - (Optional) The desired size of the disk storage for the
 Server. Only usable with types using network block storage.
 * `snapshots_retention` - (Optional) Keep this number of scheduled
-snapshots. Keep all if unset.
+snapshots. Keep all if unset. Leaving the attribute out of the config
+preserves whatever value the API currently holds; set it to `""` to
+explicitly clear it.
 * `snapshots_schedule` - (Optional) Crontab pattern for scheduled
-snapshots. Must be no more frequent than hourly.
+snapshots. Must be no more frequent than hourly. Leaving the attribute
+out of the config preserves whatever value the API currently holds; set
+it to `""` to explicitly clear it.
 * `user_data` (Optional) - A string of the desired User Data for the Server.
 * `user_data_base64` (Optional) - Already encrypted User Data - for use
 with the template provider.

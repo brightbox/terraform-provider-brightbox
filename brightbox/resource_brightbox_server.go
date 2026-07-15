@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"time"
 
 	brightbox "github.com/brightbox/gobrightbox/v2"
@@ -148,19 +149,19 @@ func resourceBrightboxServer() *schema.Resource {
 			},
 
 			"snapshots_retention": {
-				Description:  "Keep this number of scheduled snapshots. Keep all if unset",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.StringIsNotWhiteSpace,
+				Description:      "Keep this number of scheduled snapshots. Keep all if unset; set to \"\" to clear a previously configured value",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateFunc:     validateOptionalNonBlankString,
+				DiffSuppressFunc: suppressUnconfiguredSnapshotField,
 			},
 
 			"snapshots_schedule": {
-				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: ValidateCronString,
+				Description:      "Crontab pattern for scheduled snapshots. Must be at least hourly; set to \"\" to clear a previously configured value",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateFunc:     ValidateCronString,
+				DiffSuppressFunc: suppressUnconfiguredSnapshotField,
 			},
 
 			"snapshots_schedule_next_at": {
@@ -258,6 +259,23 @@ var (
 		setServerAttributes,
 	)
 )
+
+// updateServerWithNullFields performs the update via a raw PUT carrying
+// explicit JSON nulls for nullFields, rather than gobrightbox's
+// UpdateServer, which can only send "" for a cleared *string. See
+// requestBodyWithNullField.
+func updateServerWithNullFields(
+	ctx context.Context,
+	client *brightbox.Client,
+	serverOpts brightbox.ServerOptions,
+	nullFields ...string,
+) (*brightbox.Server, error) {
+	requestBody, err := requestBodyWithNullField(serverOpts, nullFields...)
+	if err != nil {
+		return nil, err
+	}
+	return brightboxAPIRequest[brightbox.Server](ctx, client, "PUT", path.Join("servers", serverOpts.ID), requestBody)
+}
 
 func addUpdateableServerOptions(
 	d *schema.ResourceData,
@@ -528,7 +546,12 @@ func resourceBrightboxServerUpdate(
 		}
 		log.Printf("[DEBUG] Server update configuration: %+v", serverOpts)
 
-		server, err = client.UpdateServer(ctx, serverOpts)
+		nullFields := snapshotNullFields(d)
+		if len(nullFields) > 0 {
+			server, err = updateServerWithNullFields(ctx, client, serverOpts, nullFields...)
+		} else {
+			server, err = client.UpdateServer(ctx, serverOpts)
+		}
 		if err != nil {
 			diags = append(diags, brightboxFromErr(err))
 		}
