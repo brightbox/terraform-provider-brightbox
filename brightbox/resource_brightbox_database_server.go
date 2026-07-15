@@ -32,7 +32,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"admin_password": {
-				Description: "Initial password required to login, only available at creation or following a password reset request",
+				Description: "Password required to login",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,

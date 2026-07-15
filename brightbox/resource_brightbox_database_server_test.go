@@ -313,9 +313,6 @@ func testAccCheckBrightboxEmptyDatabaseServerAttributes(databaseServer *brightbo
 		if databaseServer.AdminUsername == "" {
 			return fmt.Errorf("Bad AdminUsername: %s", databaseServer.AdminUsername)
 		}
-		if databaseServer.AdminPassword != "" {
-			return fmt.Errorf("Exposed API AdminPassword: %s", databaseServer.AdminPassword)
-		}
 		if len(databaseServer.AllowAccess) != 1 {
 			return fmt.Errorf("Bad AllowAccess list: %#v", databaseServer.AllowAccess)
 		}
