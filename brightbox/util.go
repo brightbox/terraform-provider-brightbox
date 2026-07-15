@@ -133,6 +133,18 @@ func assignByte(d *schema.ResourceData, target **uint8, index string) {
 	}
 }
 
+// assignCreateByte handles 0 which GetOk can't distinguish from "not set"
+// on create, so we use GetOkExists to detect it.
+func assignCreateByte(d *schema.ResourceData, target **uint8, id string, index string) {
+	if id != "" || *target != nil {
+		return
+	}
+	if attr, ok := d.GetOkExists(index); ok {
+		temp := uint8(attr.(int))
+		*target = &temp
+	}
+}
+
 func assignBool(d *schema.ResourceData, target **bool, index string) {
 	if d.HasChange(index) {
 		var temp bool

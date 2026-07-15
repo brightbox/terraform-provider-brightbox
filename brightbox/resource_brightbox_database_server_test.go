@@ -11,8 +11,36 @@ import (
 	"github.com/brightbox/gobrightbox/v2/enums/databaseserverstatus"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"gotest.tools/v3/assert"
 )
+
+func TestAddUpdateableDatabaseServerOptionsSendsZeroMaintenanceValuesOnCreate(t *testing.T) {
+	resourceData := schema.TestResourceDataRaw(t, resourceBrightboxDatabaseServer().Schema, map[string]interface{}{
+		"allow_access":        []interface{}{"any"},
+		"maintenance_hour":    0,
+		"maintenance_weekday": 0,
+	})
+	var databaseServerOpts brightbox.DatabaseServerOptions
+
+	assert.Assert(t, !addUpdateableDatabaseServerOptions(resourceData, &databaseServerOpts).HasError())
+	assert.Assert(t, databaseServerOpts.MaintenanceHour != nil, "expected MaintenanceHour to be set")
+	assert.Equal(t, *databaseServerOpts.MaintenanceHour, uint8(0))
+	assert.Assert(t, databaseServerOpts.MaintenanceWeekday != nil, "expected MaintenanceWeekday to be set")
+	assert.Equal(t, *databaseServerOpts.MaintenanceWeekday, uint8(0))
+}
+
+func TestAddUpdateableDatabaseServerOptionsOmitsUnsetMaintenanceValuesOnCreate(t *testing.T) {
+	resourceData := schema.TestResourceDataRaw(t, resourceBrightboxDatabaseServer().Schema, map[string]interface{}{
+		"allow_access": []interface{}{"any"},
+	})
+	var databaseServerOpts brightbox.DatabaseServerOptions
+
+	assert.Assert(t, !addUpdateableDatabaseServerOptions(resourceData, &databaseServerOpts).HasError())
+	assert.Assert(t, databaseServerOpts.MaintenanceHour == nil, "expected MaintenanceHour to be omitted")
+	assert.Assert(t, databaseServerOpts.MaintenanceWeekday == nil, "expected MaintenanceWeekday to be omitted")
+}
 
 func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	var databaseServer, afterChange brightbox.DatabaseServer

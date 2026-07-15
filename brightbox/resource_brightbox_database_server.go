@@ -217,6 +217,8 @@ func addUpdateableDatabaseServerOptions(
 	assignString(d, &opts.Description, "description")
 	assignByte(d, &opts.MaintenanceWeekday, "maintenance_weekday")
 	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
+	assignCreateByte(d, &opts.MaintenanceWeekday, opts.ID, "maintenance_weekday")
+	assignCreateByte(d, &opts.MaintenanceHour, opts.ID, "maintenance_hour")
 	// Always set snapshot schedule to get around default issue
 	schedule := d.Get("snapshots_schedule").(string)
 	opts.SnapshotsSchedule = &schedule
