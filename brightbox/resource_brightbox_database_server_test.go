@@ -14,6 +14,40 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// Regression test: without Computed, omitting these attrs from config plans them to "".
+func TestUnitBrightboxDatabaseServer_SnapshotsNoDriftWhenUnconfigured(t *testing.T) {
+	r := resourceBrightboxDatabaseServer()
+
+	state := &terraform.InstanceState{
+		ID: "dbs-testt",
+		Attributes: map[string]string{
+			"name":                "db server",
+			"snapshots_retention": "7",
+			"snapshots_schedule":  "0 7 * * *",
+			"allow_access.#":      "0",
+		},
+	}
+
+	config := terraform.NewResourceConfigRaw(map[string]interface{}{
+		"name":         "db server",
+		"allow_access": []interface{}{},
+	})
+
+	diff, err := r.Diff(context.Background(), state, config, nil)
+	if err != nil {
+		t.Fatalf("unexpected error computing diff: %s", err)
+	}
+
+	for _, attr := range []string{"snapshots_retention", "snapshots_schedule"} {
+		if diff == nil {
+			continue
+		}
+		if attrDiff, ok := diff.Attributes[attr]; ok {
+			t.Errorf("unexpected plan diff for %q: %#v -- an API-assigned value should be preserved when the config omits the attribute, not planned to null", attr, attrDiff)
+		}
+	}
+}
+
 func TestAccBrightboxDatabaseServer_BasicUpdates(t *testing.T) {
 	var databaseServer, afterChange brightbox.DatabaseServer
 	rInt := acctest.RandInt()

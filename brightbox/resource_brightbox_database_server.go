@@ -132,6 +132,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Description:  "Keep this number of scheduled snapshots. Keep all if unset",
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 			},
 
@@ -139,6 +140,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 				Description:  "Crontab pattern for scheduled snapshots. Must be at least hourly",
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: ValidateCronString,
 			},
 
@@ -217,9 +219,7 @@ func addUpdateableDatabaseServerOptions(
 	assignString(d, &opts.Description, "description")
 	assignByte(d, &opts.MaintenanceWeekday, "maintenance_weekday")
 	assignByte(d, &opts.MaintenanceHour, "maintenance_hour")
-	// Always set snapshot schedule to get around default issue
-	schedule := d.Get("snapshots_schedule").(string)
-	opts.SnapshotsSchedule = &schedule
+	assignString(d, &opts.SnapshotsSchedule, "snapshots_schedule")
 	assignString(d, &opts.SnapshotsRetention, "snapshots_retention")
 	assignStringSet(d, &opts.AllowAccess, "allow_access")
 	return nil
