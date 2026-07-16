@@ -1,7 +1,20 @@
 ## 3.4.4 (November 16, 2023)
 
-NOTES
-- Updates of dependencies
+IMPROVEMENTS:
+- provider: switch to the Terraform Plugin Protocol v5 mux server, ahead of migrating to the Plugin Framework
+- provider: return specific diagnostics for Brightbox API and auth errors
+
+NOTES:
+- Add plugin-framework dependency
+- Switch tests to use Provider Factories
+- Use idiomatic Go (generics) for collection helper functions
+- Remove unused helper/resource code
+- Update gobrightbox to 2.2.0
+- Update gophercloud to 1.7.0
+- Update SDK to 2.30.0
+- Update oauth to 0.14.0
+- Update test tools to 3.5.1
+- Add terraform-plugin-go and terraform-plugin-mux dependencies
 
 ## 3.4.3 (July 14, 2023)
 
