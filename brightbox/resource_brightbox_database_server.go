@@ -92,7 +92,7 @@ func resourceBrightboxDatabaseServer() *schema.Resource {
 			},
 
 			"locked": {
-				Description: "Initial password required to login, only available at creation or following a password reset request",
+				Description: "Is true if resource has been set as locked and cannot be deleted",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
