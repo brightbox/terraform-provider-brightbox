@@ -1,3 +1,23 @@
+## 3.4.5 (July 30, 2026)
+
+BUG FIXES:
+- go vet: fix non-constant printf format strings in test helpers and main.go
+- server, database_server: stop planning from clearing `snapshots_schedule`/`snapshots_retention` when left out of config; an explicit `""` now clears a previously configured value instead
+- database_server: send explicit zero `maintenance_weekday`/`maintenance_hour` on create instead of dropping them (#122)
+- database_server: update documented password behaviour now the API returns the admin password beyond initial creation
+- database_server: correct `locked` field description
+
+NOTES:
+- Update .goreleaser.yml to v2 config schema
+- Add GitHub Action for testing
+- Update gobrightbox to 2.2.2
+- Update gophercloud to 1.14.1
+- Update terraform-plugin-go to 0.31.0
+- Update terraform-plugin-mux to 0.23.1
+- Update SDK to 2.40.1
+- Update oauth to 0.36.0
+- Update test tools to 3.5.2
+
 ## 3.4.4 (November 16, 2023)
 
 IMPROVEMENTS:
@@ -304,7 +324,7 @@ NOTES:
 - Add timeout support for servers
 - Add timeout support for Cloud IPs
 - Add API client resource
-- Add orbit container resource 
+- Add orbit container resource
 - Remove old container resource
 
 ## 1.0.6 (March 04, 2019)
