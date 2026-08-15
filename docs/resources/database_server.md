@@ -11,7 +11,7 @@ resource "brightbox_database_server" "default" {
 	description = "Default DB used by servers"
 	database_engine = "mysql"
 	database_version = "8.0"
-	database_type = data.brightbox_database_type.4gb.id
+	database_type = data.brightbox_database_type.gb4.id
 	maintenance_weekday = 5
 	maintenance_hour = 4
 	snapshots_schedule = "0 5 * * *"
@@ -22,7 +22,7 @@ resource "brightbox_database_server" "default" {
 	]
 }
 
-data "brightbox_database_type" "4gb" {
+data "brightbox_database_type" "gb4" {
 	name = "^SSD 4GB$"
 }
 
