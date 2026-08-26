@@ -578,6 +578,15 @@ func resourceBrightboxServerUpdate(
 		)
 		if err != nil {
 			diags = append(diags, brightboxFromErr(err))
+		} else {
+			// No server status change is observable while a resize is in
+			// progress, so pause rather than poll here.
+			log.Printf("[INFO] Pausing %v for server type change to settle", checkDelay)
+			select {
+			case <-time.After(checkDelay):
+			case <-ctx.Done():
+				diags = append(diags, diag.FromErr(ctx.Err())...)
+			}
 		}
 	}
 	if diags.HasError() {
